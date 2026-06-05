@@ -5,15 +5,15 @@ plugins {
 android {
     namespace 'com.diamon.curso'
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId "com.diamon.curso"
         minSdk 23
-        targetSdk 36
-        versionCode 56
-        versionName "1.6.4"
+        targetSdk 37
+        versionCode 57
+        versionName "1.6.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -36,8 +36,8 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
 
-    buildToolsVersion '36.0.0'
-    ndkVersion '29.0.13599879 rc2'
+    buildToolsVersion '37.0.0'
+    ndkVersion '30.0.14904198 rc1'
 
     buildFeatures {
         resValues true
@@ -47,7 +47,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
-            version = '3.22.1'
+            version = '4.1.2'
         }
     }
 
