@@ -1,0 +1,52 @@
+.TH "libusb_ssplus_sublink_attribute" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_ssplus_sublink_attribute \- Expose \fBlibusb_ssplus_usb_device_capability_descriptor::sublinkSpeedAttributes\fP\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "uint8_t \fBssid\fP"
+.br
+.RI "Sublink Speed Attribute ID (SSID)\&. "
+.ti -1c
+.RI "enum \fBlibusb_superspeedplus_sublink_attribute_exponent\fP \fBexponent\fP"
+.br
+.RI "This field defines the base 10 exponent times 3, that shall be applied to the mantissa\&. "
+.ti -1c
+.RI "enum \fBlibusb_superspeedplus_sublink_attribute_sublink_type\fP \fBtype\fP"
+.br
+.RI "This field identifies whether the Sublink Speed Attribute defines a symmetric or asymmetric bit rate\&. "
+.ti -1c
+.RI "enum \fBlibusb_superspeedplus_sublink_attribute_sublink_direction\fP \fBdirection\fP"
+.br
+.RI "This field indicates if this Sublink Speed Attribute defines the receive or transmit bit rate\&. "
+.ti -1c
+.RI "enum \fBlibusb_superspeedplus_sublink_attribute_link_protocol\fP \fBprotocol\fP"
+.br
+.RI "This field identifies the protocol supported by the link\&. "
+.ti -1c
+.RI "uint16_t \fBmantissa\fP"
+.br
+.RI "This field defines the mantissa that shall be applied to the exponent when calculating the maximum bit rate\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+Expose \fBlibusb_ssplus_usb_device_capability_descriptor::sublinkSpeedAttributes\fP\&. 
+.SH "Field Documentation"
+.PP 
+.SS "uint8_t libusb_ssplus_sublink_attribute::ssid"
+
+.PP
+Sublink Speed Attribute ID (SSID)\&. This field is an ID that uniquely identifies the speed of this sublink 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.

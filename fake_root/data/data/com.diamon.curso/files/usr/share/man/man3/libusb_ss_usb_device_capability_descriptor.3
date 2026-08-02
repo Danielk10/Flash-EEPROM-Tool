@@ -1,0 +1,78 @@
+.TH "libusb_ss_usb_device_capability_descriptor" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_ss_usb_device_capability_descriptor \- A structure representing the SuperSpeed USB Device Capability descriptor This descriptor is documented in section 9\&.6\&.2\&.2 of the USB 3\&.0 specification\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "uint8_t \fBbLength\fP"
+.br
+.RI "Size of this descriptor (in bytes)\&. "
+.ti -1c
+.RI "uint8_t \fBbDescriptorType\fP"
+.br
+.RI "Descriptor type\&. "
+.ti -1c
+.RI "uint8_t \fBbDevCapabilityType\fP"
+.br
+.RI "Capability type\&. "
+.ti -1c
+.RI "uint8_t \fBbmAttributes\fP"
+.br
+.RI "Bitmap encoding of supported device level features\&. "
+.ti -1c
+.RI "uint16_t \fBwSpeedSupported\fP"
+.br
+.RI "Bitmap encoding of the speed supported by this device when operating in SuperSpeed mode\&. "
+.ti -1c
+.RI "uint8_t \fBbFunctionalitySupport\fP"
+.br
+.RI "The lowest speed at which all the functionality supported by the device is available to the user\&. "
+.ti -1c
+.RI "uint8_t \fBbU1DevExitLat\fP"
+.br
+.RI "U1 Device Exit Latency\&. "
+.ti -1c
+.RI "uint16_t \fBbU2DevExitLat\fP"
+.br
+.RI "U2 Device Exit Latency\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+A structure representing the SuperSpeed USB Device Capability descriptor This descriptor is documented in section 9\&.6\&.2\&.2 of the USB 3\&.0 specification\&. 
+
+All multiple-byte fields are represented in host-endian format\&. 
+.SH "Field Documentation"
+.PP 
+.SS "uint8_t libusb_ss_usb_device_capability_descriptor::bDescriptorType"
+
+.PP
+Descriptor type\&. Will have value \fBlibusb_descriptor_type::LIBUSB_DT_DEVICE_CAPABILITY\fP LIBUSB_DT_DEVICE_CAPABILITY in this context\&. 
+.SS "uint8_t libusb_ss_usb_device_capability_descriptor::bDevCapabilityType"
+
+.PP
+Capability type\&. Will have value \fBlibusb_bos_type::LIBUSB_BT_SS_USB_DEVICE_CAPABILITY\fP LIBUSB_BT_SS_USB_DEVICE_CAPABILITY in this context\&. 
+.SS "uint8_t libusb_ss_usb_device_capability_descriptor::bmAttributes"
+
+.PP
+Bitmap encoding of supported device level features\&. A value of one in a bit location indicates a feature is supported; a value of zero indicates it is not supported\&. See \fBlibusb_ss_usb_device_capability_attributes\fP\&. 
+.SS "uint16_t libusb_ss_usb_device_capability_descriptor::wSpeedSupported"
+
+.PP
+Bitmap encoding of the speed supported by this device when operating in SuperSpeed mode\&. See \fBlibusb_supported_speed\fP\&. 
+.SS "uint8_t libusb_ss_usb_device_capability_descriptor::bFunctionalitySupport"
+
+.PP
+The lowest speed at which all the functionality supported by the device is available to the user\&. For example if the device supports all its functionality when connected at full speed and above then it sets this value to 1\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.

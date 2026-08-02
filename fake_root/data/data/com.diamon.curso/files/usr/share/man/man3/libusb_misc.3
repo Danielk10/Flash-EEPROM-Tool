@@ -1,0 +1,507 @@
+.TH "libusb_misc" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_misc \- Miscellaneous
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBLIBUSB_CALL\fP"
+.br
+.RI "libusb's Windows calling convention\&. "
+.ti -1c
+.RI "#define \fBLIBUSB_API_VERSION\fP   0x0100010D"
+.br
+.RI "libusb's API version\&. "
+.ti -1c
+.RI "#define \fBLIBUSBX_API_VERSION\fP   \fBLIBUSB_API_VERSION\fP"
+.br
+.RI "This is the older spelling, kept for backwards compatibility of code needing to test for older library versions where the newer spelling did not exist\&. "
+.ti -1c
+.RI "#define \fBlibusb_le16_to_cpu\fP   \fBlibusb_cpu_to_le16\fP"
+.br
+.RI "Convert a 16-bit value from little-endian to host-endian format\&. "
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBlibusb_standard_request\fP { \fBLIBUSB_REQUEST_GET_STATUS\fP = 0x00, \fBLIBUSB_REQUEST_CLEAR_FEATURE\fP = 0x01, \fBLIBUSB_REQUEST_SET_FEATURE\fP = 0x03, \fBLIBUSB_REQUEST_SET_ADDRESS\fP = 0x05, \fBLIBUSB_REQUEST_GET_DESCRIPTOR\fP = 0x06, \fBLIBUSB_REQUEST_SET_DESCRIPTOR\fP = 0x07, \fBLIBUSB_REQUEST_GET_CONFIGURATION\fP = 0x08, \fBLIBUSB_REQUEST_SET_CONFIGURATION\fP = 0x09, \fBLIBUSB_REQUEST_GET_INTERFACE\fP = 0x0a, \fBLIBUSB_REQUEST_SET_INTERFACE\fP = 0x0b, \fBLIBUSB_REQUEST_SYNCH_FRAME\fP = 0x0c, \fBLIBUSB_REQUEST_SET_SEL\fP = 0x30, \fBLIBUSB_SET_ISOCH_DELAY\fP = 0x31 }"
+.br
+.RI "Standard requests, as defined in table 9-5 of the USB 3\&.0 specifications\&. "
+.ti -1c
+.RI "enum \fBlibusb_request_type\fP { \fBLIBUSB_REQUEST_TYPE_STANDARD\fP = (0x00 << 5), \fBLIBUSB_REQUEST_TYPE_CLASS\fP = (0x01 << 5), \fBLIBUSB_REQUEST_TYPE_VENDOR\fP = (0x02 << 5), \fBLIBUSB_REQUEST_TYPE_RESERVED\fP = (0x03 << 5) }"
+.br
+.RI "Request type bits of the \fBbmRequestType\fP field in control transfers\&. "
+.ti -1c
+.RI "enum \fBlibusb_request_recipient\fP { \fBLIBUSB_RECIPIENT_DEVICE\fP = 0x00, \fBLIBUSB_RECIPIENT_INTERFACE\fP = 0x01, \fBLIBUSB_RECIPIENT_ENDPOINT\fP = 0x02, \fBLIBUSB_RECIPIENT_OTHER\fP = 0x03 }"
+.br
+.RI "Recipient bits of the \fBbmRequestType\fP field in control transfers\&. "
+.ti -1c
+.RI "enum \fBlibusb_error\fP { \fBLIBUSB_SUCCESS\fP = 0, \fBLIBUSB_ERROR_IO\fP = -1, \fBLIBUSB_ERROR_INVALID_PARAM\fP = -2, \fBLIBUSB_ERROR_ACCESS\fP = -3, \fBLIBUSB_ERROR_NO_DEVICE\fP = -4, \fBLIBUSB_ERROR_NOT_FOUND\fP = -5, \fBLIBUSB_ERROR_BUSY\fP = -6, \fBLIBUSB_ERROR_TIMEOUT\fP = -7, \fBLIBUSB_ERROR_OVERFLOW\fP = -8, \fBLIBUSB_ERROR_PIPE\fP = -9, \fBLIBUSB_ERROR_INTERRUPTED\fP = -10, \fBLIBUSB_ERROR_NO_MEM\fP = -11, \fBLIBUSB_ERROR_NOT_SUPPORTED\fP = -12, \fBLIBUSB_ERROR_OTHER\fP = -99 }"
+.br
+.RI "Error codes\&. "
+.ti -1c
+.RI "enum \fBlibusb_capability\fP { \fBLIBUSB_CAP_HAS_CAPABILITY\fP = 0x0000U, \fBLIBUSB_CAP_HAS_HOTPLUG\fP = 0x0001U, \fBLIBUSB_CAP_HAS_HID_ACCESS\fP = 0x0100U, \fBLIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER\fP = 0x0101U }"
+.br
+.RI "Capabilities supported by an instance of libusb on the current running platform\&. "
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBlibusb_has_capability\fP (uint32_t capability)"
+.br
+.RI "Check at runtime if the loaded library has a given capability\&. "
+.ti -1c
+.RI "const char * \fBlibusb_error_name\fP (int error_code)"
+.br
+.RI "Returns a constant NULL-terminated string with the ASCII name of a libusb error or transfer status code\&. "
+.ti -1c
+.RI "const struct \fBlibusb_version\fP * \fBlibusb_get_version\fP (void)"
+.br
+.RI "Returns a pointer to const struct \fBlibusb_version\fP with the version (major, minor, micro, nano and rc) of the running library\&. "
+.ti -1c
+.RI "static uint16_t \fBlibusb_cpu_to_le16\fP (uint16_t x)"
+.br
+.RI "Convert a 16-bit value from host-endian to little-endian format\&. "
+.ti -1c
+.RI "int \fBlibusb_setlocale\fP (const char *locale)"
+.br
+.RI "Set the language, and only the language, not the encoding! "
+.ti -1c
+.RI "const char * \fBlibusb_strerror\fP (int errcode)"
+.br
+.RI "Returns a constant string with a short description of the given error code, this description is intended for displaying to the end user and will be in the language set by \fBlibusb_setlocale()\fP\&. "
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static const char *const \fBusbi_locale_supported\fP [] = { 'en', 'nl', 'fr', 'ru', 'de', 'hu' }"
+.br
+.RI "How to add a new \fBlibusb_strerror()\fP translation: "
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define LIBUSB_CALL"
+
+.PP
+libusb's Windows calling convention\&. Under Windows, the selection of available compilers and configurations means that, unlike other platforms, there is not \fIone true calling convention\fP (calling convention: the manner in which parameters are passed to functions in the generated assembly code)\&.
+
+.PP
+Matching the Windows API itself, libusb uses the WINAPI convention (which translates to the \fRstdcall\fP convention) and guarantees that the library is compiled in this way\&. The public header file also includes appropriate annotations so that your own software will use the right convention, even if another convention is being used by default within your codebase\&.
+
+.PP
+The one consideration that you must apply in your software is to mark all functions which you use as libusb callbacks with this LIBUSB_CALL annotation, so that they too get compiled for the correct calling convention\&.
+
+.PP
+On non-Windows operating systems, this macro is defined as nothing\&. This means that you can apply it to your code without worrying about cross-platform compatibility\&. 
+.SS "#define LIBUSB_API_VERSION   0x0100010D"
+
+.PP
+libusb's API version\&. Since version 1\&.0\&.18, to help with feature detection, libusb defines a LIBUSB_API_VERSION macro that gets increased every time there is a significant change to the API, such as the introduction of a new call, the definition of a new macro/enum member, or any other element that libusb applications may want to detect at compilation time\&.
+
+.PP
+Between versions 1\&.0\&.13 and 1\&.0\&.17 (inclusive) the older spelling of LIBUSBX_API_VERSION was used\&.
+
+.PP
+The macro is typically used in an application as follows: 
+.PP
+.nf
+#if defined(LIBUSB_API_VERSION) && (LIBUSB_API_VERSION >= 0x01001234)
+// Use one of the newer features from the libusb API
+#endif
+
+.fi
+.PP
+
+.PP
+Internally, LIBUSB_API_VERSION is defined as follows: (libusb major << 24) | (libusb minor << 16) | (16 bit incremental)
+
+.PP
+The incremental component has changed as follows: 
+.PD 0
+.IP "\(bu" 2
+libusbx version 1\&.0\&.13: LIBUSBX_API_VERSION = 0x01000100 
+.IP "\(bu" 2
+libusbx version 1\&.0\&.14: LIBUSBX_API_VERSION = 0x010000FF 
+.IP "\(bu" 2
+libusbx version 1\&.0\&.15: LIBUSBX_API_VERSION = 0x01000101 
+.IP "\(bu" 2
+libusbx version 1\&.0\&.16: LIBUSBX_API_VERSION = 0x01000102 
+.IP "\(bu" 2
+libusbx version 1\&.0\&.17: LIBUSBX_API_VERSION = 0x01000102 
+.IP "\(bu" 2
+libusb version 1\&.0\&.18: LIBUSB_API_VERSION = 0x01000102 
+.IP "\(bu" 2
+libusb version 1\&.0\&.19: LIBUSB_API_VERSION = 0x01000103 
+.IP "\(bu" 2
+libusb version 1\&.0\&.20: LIBUSB_API_VERSION = 0x01000104 
+.IP "\(bu" 2
+libusb version 1\&.0\&.21: LIBUSB_API_VERSION = 0x01000105 
+.IP "\(bu" 2
+libusb version 1\&.0\&.22: LIBUSB_API_VERSION = 0x01000106 
+.IP "\(bu" 2
+libusb version 1\&.0\&.23: LIBUSB_API_VERSION = 0x01000107 
+.IP "\(bu" 2
+libusb version 1\&.0\&.24: LIBUSB_API_VERSION = 0x01000108 
+.IP "\(bu" 2
+libusb version 1\&.0\&.25: LIBUSB_API_VERSION = 0x01000109 
+.IP "\(bu" 2
+libusb version 1\&.0\&.26: LIBUSB_API_VERSION = 0x01000109 
+.IP "\(bu" 2
+libusb version 1\&.0\&.27: LIBUSB_API_VERSION = 0x0100010A 
+.IP "\(bu" 2
+libusb version 1\&.0\&.28: LIBUSB_API_VERSION = 0x0100010A 
+.IP "\(bu" 2
+libusb version 1\&.0\&.29: LIBUSB_API_VERSION = 0x0100010B 
+.IP "\(bu" 2
+libusb version 1\&.0\&.30: LIBUSB_API_VERSION = 0x0100010C 
+.IP "\(bu" 2
+libusb version 1\&.0\&.31: LIBUSB_API_VERSION = 0x0100010D 
+.PP
+
+.SS "#define libusb_le16_to_cpu   \fBlibusb_cpu_to_le16\fP"
+
+.PP
+Convert a 16-bit value from little-endian to host-endian format\&. On little endian systems, this function does nothing\&. On big endian systems, the bytes are swapped\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIx\fP the little-endian value to convert 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the value in host-endian byte order 
+.RE
+.PP
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBlibusb_standard_request\fP"
+
+.PP
+Standard requests, as defined in table 9-5 of the USB 3\&.0 specifications\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_REQUEST_GET_STATUS \fP
+Request status of the specific recipient\&. 
+.TP
+\f(BILIBUSB_REQUEST_CLEAR_FEATURE \fP
+Clear or disable a specific feature\&. 
+.TP
+\f(BILIBUSB_REQUEST_SET_FEATURE \fP
+Set or enable a specific feature\&. 
+.TP
+\f(BILIBUSB_REQUEST_SET_ADDRESS \fP
+Set device address for all future accesses\&. 
+.TP
+\f(BILIBUSB_REQUEST_GET_DESCRIPTOR \fP
+Get the specified descriptor\&. 
+.TP
+\f(BILIBUSB_REQUEST_SET_DESCRIPTOR \fP
+Used to update existing descriptors or add new descriptors\&. 
+.TP
+\f(BILIBUSB_REQUEST_GET_CONFIGURATION \fP
+Get the current device configuration value\&. 
+.TP
+\f(BILIBUSB_REQUEST_SET_CONFIGURATION \fP
+Set device configuration\&. 
+.TP
+\f(BILIBUSB_REQUEST_GET_INTERFACE \fP
+Return the selected alternate setting for the specified interface\&. 
+.TP
+\f(BILIBUSB_REQUEST_SET_INTERFACE \fP
+Select an alternate interface for the specified interface\&. 
+.TP
+\f(BILIBUSB_REQUEST_SYNCH_FRAME \fP
+Set then report an endpoint's synchronization frame\&. 
+.TP
+\f(BILIBUSB_REQUEST_SET_SEL \fP
+Sets both the U1 and U2 Exit Latency\&. 
+.TP
+\f(BILIBUSB_SET_ISOCH_DELAY \fP
+Delay from the time a host transmits a packet to the time it is received by the device\&. 
+.SS "enum \fBlibusb_request_type\fP"
+
+.PP
+Request type bits of the \fBbmRequestType\fP field in control transfers\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_REQUEST_TYPE_STANDARD \fP
+Standard\&. 
+.TP
+\f(BILIBUSB_REQUEST_TYPE_CLASS \fP
+Class\&. 
+.TP
+\f(BILIBUSB_REQUEST_TYPE_VENDOR \fP
+Vendor\&. 
+.TP
+\f(BILIBUSB_REQUEST_TYPE_RESERVED \fP
+Reserved\&. 
+.SS "enum \fBlibusb_request_recipient\fP"
+
+.PP
+Recipient bits of the \fBbmRequestType\fP field in control transfers\&. Values 4 through 31 are reserved\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_RECIPIENT_DEVICE \fP
+Device\&. 
+.TP
+\f(BILIBUSB_RECIPIENT_INTERFACE \fP
+Interface\&. 
+.TP
+\f(BILIBUSB_RECIPIENT_ENDPOINT \fP
+Endpoint\&. 
+.TP
+\f(BILIBUSB_RECIPIENT_OTHER \fP
+Other\&. 
+.SS "enum \fBlibusb_error\fP"
+
+.PP
+Error codes\&. Most libusb functions return 0 on success or one of these codes on failure\&. You can call \fBlibusb_error_name()\fP to retrieve a string representation of an error code or \fBlibusb_strerror()\fP to get an end-user suitable description of an error code\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_SUCCESS \fP
+Success (no error)\&. 
+.TP
+\f(BILIBUSB_ERROR_IO \fP
+Input/output error\&. 
+.TP
+\f(BILIBUSB_ERROR_INVALID_PARAM \fP
+Invalid parameter\&. 
+.TP
+\f(BILIBUSB_ERROR_ACCESS \fP
+Access denied (insufficient permissions)\&. 
+.TP
+\f(BILIBUSB_ERROR_NO_DEVICE \fP
+No such device (it may have been disconnected)\&. 
+.TP
+\f(BILIBUSB_ERROR_NOT_FOUND \fP
+Entity not found\&. 
+.TP
+\f(BILIBUSB_ERROR_BUSY \fP
+Resource busy\&. 
+.TP
+\f(BILIBUSB_ERROR_TIMEOUT \fP
+Operation timed out\&. 
+.TP
+\f(BILIBUSB_ERROR_OVERFLOW \fP
+Overflow\&. 
+.TP
+\f(BILIBUSB_ERROR_PIPE \fP
+Pipe error\&. 
+.TP
+\f(BILIBUSB_ERROR_INTERRUPTED \fP
+System call interrupted (perhaps due to signal)\&. 
+.TP
+\f(BILIBUSB_ERROR_NO_MEM \fP
+Insufficient memory\&. 
+.TP
+\f(BILIBUSB_ERROR_NOT_SUPPORTED \fP
+Operation not supported or unimplemented on this platform\&. 
+.TP
+\f(BILIBUSB_ERROR_OTHER \fP
+Other error\&. 
+.SS "enum \fBlibusb_capability\fP"
+
+.PP
+Capabilities supported by an instance of libusb on the current running platform\&. Test if the loaded library supports a given capability by calling \fBlibusb_has_capability()\fP\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_CAP_HAS_CAPABILITY \fP
+The \fBlibusb_has_capability()\fP API is available\&. 
+.TP
+\f(BILIBUSB_CAP_HAS_HOTPLUG \fP
+Hotplug support is available on this platform\&. 
+.TP
+\f(BILIBUSB_CAP_HAS_HID_ACCESS \fP
+The library can access HID devices without requiring user intervention\&. Note that before being able to actually access an HID device, you may still have to call additional libusb functions such as \fBlibusb_detach_kernel_driver()\fP\&. 
+.TP
+\f(BILIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER \fP
+The library supports detaching of the default USB driver, using \fBlibusb_detach_kernel_driver()\fP, if one is set by the OS kernel\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int libusb_has_capability (uint32_t capability)"
+
+.PP
+Check at runtime if the loaded library has a given capability\&. This call should be performed after \fBlibusb_init_context()\fP, to ensure the backend has updated its capability set\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIcapability\fP the \fBlibusb_capability\fP to check for 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+nonzero if the running library has the capability, 0 otherwise 
+.RE
+.PP
+
+.SS "const char * libusb_error_name (int error_code)"
+
+.PP
+Returns a constant NULL-terminated string with the ASCII name of a libusb error or transfer status code\&. The caller must not free() the returned string\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIerror_code\fP The \fBlibusb_error\fP or \fBlibusb_transfer_status\fP code to return the name of\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+The error name, or the string \fBUNKNOWN\fP if the value of error_code is not a known error / status code\&. 
+.RE
+.PP
+
+.SS "uint16_t libusb_cpu_to_le16 (uint16_t x)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Convert a 16-bit value from host-endian to little-endian format\&. On little endian systems, this function does nothing\&. On big endian systems, the bytes are swapped\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIx\fP the host-endian value to convert 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the value in little-endian byte order 
+.RE
+.PP
+
+.SS "int libusb_setlocale (const char * locale)"
+
+.PP
+Set the language, and only the language, not the encoding! used for translatable libusb messages\&.
+
+.PP
+This takes a locale string in the default setlocale format: lang[-region] or lang[_country_region][\&.codeset]\&. Only the lang part of the string is used, and only 2 letter ISO 639-1 codes are accepted for it, such as "de"\&. The optional region, country_region or codeset parts are ignored\&. This means that functions which return translatable strings will NOT honor the specified encoding\&. All strings returned are encoded as UTF-8 strings\&.
+
+.PP
+If \fBlibusb_setlocale()\fP is not called, all messages will be in English\&.
+
+.PP
+The following functions return translatable strings: \fBlibusb_strerror()\fP\&. Note that the libusb log messages controlled through LIBUSB_OPTION_LOG_LEVEL are not translated, they are always in English\&.
+
+.PP
+For POSIX UTF-8 environments if you want libusb to follow the standard locale settings, call libusb_setlocale(setlocale(LC_MESSAGES, NULL)), after your app has done its locale setup\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIlocale\fP locale-string in the form of lang[_country_region][\&.codeset] or lang[-region], where lang is a 2 letter ISO 639-1 code 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+\fBLIBUSB_SUCCESS\fP on success 
+
+.PP
+\fBLIBUSB_ERROR_INVALID_PARAM\fP if the locale doesn't meet the requirements 
+
+.PP
+\fBLIBUSB_ERROR_NOT_FOUND\fP if the requested language is not supported 
+
+.PP
+a LIBUSB_ERROR code on other errors 
+.RE
+.PP
+
+.SS "const char * libusb_strerror (int errcode)"
+
+.PP
+Returns a constant string with a short description of the given error code, this description is intended for displaying to the end user and will be in the language set by \fBlibusb_setlocale()\fP\&. The returned string is encoded in UTF-8\&.
+
+.PP
+The messages always start with a capital letter and end without any dot\&. The caller must not free() the returned string\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIerrcode\fP the error code whose description is desired 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a short description of the error code in UTF-8 encoding 
+.RE
+.PP
+
+.SH "Variable Documentation"
+.PP 
+.SS "const char* const usbi_locale_supported[] = { 'en', 'nl', 'fr', 'ru', 'de', 'hu' }\fR [static]\fP"
+
+.PP
+How to add a new \fBlibusb_strerror()\fP translation: 
+.PD 0
+.IP "1." 4
+Download the latest \fRstrerror\&.c\fP from:
+.br
+ https://raw.github.com/libusb/libusb/master/libusb/strerror.c  
+.IP "2." 4
+Open the file in an UTF-8 capable editor  
+.IP "3." 4
+Add the 2 letter \fRISO 639-1\fP code for your locale at the end of \fRusbi_locale_supported\fP[]
+.br
+ Eg\&. for Chinese, you would add "zh" so that: 
+.PP
+.nf
+\&.\&.\&. usbi_locale_supported[] = { "en", "nl", "fr" };
+
+.fi
+.PP
+ becomes: 
+.PP
+.nf
+\&.\&.\&. usbi_locale_supported[] = { "en", "nl", "fr", "zh" };
+
+.fi
+.PP
+  
+.IP "4." 4
+Copy the \fR{ / * English (en) * / \&.\&.\&. }\fP section and add it at the end of \fRusbi_localized_errors\fP 
+.br
+ Eg\&. for Chinese, the last section of \fRusbi_localized_errors\fP could look like: 
+.PP
+.nf
+    }, { / * Chinese (zh) * /
+        "Success",
+        \&.\&.\&.
+        "Other error",
+    },
+};
+
+.fi
+.PP
+  
+.IP "5." 4
+Translate each of the English messages from the section you copied into your language  
+.IP "6." 4
+Save the file (in UTF-8 format) and send it to \fRlibusb-devel@lists\&.sourceforge\&.net\fP  
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.

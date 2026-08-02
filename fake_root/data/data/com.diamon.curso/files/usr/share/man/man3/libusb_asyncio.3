@@ -1,0 +1,1077 @@
+.TH "libusb_asyncio" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_asyncio \- Asynchronous device I/O
+.PP
+ \- This page details libusb's asynchronous (non-blocking) API for USB device I/O\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBlibusb_control_setup\fP"
+.br
+.RI "Setup packet for control transfers\&. "
+.ti -1c
+.RI "struct \fBlibusb_iso_packet_descriptor\fP"
+.br
+.RI "Isochronous packet descriptor\&. "
+.ti -1c
+.RI "struct \fBlibusb_transfer\fP"
+.br
+.RI "The generic USB transfer structure\&. "
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void(* \fBlibusb_transfer_cb_fn\fP) (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Asynchronous transfer callback function type\&. "
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBlibusb_transfer_type\fP { \fBLIBUSB_TRANSFER_TYPE_CONTROL\fP = 0U, \fBLIBUSB_TRANSFER_TYPE_ISOCHRONOUS\fP = 1U, \fBLIBUSB_TRANSFER_TYPE_BULK\fP = 2U, \fBLIBUSB_TRANSFER_TYPE_INTERRUPT\fP = 3U, \fBLIBUSB_TRANSFER_TYPE_BULK_STREAM\fP = 4U }"
+.br
+.RI "Transfer type\&. "
+.ti -1c
+.RI "enum \fBlibusb_transfer_status\fP { \fBLIBUSB_TRANSFER_COMPLETED\fP, \fBLIBUSB_TRANSFER_ERROR\fP, \fBLIBUSB_TRANSFER_TIMED_OUT\fP, \fBLIBUSB_TRANSFER_CANCELLED\fP, \fBLIBUSB_TRANSFER_STALL\fP, \fBLIBUSB_TRANSFER_NO_DEVICE\fP, \fBLIBUSB_TRANSFER_OVERFLOW\fP }"
+.br
+.RI "Transfer status codes\&. "
+.ti -1c
+.RI "enum \fBlibusb_transfer_flags\fP { \fBLIBUSB_TRANSFER_SHORT_NOT_OK\fP = (1U << 0), \fBLIBUSB_TRANSFER_FREE_BUFFER\fP = (1U << 1), \fBLIBUSB_TRANSFER_FREE_TRANSFER\fP = (1U << 2), \fBLIBUSB_TRANSFER_ADD_ZERO_PACKET\fP = (1U << 3) }"
+.br
+.RI "\fBlibusb_transfer\&.flags\fP values "
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBlibusb_alloc_streams\fP (\fBlibusb_device_handle\fP *dev_handle, uint32_t num_streams, unsigned char *endpoints, int num_endpoints)"
+.br
+.RI "Allocate up to num_streams usb bulk streams on the specified endpoints\&. "
+.ti -1c
+.RI "int \fBlibusb_free_streams\fP (\fBlibusb_device_handle\fP *dev_handle, unsigned char *endpoints, int num_endpoints)"
+.br
+.RI "Free usb bulk streams allocated with \fBlibusb_alloc_streams()\fP\&. "
+.ti -1c
+.RI "unsigned char * \fBlibusb_dev_mem_alloc\fP (\fBlibusb_device_handle\fP *dev_handle, size_t length)"
+.br
+.RI "Attempts to allocate a block of persistent DMA memory suitable for transfers against the given device\&. "
+.ti -1c
+.RI "int \fBlibusb_dev_mem_free\fP (\fBlibusb_device_handle\fP *dev_handle, unsigned char *buffer, size_t length)"
+.br
+.RI "Free device memory allocated with \fBlibusb_dev_mem_alloc()\fP\&. "
+.ti -1c
+.RI "struct \fBlibusb_transfer\fP * \fBlibusb_alloc_transfer\fP (int iso_packets)"
+.br
+.RI "Allocate a libusb transfer with a specified number of isochronous packet descriptors\&. "
+.ti -1c
+.RI "void \fBlibusb_free_transfer\fP (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Free a transfer structure\&. "
+.ti -1c
+.RI "int \fBlibusb_submit_transfer\fP (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Submit a transfer\&. "
+.ti -1c
+.RI "int \fBlibusb_cancel_transfer\fP (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Asynchronously cancel a previously submitted transfer\&. "
+.ti -1c
+.RI "void \fBlibusb_transfer_set_stream_id\fP (struct \fBlibusb_transfer\fP *transfer, uint32_t stream_id)"
+.br
+.RI "Set a transfers bulk stream id\&. "
+.ti -1c
+.RI "uint32_t \fBlibusb_transfer_get_stream_id\fP (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Get a transfers bulk stream id\&. "
+.ti -1c
+.RI "static unsigned char * \fBlibusb_control_transfer_get_data\fP (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Get the data section of a control transfer\&. "
+.ti -1c
+.RI "static struct \fBlibusb_control_setup\fP * \fBlibusb_control_transfer_get_setup\fP (struct \fBlibusb_transfer\fP *transfer)"
+.br
+.RI "Get the control setup packet of a control transfer\&. "
+.ti -1c
+.RI "static void \fBlibusb_fill_control_setup\fP (unsigned char *buffer, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, uint16_t wLength)"
+.br
+.RI "Helper function to populate the setup packet (first 8 bytes of the data buffer) for a control transfer\&. "
+.ti -1c
+.RI "static void \fBlibusb_fill_control_transfer\fP (struct \fBlibusb_transfer\fP *transfer, \fBlibusb_device_handle\fP *dev_handle, unsigned char *buffer, \fBlibusb_transfer_cb_fn\fP callback, void *user_data, unsigned int timeout)"
+.br
+.RI "Helper function to populate the required \fBlibusb_transfer\fP fields for a control transfer\&. "
+.ti -1c
+.RI "static void \fBlibusb_fill_bulk_transfer\fP (struct \fBlibusb_transfer\fP *transfer, \fBlibusb_device_handle\fP *dev_handle, unsigned char endpoint, unsigned char *buffer, int length, \fBlibusb_transfer_cb_fn\fP callback, void *user_data, unsigned int timeout)"
+.br
+.RI "Helper function to populate the required \fBlibusb_transfer\fP fields for a bulk transfer\&. "
+.ti -1c
+.RI "static void \fBlibusb_fill_bulk_stream_transfer\fP (struct \fBlibusb_transfer\fP *transfer, \fBlibusb_device_handle\fP *dev_handle, unsigned char endpoint, uint32_t stream_id, unsigned char *buffer, int length, \fBlibusb_transfer_cb_fn\fP callback, void *user_data, unsigned int timeout)"
+.br
+.RI "Helper function to populate the required \fBlibusb_transfer\fP fields for a bulk transfer using bulk streams\&. "
+.ti -1c
+.RI "static void \fBlibusb_fill_interrupt_transfer\fP (struct \fBlibusb_transfer\fP *transfer, \fBlibusb_device_handle\fP *dev_handle, unsigned char endpoint, unsigned char *buffer, int length, \fBlibusb_transfer_cb_fn\fP callback, void *user_data, unsigned int timeout)"
+.br
+.RI "Helper function to populate the required \fBlibusb_transfer\fP fields for an interrupt transfer\&. "
+.ti -1c
+.RI "static void \fBlibusb_fill_iso_transfer\fP (struct \fBlibusb_transfer\fP *transfer, \fBlibusb_device_handle\fP *dev_handle, unsigned char endpoint, unsigned char *buffer, int length, int num_iso_packets, \fBlibusb_transfer_cb_fn\fP callback, void *user_data, unsigned int timeout)"
+.br
+.RI "Helper function to populate the required \fBlibusb_transfer\fP fields for an isochronous transfer\&. "
+.ti -1c
+.RI "static void \fBlibusb_set_iso_packet_lengths\fP (struct \fBlibusb_transfer\fP *transfer, unsigned int length)"
+.br
+.RI "Convenience function to set the length of all packets in an isochronous transfer, based on the num_iso_packets field in the transfer structure\&. "
+.ti -1c
+.RI "static unsigned char * \fBlibusb_get_iso_packet_buffer\fP (struct \fBlibusb_transfer\fP *transfer, unsigned int packet)"
+.br
+.RI "Convenience function to locate the position of an isochronous packet within the buffer of an isochronous transfer\&. "
+.ti -1c
+.RI "static unsigned char * \fBlibusb_get_iso_packet_buffer_simple\fP (struct \fBlibusb_transfer\fP *transfer, unsigned int packet)"
+.br
+.RI "Convenience function to locate the position of an isochronous packet within the buffer of an isochronous transfer, for transfers where each packet is of identical size\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+This page details libusb's asynchronous (non-blocking) API for USB device I/O\&. 
+
+This interface is very powerful but is also quite complex - you will need to read this page carefully to understand the necessary considerations and issues surrounding use of this interface\&. Simplistic applications may wish to consider the \fBsynchronous I/O API\fP instead\&.
+
+.PP
+The asynchronous interface is built around the idea of separating transfer submission and handling of transfer completion (the synchronous model combines both of these into one)\&. There may be a long delay between submission and completion, however the asynchronous submission function is non-blocking so will return control to your application during that potentially long delay\&.
+.SH "Transfer abstraction"
+.PP
+For the asynchronous I/O, libusb implements the concept of a generic transfer entity for all types of I/O (control, bulk, interrupt, isochronous)\&. The generic transfer object must be treated slightly differently depending on which type of I/O you are performing with it\&.
+
+.PP
+This is represented by the public \fBlibusb_transfer\fP structure type\&.
+.SH "Asynchronous transfers"
+.PP
+We can view asynchronous I/O as a 5 step process:
+.IP "1." 4
+\fBAllocation\fP: allocate a \fBlibusb_transfer\fP
+.IP "2." 4
+\fBFilling\fP: populate the \fBlibusb_transfer\fP instance with information about the transfer you wish to perform
+.IP "3." 4
+\fBSubmission\fP: ask libusb to submit the transfer
+.IP "4." 4
+\fBCompletion handling\fP: examine transfer results in the \fBlibusb_transfer\fP structure
+.IP "5." 4
+\fBDeallocation\fP: clean up resources
+.PP
+.SS "Allocation"
+This step involves allocating memory for a USB transfer\&. This is the generic transfer object mentioned above\&. At this stage, the transfer is "blank" with no details about what type of I/O it will be used for\&.
+
+.PP
+Allocation is done with the \fBlibusb_alloc_transfer()\fP function\&. You must use this function rather than allocating your own transfers\&.
+.SS "Filling"
+This step is where you take a previously allocated transfer and fill it with information to determine the message type and direction, data buffer, callback function, etc\&.
+
+.PP
+You can either fill the required fields yourself or you can use the helper functions: \fBlibusb_fill_control_transfer()\fP, \fBlibusb_fill_bulk_transfer()\fP and \fBlibusb_fill_interrupt_transfer()\fP\&.
+.SS "Submission"
+When you have allocated a transfer and filled it, you can submit it using \fBlibusb_submit_transfer()\fP\&. This function returns immediately but can be regarded as firing off the I/O request in the background\&.
+.SS "Completion handling"
+After a transfer has been submitted, one of four things can happen to it:
+
+.PP
+.IP "\(bu" 2
+The transfer completes (i\&.e\&. some data was transferred)
+.IP "\(bu" 2
+The transfer has a timeout and the timeout expires before all data is transferred
+.IP "\(bu" 2
+The transfer fails due to an error
+.IP "\(bu" 2
+The transfer is cancelled
+.PP
+
+.PP
+Each of these will cause the user-specified transfer callback function to be invoked\&. It is up to the callback function to determine which of the above actually happened and to act accordingly\&.
+
+.PP
+The user-specified callback is passed a pointer to the \fBlibusb_transfer\fP structure which was used to setup and submit the transfer\&. At completion time, libusb has populated this structure with results of the transfer: success or failure reason, number of bytes of data transferred, etc\&. See the \fBlibusb_transfer\fP structure documentation for more information\&.
+
+.PP
+\fBImportant Note\fP: The user-specified callback is called from an event handling context\&. It is therefore important that no calls are made into libusb that will attempt to perform any event handling\&. Examples of such functions are any listed in the \fBsynchronous API\fP and any of the blocking functions that retrieve \fBUSB descriptors\fP\&.
+.SS "Deallocation"
+When a transfer has completed (i\&.e\&. the callback function has been invoked), you are advised to free the transfer (unless you wish to resubmit it, see below)\&. Transfers are deallocated with \fBlibusb_free_transfer()\fP\&.
+
+.PP
+It is undefined behaviour to free a transfer which has not completed\&.
+.SH "Resubmission"
+.PP
+You may be wondering why allocation, filling, and submission are all separated above where they could reasonably be combined into a single operation\&.
+
+.PP
+The reason for separation is to allow you to resubmit transfers without having to allocate new ones every time\&. This is especially useful for common situations dealing with interrupt endpoints - you allocate one transfer, fill and submit it, and when it returns with results you just resubmit it for the next interrupt\&.
+.SH "Cancellation"
+.PP
+Another advantage of using the asynchronous interface is that you have the ability to cancel transfers which have not yet completed\&. This is done by calling the \fBlibusb_cancel_transfer()\fP function\&.
+
+.PP
+\fBlibusb_cancel_transfer()\fP is asynchronous/non-blocking in itself\&. When the cancellation actually completes, the transfer's callback function will be invoked, and the callback function should check the transfer status to determine that it was cancelled\&.
+
+.PP
+On macOS and iOS it is not possible to cancel a single transfer\&. In this case cancelling one transfer on an endpoint will cause all transfers on that endpoint to be cancelled\&.
+
+.PP
+Freeing the transfer after it has been cancelled but before cancellation has completed will result in undefined behaviour\&.
+
+.PP
+\fBAttention\fP
+.RS 4
+When a transfer is cancelled, some of the data may have been transferred\&. libusb will communicate this to you in the transfer callback\&. \fBDo not assume that no data was transferred\&.\fP
+.RE
+.PP
+.SH "Partial data transfer resulting from cancellation"
+.PP
+As noted above, some of the data may have been transferred at the time a transfer is cancelled\&. It is helpful to see how this is possible if you consider a bulk transfer to an endpoint with a packet size of 64 bytes\&. Supposing you submit a 512-byte transfer to this endpoint, the operating system will divide this transfer up into 8 separate 64-byte frames that the host controller will schedule for the device to transfer data\&. If this transfer is cancelled while the device is transferring data, a subset of these frames may be descheduled from the host controller before the device has the opportunity to finish transferring data to the host\&.
+
+.PP
+What your application should do with a partial data transfer is a policy decision; there is no single answer that satisfies the needs of every application\&. The data that was successfully transferred should be considered entirely valid, but your application must decide what to do with the remaining data that was not transferred\&. Some possible actions to take are:
+.IP "\(bu" 2
+Resubmit another transfer for the remaining data, possibly with a shorter timeout
+.IP "\(bu" 2
+Discard the partially transferred data and report an error
+.PP
+.SH "Timeouts"
+.PP
+When a transfer times out, libusb internally notes this and attempts to cancel the transfer\&. As noted in \fBabove\fP, it is possible that some of the data may actually have been transferred\&. Your application should \fBalways\fP check how much data was actually transferred once the transfer completes and act accordingly\&.
+.SH "Overflows on device-to-host bulk/interrupt endpoints"
+.PP
+If your device does not have predictable transfer sizes (or it misbehaves), your application may submit a request for data on an IN endpoint which is smaller than the data that the device wishes to send\&. In some circumstances this will cause an overflow, which is a nasty condition to deal with\&. See the \fBPackets and overflows\fP page for discussion\&.
+.SH "Considerations for control transfers"
+.PP
+The \fR\fBlibusb_transfer\fP\fP structure is generic and hence does not include specific fields for the control-specific setup packet structure\&.
+
+.PP
+In order to perform a control transfer, you must place the 8-byte setup packet at the start of the data buffer\&. To simplify this, you could cast the buffer pointer to type struct \fBlibusb_control_setup\fP, or you can use the helper function \fBlibusb_fill_control_setup()\fP\&.
+
+.PP
+The wLength field placed in the setup packet must be the length you would expect to be sent in the setup packet: the length of the payload that follows (or the expected maximum number of bytes to receive)\&. However, the length field of the \fBlibusb_transfer\fP object must be the length of the data buffer - i\&.e\&. it should be wLength \fIplus\fP the size of the setup packet (LIBUSB_CONTROL_SETUP_SIZE)\&.
+
+.PP
+If you use the helper functions, this is simplified for you:
+.IP "1." 4
+Allocate a buffer of size LIBUSB_CONTROL_SETUP_SIZE plus the size of the data you are sending/requesting\&.
+.IP "2." 4
+Call \fBlibusb_fill_control_setup()\fP on the data buffer, using the transfer request size as the wLength value (i\&.e\&. do not include the extra space you allocated for the control setup)\&.
+.IP "3." 4
+If this is a host-to-device transfer, place the data to be transferred in the data buffer, starting at offset LIBUSB_CONTROL_SETUP_SIZE\&.
+.IP "4." 4
+Call \fBlibusb_fill_control_transfer()\fP to associate the data buffer with the transfer (and to set the remaining details such as callback and timeout)\&.
+.IP "  \(bu" 4
+Note that there is no parameter to set the length field of the transfer\&. The length is automatically inferred from the wLength field of the setup packet\&.
+.PP
+
+.IP "5." 4
+Submit the transfer\&.
+.PP
+
+.PP
+The multi-byte control setup fields (wValue, wIndex and wLength) must be given in little-endian byte order (the endianness of the USB bus)\&. Endianness conversion is transparently handled by \fBlibusb_fill_control_setup()\fP which is documented to accept host-endian values\&.
+
+.PP
+Further considerations are needed when handling transfer completion in your callback function:
+.IP "\(bu" 2
+As you might expect, the setup packet will still be sitting at the start of the data buffer\&.
+.IP "\(bu" 2
+If this was a device-to-host transfer, the received data will be sitting at offset LIBUSB_CONTROL_SETUP_SIZE into the buffer\&.
+.IP "\(bu" 2
+The actual_length field of the transfer structure is relative to the wLength of the setup packet, rather than the size of the data buffer\&. So, if your wLength was 4, your transfer's \fRlength\fP was 12, then you should expect an \fRactual_length\fP of 4 to indicate that the data was transferred in entirety\&.
+.PP
+
+.PP
+To simplify parsing of setup packets and obtaining the data from the correct offset, you may wish to use the \fBlibusb_control_transfer_get_data()\fP and \fBlibusb_control_transfer_get_setup()\fP functions within your transfer callback\&.
+
+.PP
+Even though control endpoints do not halt, a completed control transfer may have a LIBUSB_TRANSFER_STALL status code\&. This indicates the control request was not supported\&.
+.SH "Considerations for interrupt transfers"
+.PP
+All interrupt transfers are performed using the polling interval presented by the bInterval value of the endpoint descriptor\&.
+.SH "Considerations for isochronous transfers"
+.PP
+Isochronous transfers are more complicated than transfers to non-isochronous endpoints\&.
+
+.PP
+To perform I/O to an isochronous endpoint, allocate the transfer by calling \fBlibusb_alloc_transfer()\fP with an appropriate number of isochronous packets\&.
+
+.PP
+During filling, set \fBtype\fP to \fBLIBUSB_TRANSFER_TYPE_ISOCHRONOUS\fP, and set \fBnum_iso_packets\fP to a value less than or equal to the number of packets you requested during allocation\&. \fBlibusb_alloc_transfer()\fP does not set either of these fields for you, given that you might not even use the transfer on an isochronous endpoint\&.
+
+.PP
+Next, populate the length field for the first num_iso_packets entries in the \fBiso_packet_desc\fP array\&. Section 5\&.6\&.3 of the USB2 specifications describe how the maximum isochronous packet length is determined by the wMaxPacketSize field in the endpoint descriptor\&. Two functions can help you here:
+
+.PP
+.IP "\(bu" 2
+\fBlibusb_get_max_iso_packet_size()\fP is an easy way to determine the max packet size for an isochronous endpoint\&. Note that the maximum packet size is actually the maximum number of bytes that can be transmitted in a single microframe, therefore this function multiplies the maximum number of bytes per transaction by the number of transaction opportunities per microframe\&.
+.IP "\(bu" 2
+\fBlibusb_set_iso_packet_lengths()\fP assigns the same length to all packets within a transfer, which is usually what you want\&.
+.PP
+
+.PP
+For outgoing transfers, you'll obviously fill the buffer and populate the packet descriptors in hope that all the data gets transferred\&. For incoming transfers, you must ensure the buffer has sufficient capacity for the situation where all packets transfer the full amount of requested data\&.
+
+.PP
+Completion handling requires some extra consideration\&. The \fBactual_length\fP field of the transfer is meaningless and should not be examined; instead you must refer to the \fBactual_length\fP field of each individual packet\&.
+
+.PP
+The \fBstatus\fP field of the transfer is also a little misleading:
+.IP "\(bu" 2
+If the packets were submitted and the isochronous data microframes completed normally, status will have value \fBLIBUSB_TRANSFER_COMPLETED\fP\&. Note that bus errors and software-incurred delays are not counted as transfer errors; the transfer\&.status field may indicate COMPLETED even if some or all of the packets failed\&. Refer to the \fBstatus\fP field of each individual packet to determine packet failures\&.
+.IP "\(bu" 2
+The status field will have value \fBLIBUSB_TRANSFER_ERROR\fP only when serious errors were encountered\&.
+.IP "\(bu" 2
+Other transfer status codes occur with normal behaviour\&.
+.PP
+
+.PP
+The data for each packet will be found at an offset into the buffer that can be calculated as if each prior packet completed in full\&. The \fBlibusb_get_iso_packet_buffer()\fP and \fBlibusb_get_iso_packet_buffer_simple()\fP functions may help you here\&.
+.SH "Transfer length limitations"
+.PP
+Some operating systems may impose limits on the length of the transfer data buffer or, in the case of isochronous transfers, the length of individual isochronous packets\&. Such limits can be difficult for libusb to detect, so in most cases the library will simply try and submit the transfer as set up by you\&. If the transfer fails to submit because it is too large, \fBlibusb_submit_transfer()\fP will return \fBLIBUSB_ERROR_INVALID_PARAM\fP\&.
+
+.PP
+The following are known limits for control transfer lengths\&. Note that this length includes the 8-byte setup packet\&.
+.IP "\(bu" 2
+Linux (4,096 bytes)
+.IP "\(bu" 2
+Windows (4,096 bytes)
+.PP
+.SH "Memory caveats"
+.PP
+In most circumstances, it is not safe to use stack memory for transfer buffers\&. This is because the function that fired off the asynchronous transfer may return before libusb has finished using the buffer, and when the function returns it's stack gets destroyed\&. This is true for both host-to-device and device-to-host transfers\&.
+
+.PP
+The only case in which it is safe to use stack memory is where you can guarantee that the function owning the stack space for the buffer does not return until after the transfer's callback function has completed\&. In every other case, you need to use heap memory instead\&.
+.SH "Fine control"
+.PP
+Through using this asynchronous interface, you may find yourself repeating a few simple operations many times\&. You can apply a bitwise OR of certain flags to a transfer to simplify certain things:
+.IP "\(bu" 2
+\fBLIBUSB_TRANSFER_SHORT_NOT_OK\fP results in transfers which transferred less than the requested amount of data being marked with status \fBLIBUSB_TRANSFER_ERROR\fP (they would normally be regarded as COMPLETED)
+.IP "\(bu" 2
+\fBLIBUSB_TRANSFER_FREE_BUFFER\fP allows you to ask libusb to free the transfer buffer when freeing the transfer\&.
+.IP "\(bu" 2
+\fBLIBUSB_TRANSFER_FREE_TRANSFER\fP causes libusb to automatically free the transfer after the transfer callback returns\&.
+.PP
+.SH "Event handling"
+.PP
+An asynchronous model requires that libusb perform work at various points in time - namely processing the results of previously-submitted transfers and invoking the user-supplied callback function\&.
+
+.PP
+This gives rise to the \fBlibusb_handle_events()\fP function which your application must call into when libusb has work do to\&. This gives libusb the opportunity to reap pending transfers, invoke callbacks, etc\&.
+
+.PP
+\fBNote\fP
+.RS 4
+All event handling is performed by whichever thread calls the \fBlibusb_handle_events()\fP function\&. libusb does not invoke any callbacks outside of this context\&. Consequently, any callbacks will be run on the thread that calls the \fBlibusb_handle_events()\fP function\&.
+.RE
+.PP
+When to call the \fBlibusb_handle_events()\fP function depends on which model your application decides to use\&. The 2 different approaches:
+
+.PP
+.IP "1." 4
+Repeatedly call \fBlibusb_handle_events()\fP in blocking mode from a dedicated thread\&.
+.IP "2." 4
+Integrate libusb with your application's main event loop\&. libusb exposes a set of file descriptors which allow you to do this\&.
+.PP
+
+.PP
+The first approach has the big advantage that it will also work on Windows were libusb' poll API for select / poll integration is not available\&. So if you want to support Windows and use the async API, you must use this approach, see the \fBUsing an event handling thread\fP section below for details\&.
+
+.PP
+If you prefer a single threaded approach with a single central event loop, see the \fBpolling and timing\fP section for how to integrate libusb into your application's main event loop\&.
+.SH "Using an event handling thread"
+.PP
+Lets begin with stating the obvious: If you're going to use a separate thread for libusb event handling, your callback functions MUST be thread-safe\&.
+
+.PP
+Other then that doing event handling from a separate thread, is mostly simple\&. You can use an event thread function as follows: 
+.PP
+.nf
+void *event_thread_func(void *ctx)
+{
+    while (event_thread_run)
+        libusb_handle_events(ctx);
+
+    return NULL;
+}
+
+.fi
+.PP
+
+.PP
+There is one caveat though, stopping this thread requires setting the event_thread_run variable to 0, and after that \fBlibusb_handle_events()\fP needs to return control to event_thread_func\&. But unless some event happens, \fBlibusb_handle_events()\fP will not return\&.
+
+.PP
+There are 2 different ways of dealing with this, depending on if your application uses libusb' \fBhotplug\fP support or not\&.
+
+.PP
+Applications which do not use hotplug support, should not start the event thread until after their first call to \fBlibusb_open()\fP, and should stop the thread when closing the last open device as follows: 
+.PP
+.nf
+void my_close_handle(libusb_device_handle *dev_handle)
+{
+    if (open_devs == 1)
+        event_thread_run = 0;
+
+    libusb_close(dev_handle); // This wakes up libusb_handle_events()
+
+    if (open_devs == 1)
+        pthread_join(event_thread);
+
+    open_devs\-\-;
+}
+
+.fi
+.PP
+
+.PP
+Applications using hotplug support should start the thread at program init, after having successfully called \fBlibusb_hotplug_register_callback()\fP, and should stop the thread at program exit as follows: 
+.PP
+.nf
+void my_libusb_exit(void)
+{
+    event_thread_run = 0;
+    libusb_hotplug_deregister_callback(ctx, hotplug_cb_handle); // This wakes up libusb_handle_events()
+    pthread_join(event_thread);
+    libusb_exit(ctx);
+}
+
+.fi
+.PP
+ 
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* libusb_transfer_cb_fn) (struct \fBlibusb_transfer\fP *transfer)"
+
+.PP
+Asynchronous transfer callback function type\&. When submitting asynchronous transfers, you pass a pointer to a callback function of this type via the \fBcallback\fP member of the \fBlibusb_transfer\fP structure\&. libusb will call this function later, when the transfer has completed or failed\&. See \fBAsynchronous device I/O\fP for more information\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP The \fBlibusb_transfer\fP struct the callback function is being notified about\&. 
+.RE
+.PP
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBlibusb_transfer_type\fP"
+
+.PP
+Transfer type\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_TRANSFER_TYPE_CONTROL \fP
+Control transfer\&. 
+.TP
+\f(BILIBUSB_TRANSFER_TYPE_ISOCHRONOUS \fP
+Isochronous transfer\&. 
+.TP
+\f(BILIBUSB_TRANSFER_TYPE_BULK \fP
+Bulk transfer\&. 
+.TP
+\f(BILIBUSB_TRANSFER_TYPE_INTERRUPT \fP
+Interrupt transfer\&. 
+.TP
+\f(BILIBUSB_TRANSFER_TYPE_BULK_STREAM \fP
+Bulk stream transfer\&. 
+.SS "enum \fBlibusb_transfer_status\fP"
+
+.PP
+Transfer status codes\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_TRANSFER_COMPLETED \fP
+Transfer completed without error\&. Note that this does not indicate that the entire amount of requested data was transferred\&. 
+.TP
+\f(BILIBUSB_TRANSFER_ERROR \fP
+Transfer failed\&. 
+.TP
+\f(BILIBUSB_TRANSFER_TIMED_OUT \fP
+Transfer timed out\&. 
+.TP
+\f(BILIBUSB_TRANSFER_CANCELLED \fP
+Transfer was cancelled\&. 
+.TP
+\f(BILIBUSB_TRANSFER_STALL \fP
+For bulk/interrupt endpoints: halt condition detected (endpoint stalled)\&. For control endpoints: control request not supported\&. 
+.TP
+\f(BILIBUSB_TRANSFER_NO_DEVICE \fP
+Device was disconnected\&. 
+.TP
+\f(BILIBUSB_TRANSFER_OVERFLOW \fP
+Device sent more data than requested\&. 
+.SS "enum \fBlibusb_transfer_flags\fP"
+
+.PP
+\fBlibusb_transfer\&.flags\fP values 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\f(BILIBUSB_TRANSFER_SHORT_NOT_OK \fP
+Report short frames as errors\&. 
+.TP
+\f(BILIBUSB_TRANSFER_FREE_BUFFER \fP
+Automatically free() transfer buffer during \fBlibusb_free_transfer()\fP\&. Note that buffers allocated with \fBlibusb_dev_mem_alloc()\fP should not be attempted freed in this way, since free() is not an appropriate way to release such memory\&. 
+.TP
+\f(BILIBUSB_TRANSFER_FREE_TRANSFER \fP
+Automatically call \fBlibusb_free_transfer()\fP after callback returns\&. If this flag is set, it is illegal to call \fBlibusb_free_transfer()\fP from your transfer callback, as this will result in a double-free when this flag is acted upon\&. 
+.TP
+\f(BILIBUSB_TRANSFER_ADD_ZERO_PACKET \fP
+Terminate transfers that are a multiple of the endpoint's wMaxPacketSize with an extra zero length packet\&. This is useful when a device protocol mandates that each logical request is terminated by an incomplete packet (i\&.e\&. the logical requests are not separated by other means)\&.
+
+.PP
+This flag only affects host-to-device transfers to bulk and interrupt endpoints\&. In other situations, it is ignored\&.
+
+.PP
+This flag only affects transfers with a length that is a multiple of the endpoint's wMaxPacketSize\&. On transfers of other lengths, this flag has no effect\&. Therefore, if you are working with a device that needs a ZLP whenever the end of the logical request falls on a packet boundary, then it is sensible to set this flag on \fIevery\fP transfer (you do not have to worry about only setting it on transfers that end on the boundary)\&.
+
+.PP
+This flag is currently only supported on Linux\&. On other systems, \fBlibusb_submit_transfer()\fP will return \fBLIBUSB_ERROR_NOT_SUPPORTED\fP for every transfer where this flag is set\&.
+
+.PP
+Available since libusb-1\&.0\&.9\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int libusb_alloc_streams (\fBlibusb_device_handle\fP * dev_handle, uint32_t num_streams, unsigned char * endpoints, int num_endpoints)"
+
+.PP
+Allocate up to num_streams usb bulk streams on the specified endpoints\&. This function takes an array of endpoints rather then a single endpoint because some protocols require that endpoints are setup with similar stream ids\&. All endpoints passed in must belong to the same interface\&.
+
+.PP
+Note this function may return less streams then requested\&. Also note that the same number of streams are allocated for each endpoint in the endpoint array\&.
+
+.PP
+Stream id 0 is reserved, and should not be used to communicate with devices\&. If \fBlibusb_alloc_streams()\fP returns with a value of N, you may use stream ids 1 to N\&.
+
+.PP
+Since version 1\&.0\&.19, \fBLIBUSB_API_VERSION\fP >= 0x01000103
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIdev_handle\fP a device handle 
+.br
+\fInum_streams\fP number of streams to try to allocate 
+.br
+\fIendpoints\fP array of endpoints to allocate streams on 
+.br
+\fInum_endpoints\fP length of the endpoints array 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+number of streams allocated, or a LIBUSB_ERROR code on failure 
+.RE
+.PP
+
+.SS "int libusb_free_streams (\fBlibusb_device_handle\fP * dev_handle, unsigned char * endpoints, int num_endpoints)"
+
+.PP
+Free usb bulk streams allocated with \fBlibusb_alloc_streams()\fP\&. Note streams are automatically free-ed when releasing an interface\&.
+
+.PP
+Since version 1\&.0\&.19, \fBLIBUSB_API_VERSION\fP >= 0x01000103
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIdev_handle\fP a device handle 
+.br
+\fIendpoints\fP array of endpoints to free streams on 
+.br
+\fInum_endpoints\fP length of the endpoints array 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+\fBLIBUSB_SUCCESS\fP, or a LIBUSB_ERROR code on failure 
+.RE
+.PP
+
+.SS "unsigned char * libusb_dev_mem_alloc (\fBlibusb_device_handle\fP * dev_handle, size_t length)"
+
+.PP
+Attempts to allocate a block of persistent DMA memory suitable for transfers against the given device\&. If successful, will return a block of memory that is suitable for use as "buffer" in \fBlibusb_transfer\fP against this device\&. Using this memory instead of regular memory means that the host controller can use DMA directly into the buffer to increase performance, and also that transfers can no longer fail due to kernel memory fragmentation\&.
+
+.PP
+Note that this means you should not modify this memory (or even data on the same cache lines) when a transfer is in progress, although it is legal to have several transfers going on within the same memory block\&.
+
+.PP
+Will return NULL on failure\&. Many systems do not support such zero-copy and will always return NULL\&. Memory allocated with this function must be freed with \fBlibusb_dev_mem_free\fP\&. Specifically, this means that the flag \fBLIBUSB_TRANSFER_FREE_BUFFER\fP cannot be used to free memory allocated with this function\&.
+
+.PP
+Since version 1\&.0\&.21, \fBLIBUSB_API_VERSION\fP >= 0x01000105
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIdev_handle\fP a device handle 
+.br
+\fIlength\fP size of desired data buffer 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a pointer to the newly allocated memory, or NULL on failure 
+.RE
+.PP
+
+.SS "int libusb_dev_mem_free (\fBlibusb_device_handle\fP * dev_handle, unsigned char * buffer, size_t length)"
+
+.PP
+Free device memory allocated with \fBlibusb_dev_mem_alloc()\fP\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIdev_handle\fP a device handle 
+.br
+\fIbuffer\fP pointer to the previously allocated memory 
+.br
+\fIlength\fP size of previously allocated memory 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+\fBLIBUSB_SUCCESS\fP, or a LIBUSB_ERROR code on failure 
+.RE
+.PP
+
+.SS "struct \fBlibusb_transfer\fP * libusb_alloc_transfer (int iso_packets)"
+
+.PP
+Allocate a libusb transfer with a specified number of isochronous packet descriptors\&. The returned transfer is pre-initialized for you\&. When the new transfer is no longer needed, it should be freed with \fBlibusb_free_transfer()\fP\&.
+
+.PP
+Transfers intended for non-isochronous endpoints (e\&.g\&. control, bulk, interrupt) should specify an iso_packets count of zero\&.
+
+.PP
+For transfers intended for isochronous endpoints, specify an appropriate number of packet descriptors to be allocated as part of the transfer\&. The returned transfer is not specially initialized for isochronous I/O; you are still required to set the \fBnum_iso_packets\fP and \fBtype\fP fields accordingly\&.
+
+.PP
+It is safe to allocate a transfer with some isochronous packets and then use it on a non-isochronous endpoint\&. If you do this, ensure that at time of submission, num_iso_packets is 0 and that type is set appropriately\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIiso_packets\fP number of isochronous packet descriptors to allocate\&. Must be non-negative\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a newly allocated transfer, or NULL on error 
+.RE
+.PP
+
+.SS "void libusb_free_transfer (struct \fBlibusb_transfer\fP * transfer)"
+
+.PP
+Free a transfer structure\&. This should be called for all transfers allocated with \fBlibusb_alloc_transfer()\fP\&.
+
+.PP
+If the \fBLIBUSB_TRANSFER_FREE_BUFFER\fP flag is set and the transfer buffer is non-NULL, this function will also free the transfer buffer using the standard system memory allocator (e\&.g\&. free())\&.
+
+.PP
+It is legal to call this function with a NULL transfer\&. In this case, the function will simply return safely\&.
+
+.PP
+It is not legal to free an active transfer (one which has been submitted and has not yet completed)\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to free 
+.RE
+.PP
+
+.SS "int libusb_submit_transfer (struct \fBlibusb_transfer\fP * transfer)"
+
+.PP
+Submit a transfer\&. This function will fire off the USB transfer and then return immediately\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to submit 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0 on success 
+
+.PP
+\fBLIBUSB_ERROR_NO_DEVICE\fP if the device has been disconnected 
+
+.PP
+\fBLIBUSB_ERROR_BUSY\fP if the transfer has already been submitted\&. 
+
+.PP
+\fBLIBUSB_ERROR_NOT_SUPPORTED\fP if the transfer flags are not supported by the operating system\&. 
+
+.PP
+\fBLIBUSB_ERROR_INVALID_PARAM\fP if the transfer size is larger than the operating system and/or hardware can support (see \fBTransfer length limitations\fP) 
+
+.PP
+another LIBUSB_ERROR code on other failure 
+.RE
+.PP
+
+.SS "int libusb_cancel_transfer (struct \fBlibusb_transfer\fP * transfer)"
+
+.PP
+Asynchronously cancel a previously submitted transfer\&. This function returns immediately, but this does not indicate cancellation is complete\&. Your callback function will be invoked at some later time with a transfer status of \fBLIBUSB_TRANSFER_CANCELLED\&.\fP
+
+.PP
+This function behaves differently on Darwin-based systems (macOS and iOS):
+
+.PP
+.IP "\(bu" 2
+Calling this function for one transfer will cause all transfers on the same endpoint to be cancelled\&. Your callback function will be invoked with a transfer status of \fBLIBUSB_TRANSFER_CANCELLED\fP for each transfer that was cancelled\&.
+.IP "\(bu" 2
+When built for macOS versions prior to 10\&.5, this function sends a \fRClearFeature(ENDPOINT_HALT)\fP request for the transfer's endpoint\&. (Prior to libusb 1\&.0\&.27, this request was sent on all Darwin systems\&.) If the device does not handle this request correctly, the data toggle bits for the endpoint can be left out of sync between host and device, which can have unpredictable results when the next data is sent on the endpoint, including data being silently lost\&. A call to \fBlibusb_clear_halt\fP will not resolve this situation, since that function uses the same request\&. Therefore, if your program runs on macOS < 10\&.5 (or libusb < 1\&.0\&.27), and uses a device that does not correctly implement \fRClearFeature(ENDPOINT_HALT)\fP requests, it may only be safe to cancel transfers when followed by a device reset using \fBlibusb_reset_device\fP\&.
+.PP
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to cancel 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0 on success 
+
+.PP
+\fBLIBUSB_ERROR_NOT_FOUND\fP if the transfer is not in progress, already complete, or already cancelled\&. 
+
+.PP
+a LIBUSB_ERROR code on failure 
+.RE
+.PP
+
+.SS "void libusb_transfer_set_stream_id (struct \fBlibusb_transfer\fP * transfer, uint32_t stream_id)"
+
+.PP
+Set a transfers bulk stream id\&. Note users are advised to use \fBlibusb_fill_bulk_stream_transfer()\fP instead of calling this function directly\&.
+
+.PP
+Since version 1\&.0\&.19, \fBLIBUSB_API_VERSION\fP >= 0x01000103
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to set the stream id for 
+.br
+\fIstream_id\fP the stream id to set 
+.RE
+.PP
+\fBSee also\fP
+.RS 4
+\fBlibusb_alloc_streams()\fP 
+.RE
+.PP
+
+.SS "uint32_t libusb_transfer_get_stream_id (struct \fBlibusb_transfer\fP * transfer)"
+
+.PP
+Get a transfers bulk stream id\&. Since version 1\&.0\&.19, \fBLIBUSB_API_VERSION\fP >= 0x01000103
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to get the stream id for 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the stream id for the transfer 
+.RE
+.PP
+
+.SS "unsigned char * libusb_control_transfer_get_data (struct \fBlibusb_transfer\fP * transfer)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Get the data section of a control transfer\&. This convenience function is here to remind you that the data does not start until 8 bytes into the actual buffer, as the setup packet comes first\&.
+
+.PP
+Calling this function only makes sense from a transfer callback function, or situations where you have already allocated a suitably sized buffer at transfer->buffer\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP a transfer 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+pointer to the first byte of the data section 
+.RE
+.PP
+
+.SS "struct \fBlibusb_control_setup\fP * libusb_control_transfer_get_setup (struct \fBlibusb_transfer\fP * transfer)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Get the control setup packet of a control transfer\&. This convenience function is here to remind you that the control setup occupies the first 8 bytes of the transfer data buffer\&.
+
+.PP
+Calling this function only makes sense from a transfer callback function, or situations where you have already allocated a suitably sized buffer at transfer->buffer\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP a transfer 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a casted pointer to the start of the transfer data buffer 
+.RE
+.PP
+
+.SS "void libusb_fill_control_setup (unsigned char * buffer, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, uint16_t wLength)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Helper function to populate the setup packet (first 8 bytes of the data buffer) for a control transfer\&. The wIndex, wValue and wLength values should be given in host-endian byte order\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIbuffer\fP buffer to output the setup packet into This pointer must be aligned to at least 2 bytes boundary\&. 
+.br
+\fIbmRequestType\fP see the \fBbmRequestType\fP field of \fBlibusb_control_setup\fP 
+.br
+\fIbRequest\fP see the \fBbRequest\fP field of \fBlibusb_control_setup\fP 
+.br
+\fIwValue\fP see the \fBwValue\fP field of \fBlibusb_control_setup\fP 
+.br
+\fIwIndex\fP see the \fBwIndex\fP field of \fBlibusb_control_setup\fP 
+.br
+\fIwLength\fP see the \fBwLength\fP field of \fBlibusb_control_setup\fP 
+.RE
+.PP
+
+.SS "void libusb_fill_control_transfer (struct \fBlibusb_transfer\fP * transfer, \fBlibusb_device_handle\fP * dev_handle, unsigned char * buffer, \fBlibusb_transfer_cb_fn\fP callback, void * user_data, unsigned int timeout)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Helper function to populate the required \fBlibusb_transfer\fP fields for a control transfer\&. If you pass a transfer buffer to this function, the first 8 bytes will be interpreted as a control setup packet, and the wLength field will be used to automatically populate the \fBlength\fP field of the transfer\&. Therefore the recommended approach is:
+.IP "1." 4
+Allocate a suitably sized data buffer (including space for control setup)
+.IP "2." 4
+Call \fBlibusb_fill_control_setup()\fP
+.IP "3." 4
+If this is a host-to-device transfer with a data stage, put the data in place after the setup packet
+.IP "4." 4
+Call this function
+.IP "5." 4
+Call \fBlibusb_submit_transfer()\fP
+.PP
+
+.PP
+It is also legal to pass a NULL buffer to this function, in which case this function will not attempt to populate the length field\&. Remember that you must then populate the buffer and length fields later\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to populate 
+.br
+\fIdev_handle\fP handle of the device that will handle the transfer 
+.br
+\fIbuffer\fP data buffer\&. If provided, this function will interpret the first 8 bytes as a setup packet and infer the transfer length from that\&. This pointer must be aligned to at least 2 bytes boundary\&. 
+.br
+\fIcallback\fP callback function to be invoked on transfer completion 
+.br
+\fIuser_data\fP user data to pass to callback function 
+.br
+\fItimeout\fP timeout for the transfer in milliseconds 
+.RE
+.PP
+
+.SS "void libusb_fill_bulk_transfer (struct \fBlibusb_transfer\fP * transfer, \fBlibusb_device_handle\fP * dev_handle, unsigned char endpoint, unsigned char * buffer, int length, \fBlibusb_transfer_cb_fn\fP callback, void * user_data, unsigned int timeout)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Helper function to populate the required \fBlibusb_transfer\fP fields for a bulk transfer\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to populate 
+.br
+\fIdev_handle\fP handle of the device that will handle the transfer 
+.br
+\fIendpoint\fP address of the endpoint where this transfer will be sent 
+.br
+\fIbuffer\fP data buffer 
+.br
+\fIlength\fP length of data buffer 
+.br
+\fIcallback\fP callback function to be invoked on transfer completion 
+.br
+\fIuser_data\fP user data to pass to callback function 
+.br
+\fItimeout\fP timeout for the transfer in milliseconds 
+.RE
+.PP
+
+.SS "void libusb_fill_bulk_stream_transfer (struct \fBlibusb_transfer\fP * transfer, \fBlibusb_device_handle\fP * dev_handle, unsigned char endpoint, uint32_t stream_id, unsigned char * buffer, int length, \fBlibusb_transfer_cb_fn\fP callback, void * user_data, unsigned int timeout)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Helper function to populate the required \fBlibusb_transfer\fP fields for a bulk transfer using bulk streams\&. Since version 1\&.0\&.19, \fBLIBUSB_API_VERSION\fP >= 0x01000103
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to populate 
+.br
+\fIdev_handle\fP handle of the device that will handle the transfer 
+.br
+\fIendpoint\fP address of the endpoint where this transfer will be sent 
+.br
+\fIstream_id\fP bulk stream id for this transfer 
+.br
+\fIbuffer\fP data buffer 
+.br
+\fIlength\fP length of data buffer 
+.br
+\fIcallback\fP callback function to be invoked on transfer completion 
+.br
+\fIuser_data\fP user data to pass to callback function 
+.br
+\fItimeout\fP timeout for the transfer in milliseconds 
+.RE
+.PP
+
+.SS "void libusb_fill_interrupt_transfer (struct \fBlibusb_transfer\fP * transfer, \fBlibusb_device_handle\fP * dev_handle, unsigned char endpoint, unsigned char * buffer, int length, \fBlibusb_transfer_cb_fn\fP callback, void * user_data, unsigned int timeout)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Helper function to populate the required \fBlibusb_transfer\fP fields for an interrupt transfer\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to populate 
+.br
+\fIdev_handle\fP handle of the device that will handle the transfer 
+.br
+\fIendpoint\fP address of the endpoint where this transfer will be sent 
+.br
+\fIbuffer\fP data buffer 
+.br
+\fIlength\fP length of data buffer 
+.br
+\fIcallback\fP callback function to be invoked on transfer completion 
+.br
+\fIuser_data\fP user data to pass to callback function 
+.br
+\fItimeout\fP timeout for the transfer in milliseconds 
+.RE
+.PP
+
+.SS "void libusb_fill_iso_transfer (struct \fBlibusb_transfer\fP * transfer, \fBlibusb_device_handle\fP * dev_handle, unsigned char endpoint, unsigned char * buffer, int length, int num_iso_packets, \fBlibusb_transfer_cb_fn\fP callback, void * user_data, unsigned int timeout)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Helper function to populate the required \fBlibusb_transfer\fP fields for an isochronous transfer\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP the transfer to populate 
+.br
+\fIdev_handle\fP handle of the device that will handle the transfer 
+.br
+\fIendpoint\fP address of the endpoint where this transfer will be sent 
+.br
+\fIbuffer\fP data buffer 
+.br
+\fIlength\fP length of data buffer 
+.br
+\fInum_iso_packets\fP the number of isochronous packets 
+.br
+\fIcallback\fP callback function to be invoked on transfer completion 
+.br
+\fIuser_data\fP user data to pass to callback function 
+.br
+\fItimeout\fP timeout for the transfer in milliseconds 
+.RE
+.PP
+
+.SS "void libusb_set_iso_packet_lengths (struct \fBlibusb_transfer\fP * transfer, unsigned int length)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Convenience function to set the length of all packets in an isochronous transfer, based on the num_iso_packets field in the transfer structure\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP a transfer 
+.br
+\fIlength\fP the length to set in each isochronous packet descriptor 
+.RE
+.PP
+\fBSee also\fP
+.RS 4
+\fBlibusb_get_max_packet_size()\fP 
+.RE
+.PP
+
+.SS "unsigned char * libusb_get_iso_packet_buffer (struct \fBlibusb_transfer\fP * transfer, unsigned int packet)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Convenience function to locate the position of an isochronous packet within the buffer of an isochronous transfer\&. This is a thorough function which loops through all preceding packets, accumulating their lengths to find the position of the specified packet\&. Typically you will assign equal lengths to each packet in the transfer, and hence the above method is sub-optimal\&. You may wish to use \fBlibusb_get_iso_packet_buffer_simple()\fP instead\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP a transfer 
+.br
+\fIpacket\fP the packet to return the address of 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the base address of the packet buffer inside the transfer buffer, or NULL if the packet does not exist\&. 
+.RE
+.PP
+\fBSee also\fP
+.RS 4
+\fBlibusb_get_iso_packet_buffer_simple()\fP 
+.RE
+.PP
+
+.SS "unsigned char * libusb_get_iso_packet_buffer_simple (struct \fBlibusb_transfer\fP * transfer, unsigned int packet)\fR [inline]\fP, \fR [static]\fP"
+
+.PP
+Convenience function to locate the position of an isochronous packet within the buffer of an isochronous transfer, for transfers where each packet is of identical size\&. This function relies on the assumption that every packet within the transfer is of identical size to the first packet\&. Calculating the location of the packet buffer is then just a simple calculation: \fRbuffer + (packet_size * packet)\fP
+
+.PP
+Do not use this function on transfers other than those that have identical packet lengths for each packet\&.
+
+.PP
+\fBParameters\fP
+.RS 4
+\fItransfer\fP a transfer 
+.br
+\fIpacket\fP the packet to return the address of 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the base address of the packet buffer inside the transfer buffer, or NULL if the packet does not exist\&. 
+.RE
+.PP
+\fBSee also\fP
+.RS 4
+\fBlibusb_get_iso_packet_buffer()\fP 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.

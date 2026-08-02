@@ -1,0 +1,40 @@
+.TH "libusb_interface" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_interface \- A collection of alternate settings for a particular USB interface\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "const struct \fBlibusb_interface_descriptor\fP * \fBaltsetting\fP"
+.br
+.RI "Array of interface descriptors\&. "
+.ti -1c
+.RI "int \fBnum_altsetting\fP"
+.br
+.RI "The number of alternate settings that belong to this interface\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+A collection of alternate settings for a particular USB interface\&. 
+.SH "Field Documentation"
+.PP 
+.SS "const struct \fBlibusb_interface_descriptor\fP* libusb_interface::altsetting"
+
+.PP
+Array of interface descriptors\&. The length of this array is determined by the num_altsetting field\&. 
+.SS "int libusb_interface::num_altsetting"
+
+.PP
+The number of alternate settings that belong to this interface\&. Must be non-negative\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.
