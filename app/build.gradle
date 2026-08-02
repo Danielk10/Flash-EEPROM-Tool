@@ -3,6 +3,9 @@ plugins {
 }
 
 android {
+
+      // Redirigir la carpeta build a /tmp
+    project.layout.buildDirectory.set(file("/tmp/calculo"))
     namespace 'com.diamon.curso'
     compileSdk {
         version = release(37)
@@ -35,10 +38,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-
     buildToolsVersion '37.0.0'
     ndkVersion '30.0.14904198 rc1'
 
+    
     buildFeatures {
         resValues true
         viewBinding true
