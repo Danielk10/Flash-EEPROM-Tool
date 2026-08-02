@@ -1,0 +1,90 @@
+.TH "libusb_config_descriptor" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_config_descriptor \- A structure representing the standard USB configuration descriptor\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "uint8_t \fBbLength\fP"
+.br
+.RI "Size of this descriptor (in bytes)\&. "
+.ti -1c
+.RI "uint8_t \fBbDescriptorType\fP"
+.br
+.RI "Descriptor type\&. "
+.ti -1c
+.RI "uint16_t \fBwTotalLength\fP"
+.br
+.RI "Total length of data returned for this configuration\&. "
+.ti -1c
+.RI "uint8_t \fBbNumInterfaces\fP"
+.br
+.RI "Number of interfaces supported by this configuration\&. "
+.ti -1c
+.RI "uint8_t \fBbConfigurationValue\fP"
+.br
+.RI "Identifier value for this configuration\&. "
+.ti -1c
+.RI "uint8_t \fBiConfiguration\fP"
+.br
+.RI "Index of string descriptor describing this configuration\&. "
+.ti -1c
+.RI "uint8_t \fBbmAttributes\fP"
+.br
+.RI "Configuration characteristics\&. "
+.ti -1c
+.RI "uint8_t \fBMaxPower\fP"
+.br
+.RI "Maximum power consumption of the USB device from this bus in this configuration when the device is fully operation\&. "
+.ti -1c
+.RI "const struct \fBlibusb_interface\fP * \fBinterface\fP"
+.br
+.RI "Array of interfaces supported by this configuration\&. "
+.ti -1c
+.RI "const unsigned char * \fBextra\fP"
+.br
+.RI "Extra descriptors\&. "
+.ti -1c
+.RI "int \fBextra_length\fP"
+.br
+.RI "Length of the extra descriptors, in bytes\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+A structure representing the standard USB configuration descriptor\&. 
+
+This descriptor is documented in section 9\&.6\&.3 of the USB 3\&.0 specification\&. All multiple-byte fields are represented in host-endian format\&. 
+.SH "Field Documentation"
+.PP 
+.SS "uint8_t libusb_config_descriptor::bDescriptorType"
+
+.PP
+Descriptor type\&. Will have value \fBlibusb_descriptor_type::LIBUSB_DT_CONFIG\fP LIBUSB_DT_CONFIG in this context\&. 
+.SS "uint8_t libusb_config_descriptor::MaxPower"
+
+.PP
+Maximum power consumption of the USB device from this bus in this configuration when the device is fully operation\&. Expressed in units of 2 mA when the device is operating in high-speed mode and in units of 8 mA when the device is operating in super-speed mode\&. 
+.SS "const struct \fBlibusb_interface\fP* libusb_config_descriptor::interface"
+
+.PP
+Array of interfaces supported by this configuration\&. The length of this array is determined by the bNumInterfaces field\&. 
+.SS "const unsigned char* libusb_config_descriptor::extra"
+
+.PP
+Extra descriptors\&. If libusb encounters unknown configuration descriptors, it will store them here, should you wish to parse them\&. 
+.SS "int libusb_config_descriptor::extra_length"
+
+.PP
+Length of the extra descriptors, in bytes\&. Must be non-negative\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.

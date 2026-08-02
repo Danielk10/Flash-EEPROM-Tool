@@ -1,0 +1,113 @@
+.TH "libusb_io" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_io \- Synchronous and asynchronous device I/O 
+.PP
+
+.SH "Introduction"
+.PP
+If you're using libusb in your application, you're probably wanting to perform I/O with devices - you want to perform USB data transfers\&.
+
+.PP
+libusb offers two separate interfaces for device I/O\&. This page aims to introduce the two in order to help you decide which one is more suitable for your application\&. You can also choose to use both interfaces in your application by considering each transfer on a case-by-case basis\&.
+
+.PP
+Once you have read through the following discussion, you should consult the detailed API documentation pages for the details:
+.IP "\(bu" 2
+\fBSynchronous device I/O\fP
+.IP "\(bu" 2
+\fBAsynchronous device I/O\fP
+.PP
+.SH "Transfers at a logical level"
+.PP
+At a logical level, USB transfers typically happen in two parts\&. For example, when reading data from a endpoint:
+.IP "1." 4
+A request for data is sent to the device
+.IP "2." 4
+Some time later, the incoming data is received by the host
+.PP
+
+.PP
+or when writing data to an endpoint:
+
+.PP
+.IP "1." 4
+The data is sent to the device
+.IP "2." 4
+Some time later, the host receives acknowledgement from the device that the data has been transferred\&.
+.PP
+
+.PP
+There may be an indefinite delay between the two steps\&. Consider a fictional USB input device with a button that the user can press\&. In order to determine when the button is pressed, you would likely submit a request to read data on a bulk or interrupt endpoint and wait for data to arrive\&. Data will arrive when the button is pressed by the user, which is potentially hours later\&.
+
+.PP
+libusb offers both a synchronous and an asynchronous interface to performing USB transfers\&. The main difference is that the synchronous interface combines both steps indicated above into a single function call, whereas the asynchronous interface separates them\&.
+.SH "The synchronous interface"
+.PP
+The synchronous I/O interface allows you to perform a USB transfer with a single function call\&. When the function call returns, the transfer has completed and you can parse the results\&.
+
+.PP
+If you have used libusb-0\&.1 before, this I/O style will seem familiar to you\&. libusb-0\&.1 only offered a synchronous interface\&.
+
+.PP
+In our input device example, to read button presses you might write code in the following style: 
+.PP
+.nf
+unsigned char data[4];
+int actual_length;
+int r = libusb_bulk_transfer(dev_handle, LIBUSB_ENDPOINT_IN, data, sizeof(data), &actual_length, 0);
+if (r == 0 && actual_length == sizeof(data)) {
+    // results of the transaction can now be found in the data buffer
+    // parse them here and report button press
+} else {
+    error();
+}
+
+.fi
+.PP
+
+.PP
+The main advantage of this model is simplicity: you did everything with a single simple function call\&.
+
+.PP
+However, this interface has its limitations\&. Your application will sleep inside \fBlibusb_bulk_transfer()\fP until the transaction has completed\&. If it takes the user 3 hours to press the button, your application will be sleeping for that long\&. Execution will be tied up inside the library - the entire thread will be useless for that duration\&.
+
+.PP
+Another issue is that by tying up the thread with that single transaction there is no possibility of performing I/O with multiple endpoints and/or multiple devices simultaneously, unless you resort to creating one thread per transaction\&.
+
+.PP
+Additionally, there is no opportunity to cancel the transfer after the request has been submitted\&.
+
+.PP
+For details on how to use the synchronous API, see the \fBsynchronous I/O API documentation\fP pages\&.
+.SH "The asynchronous interface"
+.PP
+Asynchronous I/O is the most significant new feature in libusb-1\&.0\&. Although it is a more complex interface, it solves all the issues detailed above\&.
+
+.PP
+Instead of providing which functions that block until the I/O has complete, libusb's asynchronous interface presents non-blocking functions which begin a transfer and then return immediately\&. Your application passes a callback function pointer to this non-blocking function, which libusb will call with the results of the transaction when it has completed\&.
+
+.PP
+Transfers which have been submitted through the non-blocking functions can be cancelled with a separate function call\&.
+
+.PP
+The non-blocking nature of this interface allows you to be simultaneously performing I/O to multiple endpoints on multiple devices, without having to use threads\&.
+
+.PP
+This added flexibility does come with some complications though:
+.IP "\(bu" 2
+In the interest of being a lightweight library, libusb does not create threads and can only operate when your application is calling into it\&. Your application must call into libusb from it's main loop when events are ready to be handled, or you must use some other scheme to allow libusb to undertake whatever work needs to be done\&.
+.IP "\(bu" 2
+libusb also needs to be called into at certain fixed points in time in order to accurately handle transfer timeouts\&.
+.IP "\(bu" 2
+Memory handling becomes more complex\&. You cannot use stack memory unless the function with that stack is guaranteed not to return until the transfer callback has finished executing\&.
+.IP "\(bu" 2
+You generally lose some linearity from your code flow because submitting the transfer request is done in a separate function from where the transfer results are handled\&. This becomes particularly obvious when you want to submit a second transfer based on the results of an earlier transfer\&.
+.PP
+
+.PP
+Internally, libusb's synchronous interface is expressed in terms of function calls to the asynchronous interface\&.
+
+.PP
+For details on how to use the asynchronous API, see the \fBasynchronous I/O API\fP documentation pages\&. 

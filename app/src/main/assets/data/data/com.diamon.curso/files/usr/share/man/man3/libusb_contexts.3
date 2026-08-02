@@ -1,0 +1,25 @@
+.TH "libusb_contexts" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_contexts \- Contexts 
+.PP
+It is possible that libusb may be used simultaneously from two independent libraries linked into the same executable\&.
+
+.PP
+For example, if your application has a plugin-like system which allows the user to dynamically load a range of modules into your program, it is feasible that two independently developed modules may both use libusb\&.
+
+.PP
+libusb is written to allow for these multiple user scenarios\&. The two "instances" of libusb will not interfere: an option set by one user will have no effect the same option for other users, other users can continue using libusb after one of them calls \fBlibusb_exit()\fP, etc\&.
+
+.PP
+This is made possible through libusb's \fIcontext\fP concept\&. When you call \fBlibusb_init_context()\fP, you are (optionally) given a context\&. You can then pass this context pointer back into future libusb functions\&.
+
+.PP
+In order to keep things simple for more simplistic applications, it is legal to pass NULL to all functions requiring a context pointer (as long as you're sure no other code will attempt to use libusb from the same process)\&. When you pass NULL, the default context will be used\&. The default context is created the first time a process calls \fBlibusb_init_context()\fP when no other context is alive\&. Contexts are destroyed during \fBlibusb_exit()\fP\&.
+
+.PP
+The default context is reference-counted and can be shared\&. That means that if libusb_init_context(NULL, x, y) is called twice within the same process, the two users end up sharing the same context\&. The deinitialization and freeing of the default context will only happen when the last user calls \fBlibusb_exit()\fP\&. In other words, the default context is created and initialized when its reference count goes from 0 to 1, and is deinitialized and destroyed when its reference count goes from 1 to 0\&.
+
+.PP
+You may be wondering why only a subset of libusb functions require a context pointer in their function definition\&. Internally, libusb stores context pointers in other objects (e\&.g\&. \fBlibusb_device\fP instances) and hence can infer the context from those objects\&. 

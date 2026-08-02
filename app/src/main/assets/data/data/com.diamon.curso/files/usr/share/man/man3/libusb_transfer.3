@@ -1,0 +1,124 @@
+.TH "libusb_transfer" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_transfer \- The generic USB transfer structure\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "\fBlibusb_device_handle\fP * \fBdev_handle\fP"
+.br
+.RI "Handle of the device that this transfer will be submitted to\&. "
+.ti -1c
+.RI "uint8_t \fBflags\fP"
+.br
+.RI "A bitwise OR combination of \fBlibusb_transfer_flags\fP\&. "
+.ti -1c
+.RI "unsigned char \fBendpoint\fP"
+.br
+.RI "Address of the endpoint where this transfer will be sent\&. "
+.ti -1c
+.RI "unsigned char \fBtype\fP"
+.br
+.RI "Type of the transfer from \fBlibusb_transfer_type\fP\&. "
+.ti -1c
+.RI "unsigned int \fBtimeout\fP"
+.br
+.RI "Timeout for this transfer in milliseconds\&. "
+.ti -1c
+.RI "enum \fBlibusb_transfer_status\fP \fBstatus\fP"
+.br
+.RI "The status of the transfer\&. "
+.ti -1c
+.RI "int \fBlength\fP"
+.br
+.RI "Length of the data buffer\&. "
+.ti -1c
+.RI "int \fBactual_length\fP"
+.br
+.RI "Actual length of data that was transferred\&. "
+.ti -1c
+.RI "\fBlibusb_transfer_cb_fn\fP \fBcallback\fP"
+.br
+.RI "Callback function\&. "
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.RI "User context data\&. "
+.ti -1c
+.RI "unsigned char * \fBbuffer\fP"
+.br
+.RI "Data buffer\&. "
+.ti -1c
+.RI "int \fBnum_iso_packets\fP"
+.br
+.RI "Number of isochronous packets\&. "
+.ti -1c
+.RI "struct \fBlibusb_iso_packet_descriptor\fP \fBiso_packet_desc\fP [LIBUSB_FLEXIBLE_ARRAY]"
+.br
+.RI "Isochronous packet descriptors, for isochronous transfers only\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+The generic USB transfer structure\&. 
+
+The user populates this structure and then submits it in order to request a transfer\&. After the transfer has completed, the library populates the transfer with the results and passes it back to the user\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned int libusb_transfer::timeout"
+
+.PP
+Timeout for this transfer in milliseconds\&. A value of 0 indicates no timeout\&. 
+.SS "enum \fBlibusb_transfer_status\fP libusb_transfer::status"
+
+.PP
+The status of the transfer\&. Read-only, and only for use within transfer callback function\&.
+
+.PP
+If this is an isochronous transfer, this field may read COMPLETED even if there were errors in the frames\&. Use the \fBstatus\fP field in each packet to determine if errors occurred\&. 
+.SS "int libusb_transfer::length"
+
+.PP
+Length of the data buffer\&. Must be non-negative\&. 
+.SS "int libusb_transfer::actual_length"
+
+.PP
+Actual length of data that was transferred\&. Read-only, and only for use within transfer callback function\&. Not valid for isochronous endpoint transfers\&. Never negative\&. 
+.SS "\fBlibusb_transfer_cb_fn\fP libusb_transfer::callback"
+
+.PP
+Callback function\&. This will be invoked when the transfer completes, fails, or is cancelled\&. 
+.SS "void* libusb_transfer::user_data"
+
+.PP
+User context data\&. Useful for associating specific data to a transfer that can be accessed from within the callback function\&.
+
+.PP
+This field may be set manually or is taken as the \fR\fBuser_data\fP\fP parameter of the following functions:
+.IP "\(bu" 2
+\fBlibusb_fill_bulk_transfer()\fP
+.IP "\(bu" 2
+\fBlibusb_fill_bulk_stream_transfer()\fP
+.IP "\(bu" 2
+\fBlibusb_fill_control_transfer()\fP
+.IP "\(bu" 2
+\fBlibusb_fill_interrupt_transfer()\fP
+.IP "\(bu" 2
+\fBlibusb_fill_iso_transfer()\fP 
+.PP
+
+.SS "int libusb_transfer::num_iso_packets"
+
+.PP
+Number of isochronous packets\&. Only used for I/O with isochronous endpoints\&. Must be non-negative\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.
