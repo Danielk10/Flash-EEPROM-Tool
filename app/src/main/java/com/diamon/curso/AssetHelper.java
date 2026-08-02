@@ -267,7 +267,7 @@ public class AssetHelper {
         File usrBin = new File(filesDir, "usr/bin");
         File usrSbin = new File(filesDir, "usr/sbin");
         File usrLib = new File(filesDir, "usr/lib");
-        File pythonSitePackages = new File(usrLib, "python3.12/site-packages");
+        File pythonSitePackages = new File(usrLib, "python3.14/site-packages");
 
         if (!usrBin.exists())
             usrBin.mkdirs();
@@ -287,7 +287,7 @@ public class AssetHelper {
         ok &= linkTool(new File(usrSbin, "pcilmr"), new File(nativeLibDir, "libpcilmr.so"));
         // update-pciids is a bash script in assets, no symlink needed from jniLibs
         ok &= linkTool(new File(usrBin, "ftdi_eeprom"), new File(nativeLibDir, "libftdi_eeprom.so"));
-        ok &= linkTool(new File(usrBin, "libftdi1-config"), new File(nativeLibDir, "liblibftdi1-config.so"));
+        // libftdi1-config is a shell script extracted from assets (not ELF), no jniLibs link needed
 
         // Sonames esperados por binarios/nativas: apuntan al nombre Android copiable
         // (.so).
@@ -297,7 +297,7 @@ public class AssetHelper {
 
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libpci.so");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libpci.so.3");
-        ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libpci.so.3.14.0");
+        ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libpci.so.3.15.0");
 
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libftdi1.so");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libftdi1.so.2");
