@@ -1,4 +1,4 @@
-# Reporte de Dependencias
+# Reporte Actualizado de Dependencias
 
 ### _pyftdi1.so
 | Dep | Class | InFolder |
@@ -12,7 +12,7 @@
 ### flashrom
 | Dep | Class | InFolder |
 |---|---|---|
-| libcrypto.so.3 | Externa | No |
+| libcrypto.so.3 | Externa | Sí |
 | libpci.so.3 | Externa | Sí |
 | libusb-1.0.so | Externa | Sí |
 | libftdi1.so.2 | Externa | Sí |
@@ -24,8 +24,26 @@
 |---|---|---|
 | liblog.so | Sistema | No |
 | libftdi1.so.2 | Externa | Sí |
-| libconfuse.so | Externa | No |
+| libconfuse.so | Externa | Sí |
 | libusb-1.0.so | Externa | Sí |
+| libdl.so | Sistema | No |
+| libc.so | Sistema | No |
+
+### libc++_shared.so
+| Dep | Class | InFolder |
+|---|---|---|
+| libc.so | Sistema | No |
+| libm.so | Sistema | No |
+| libdl.so | Sistema | No |
+
+### libconfuse.so
+| Dep | Class | InFolder |
+|---|---|---|
+| libc.so | Sistema | No |
+
+### libcrypto.so.3
+| Dep | Class | InFolder |
+|---|---|---|
 | libdl.so | Sistema | No |
 | libc.so | Sistema | No |
 
@@ -86,7 +104,7 @@
 | liblog.so | Sistema | No |
 | libftdi1.so.2 | Externa | Sí |
 | libusb-1.0.so | Externa | Sí |
-| libc++_shared.so | Externa | No |
+| libc++_shared.so | Sistema | Sí |
 | libdl.so | Sistema | No |
 | libm.so | Sistema | No |
 | libc.so | Sistema | No |
@@ -97,7 +115,7 @@
 | liblog.so | Sistema | No |
 | libftdi1.so.2 | Externa | Sí |
 | libusb-1.0.so | Externa | Sí |
-| libc++_shared.so | Externa | No |
+| libc++_shared.so | Sistema | Sí |
 | libdl.so | Sistema | No |
 | libm.so | Sistema | No |
 | libc.so | Sistema | No |
@@ -108,7 +126,7 @@
 | liblog.so | Sistema | No |
 | libftdi1.so.2 | Externa | Sí |
 | libusb-1.0.so | Externa | Sí |
-| libc++_shared.so | Externa | No |
+| libc++_shared.so | Sistema | Sí |
 | libdl.so | Sistema | No |
 | libm.so | Sistema | No |
 | libc.so | Sistema | No |
@@ -123,21 +141,21 @@
 ### libpci.so
 | Dep | Class | InFolder |
 |---|---|---|
-| libz.so.1 | Externa | No |
+| libz.so.1 | Sistema | Sí |
 | libdl.so | Sistema | No |
 | libc.so | Sistema | No |
 
 ### libpci.so.3
 | Dep | Class | InFolder |
 |---|---|---|
-| libz.so.1 | Externa | No |
+| libz.so.1 | Sistema | Sí |
 | libdl.so | Sistema | No |
 | libc.so | Sistema | No |
 
 ### libpci.so.3.15.0
 | Dep | Class | InFolder |
 |---|---|---|
-| libz.so.1 | Externa | No |
+| libz.so.1 | Sistema | Sí |
 | libdl.so | Sistema | No |
 | libc.so | Sistema | No |
 
@@ -145,6 +163,11 @@
 | Dep | Class | InFolder |
 |---|---|---|
 | libdl.so | Sistema | No |
+| libc.so | Sistema | No |
+
+### libz.so.1
+| Dep | Class | InFolder |
+|---|---|---|
 | libc.so | Sistema | No |
 
 ### lspci
