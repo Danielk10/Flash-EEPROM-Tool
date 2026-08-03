@@ -22,8 +22,8 @@ Una vez que el script `setup-sdk.sh` termine y el SDK esté listo, el proyecto s
 
 ## 3. Ubicación del APK Generado
 
-Después de una compilación exitosa, el archivo APK generado se encontrará en la siguiente ruta dentro del directorio del proyecto:
+Después de una compilación exitosa, el archivo APK generado se encontrará en la siguiente ruta absoluta fuera del proyecto para mantener el espacio de trabajo limpio:
 
 ```
-app/build/outputs/apk/debug/app-debug.apk
+/tmp/calculo/outputs/apk/debug/app-debug.apk
 ```
