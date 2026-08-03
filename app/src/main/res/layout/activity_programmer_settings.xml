@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Seleccionar Dispositivo (Base):"
+            android:text="@string/str_seleccionar_dis"
             android:textStyle="bold"
             android:textSize="14sp"
             android:layout_marginBottom="4dp" />
@@ -26,7 +26,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ajustes Manuales de Parámetros (-p):"
+            android:text="@string/str_ajustes_manuale"
             android:textStyle="bold"
             android:textSize="14sp"
             android:layout_marginBottom="4dp" />
@@ -43,13 +43,13 @@
             android:id="@+id/btnSaveProgrammer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Guardar Configuración"
+            android:text="@string/str_guardar_configu"
             android:layout_marginBottom="24dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hardware Soportado en esta compilación:"
+            android:text="@string/str_hardware_soport"
             android:textColor="#388E3C"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -58,7 +58,7 @@
             android:id="@+id/tvSupported"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="asm106x, atavia, buspirate_spi, ch341a_spi, ch347_spi, dediprog, developerbox_spi, digilent_spi, dirtyjtag_spi, drkaiser, dummy, ft2232_spi, gfxnvidia, internal, it8212, jlink_spi, linux_mtd, linux_spi, mediatek_i2c_spi, mstarddc_spi, nicintel, nicintel_eeprom, nicintel_spi, nv_sma_spi, ogp_spi, parade_lspcon, pickit2_spi, pony_spi, raiden_debug_spi, realtek_mst_i2c_spi, satasii, serprog, spidriver, stlinkv3_spi, usbblaster_spi"
+            android:text="@string/str_asm106x_atavia_"
             android:textSize="13sp"
             android:layout_marginBottom="24dp"
             android:lineSpacingExtra="2dp" />
@@ -66,7 +66,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hardware NO SOPORTADO o Excluido:"
+            android:text="@string/str_hardware_no_sop"
             android:textColor="#D32F2F"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -75,7 +75,7 @@
             android:id="@+id/tvUnsupported"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="atahpt, atapromise, ft232r_spi, ni845x_spi, nic3com, nicnatsemi, nicrealtek, rayer_spi, satamv"
+            android:text="@string/str_atahpt_atapromi"
             android:textSize="13sp"
             android:lineSpacingExtra="2dp"
             android:layout_marginBottom="16dp" />

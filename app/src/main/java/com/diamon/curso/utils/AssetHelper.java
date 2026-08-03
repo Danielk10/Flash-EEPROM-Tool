@@ -1,4 +1,4 @@
-package com.diamon.curso;
+package com.diamon.curso.utils;
 
 import android.content.Context;
 import android.content.res.AssetManager;

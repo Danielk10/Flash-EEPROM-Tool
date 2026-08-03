@@ -1,4 +1,4 @@
-package com.diamon.curso;
+package com.diamon.curso.core;
 
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -275,6 +275,7 @@ public class PtyBridge {
         byte[] buf = new byte[64];
 
         while (System.currentTimeMillis() < deadlineMs) {
+            if (usbPort == null) return false;
             try {
                 int n = usbPort.read(buf, 100);
                 if (n <= 0) {

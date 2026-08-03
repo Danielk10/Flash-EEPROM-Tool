@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Preparando dependencias nativas..."
+            android:text="@string/str_preparando_depe"
             android:textColor="#E0E0E0"
             android:textSize="16sp" />
     </LinearLayout>
@@ -51,7 +51,7 @@
             android:id="@+id/tvStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Estado USB: Desconectado"
+            android:text="@string/str_estado_usb_desc"
             android:textColor="#4CAF50"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -61,7 +61,7 @@
             android:id="@+id/btnConnect"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Detectar y Conectar Automáticamente"
+            android:text="@string/str_detectar_y_cone"
             android:layout_marginBottom="4dp" />
 
         <LinearLayout
@@ -77,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:enabled="false"
-                android:text="Identificar Chip" />
+                android:text="@string/str_identificar_chi" />
 
             <Space
                 android:layout_width="8dp"
@@ -89,7 +89,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:enabled="false"
-                android:text="Verificar ROM" />
+                android:text="@string/str_verificar_rom" />
         </LinearLayout>
 
         <LinearLayout
@@ -107,7 +107,7 @@
                 android:enabled="false"
                 android:backgroundTint="#4CAF50"
                 android:textSize="14sp"
-                android:text="Leer Backup" />
+                android:text="@string/str_leer_backup" />
 
             <Space
                 android:layout_width="8dp"
@@ -122,7 +122,7 @@
                 android:enabled="false"
                 android:backgroundTint="#F44336"
                 android:textSize="14sp"
-                android:text="Flashear ROM" />
+                android:text="@string/str_flashear_rom" />
         </LinearLayout>
 
         <LinearLayout
@@ -138,7 +138,7 @@
                 android:minHeight="48dp"
                 android:layout_weight="1"
                 android:textSize="14sp"
-                android:text="Cargar ROM" />
+                android:text="@string/str_cargar_rom" />
 
             <Space
                 android:layout_width="8dp"
@@ -151,7 +151,7 @@
                 android:minHeight="48dp"
                 android:layout_weight="1"
                 android:textSize="14sp"
-                android:text="Guardar ROM" />
+                android:text="@string/str_guardar_rom" />
         </LinearLayout>
 
         <LinearLayout
@@ -167,7 +167,7 @@
                 android:layout_weight="1"
                 android:minHeight="44dp"
                 android:enabled="false"
-                android:text="Borrar Chip"
+                android:text="@string/str_borrar_chip"
                 android:backgroundTint="#FF9800"
                 android:textColor="#FFFFFF" />
 
@@ -181,7 +181,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:minHeight="44dp"
-                android:text="Borrar ROM"
+                android:text="@string/str_borrar_rom"
                 android:backgroundTint="#616161"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
@@ -204,7 +204,7 @@
             android:id="@+id/btnRunCustomCommand"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ejecutar Instrucción por Consola"
+            android:text="@string/str_ejecutar_instru"
             android:backgroundTint="#1976D2"
             android:textColor="#FFFFFF"
             android:layout_marginBottom="4dp" />
@@ -225,7 +225,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Terminal Salida:"
+                    android:text="@string/str_terminal_salida"
                     android:textColor="#B0BEC5"
                     android:textStyle="bold"
                     android:textSize="13sp"
@@ -237,7 +237,7 @@
                     android:id="@+id/btnClearLogs"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Limpiar"
+                    android:text="@string/str_limpiar"
                     android:minHeight="0dp"
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp"/>
@@ -264,7 +264,7 @@
                 android:longClickable="true"
                 android:textColor="#00FF00"
                 android:textSize="12sp"
-                android:text="--- Log ---" />
+                android:text="@string/str__log_" />
 
         </ScrollView>
 

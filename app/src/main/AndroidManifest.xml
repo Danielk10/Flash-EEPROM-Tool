@@ -47,7 +47,7 @@
             android:value="true" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.activities.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -64,20 +64,20 @@
 
         </activity>
 
-        <activity android:name=".PolicyActivity"
+        <activity android:name=".ui.activities.PolicyActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:label="Políticas" />
 
-        <activity android:name=".HexViewerActivity"
+        <activity android:name=".ui.activities.HexViewerActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:label="Visor Hexadecimal" />
 
-        <activity android:name=".ProgrammerSettingsActivity"
+        <activity android:name=".ui.activities.ProgrammerSettingsActivity"
             android:exported="false" />
 
-        <activity android:name=".HexDiffActivity"
+        <activity android:name=".ui.activities.HexDiffActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:label="Comparar HEX" />

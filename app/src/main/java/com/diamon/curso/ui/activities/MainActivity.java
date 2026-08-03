@@ -1,4 +1,10 @@
-package com.diamon.curso;
+package com.diamon.curso.ui.activities;
+
+import com.diamon.curso.R;
+import com.diamon.curso.ads.MostrarPublicidad;
+import com.diamon.curso.core.PtyBridge;
+import com.diamon.curso.ui.views.PinoutView;
+import com.diamon.curso.utils.AssetHelper;
 
 import android.app.PendingIntent;
 import android.content.ClipData;
@@ -625,83 +631,94 @@ public class MainActivity extends AppCompatActivity {
                 throw new IllegalStateException("No se pudo abrir el archivo seleccionado para lectura.");
             }
 
-            // Leer todo el contenido primero para validar
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                baos.write(buffer, 0, read);
-            }
-            byte[] data = baos.toByteArray();
-
-            // Validación de tamaño
-            if (data.length == 0) {
-                log("Error: El archivo seleccionado está vacío. No es un binario válido.");
-                return;
-            }
-            long maxSize = 128L * 1024 * 1024; // 128 MB
-            if (data.length > maxSize) {
-                log("Error: El archivo es demasiado grande (" + (data.length / 1024 / 1024)
-                        + " MB). Máximo soportado: 128 MB.");
-                return;
-            }
-
-            // Detección de formato
+            // Detectar metadata y tamano sin cargar a RAM
             String fileName = "archivo";
+            long fileSize = -1;
             try {
                 android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
                 if (cursor != null && cursor.moveToFirst()) {
                     int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                    if (idx >= 0)
-                        fileName = cursor.getString(idx);
+                    if (idx >= 0) fileName = cursor.getString(idx);
+                    int sizeIdx = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                    if (sizeIdx >= 0) fileSize = cursor.getLong(sizeIdx);
                     cursor.close();
                 }
             } catch (Exception ignored) {
             }
 
-            boolean isIntelHex = fileName.toLowerCase().endsWith(".hex") ||
-                    (data.length > 0 && data[0] == ':');
+            long maxSize = 128L * 1024 * 1024; // 128 MB
+            if (fileSize > maxSize) {
+                log("Error: El archivo es demasiado grande (" + (fileSize / 1024 / 1024)
+                        + " MB). Máximo soportado: 128 MB.");
+                return;
+            }
 
-            // Validación de contenido sospechoso (archivos de texto no-hex)
-            if (!isIntelHex) {
-                // Verificar que no sea un archivo de texto común
-                boolean looksLikeText = true;
-                int checkLen = Math.min(data.length, 512);
-                for (int i = 0; i < checkLen; i++) {
-                    int b = data[i] & 0xFF;
-                    if (b < 0x09 || (b > 0x0D && b < 0x20 && b != 0x1A)) {
-                        looksLikeText = false;
-                        break;
+            boolean isIntelHex = fileName.toLowerCase().endsWith(".hex");
+            File outFile = new File(getFilesDir(), "bios.bin");
+            clearTransientRomState(false);
+            long totalWritten = 0;
+
+            try (OutputStream out = new FileOutputStream(outFile)) {
+                if (isIntelHex) {
+                    // HEX suele ser pequeno, y la funcion parseIntelHex requiere el arreglo completo en memoria.
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        baos.write(buffer, 0, read);
+                    }
+                    byte[] data = baos.toByteArray();
+                    if (data.length > 0 && data[0] == ':') {
+                        byte[] parsed = parseIntelHex(data);
+                        if (parsed.length == 0) {
+                            log("Error: El Intel HEX no contiene datos útiles.");
+                            return;
+                        }
+                        out.write(parsed);
+                        totalWritten = parsed.length;
+                    } else {
+                        // Falsa alarma, era binario
+                        out.write(data);
+                        totalWritten = data.length;
+                        isIntelHex = false;
+                    }
+                } else {
+                    // Si es binario crudo, transmitir directamente en bloques para evitar OOM (Fix Issue #72)
+                    byte[] buffer = new byte[65536]; // 64 KB chunk
+                    int read;
+                    boolean firstChunk = true;
+                    while ((read = in.read(buffer)) != -1) {
+                        if (firstChunk) {
+                            boolean looksLikeText = true;
+                            int checkLen = Math.min(read, 512);
+                            for (int i = 0; i < checkLen; i++) {
+                                int b = buffer[i] & 0xFF;
+                                if (b < 0x09 || (b > 0x0D && b < 0x20 && b != 0x1A)) {
+                                    looksLikeText = false;
+                                    break;
+                                }
+                            }
+                            if (looksLikeText && fileSize < 1024) {
+                                log("[AVISO] El archivo '" + fileName + "' parece ser texto plano.");
+                            }
+                            firstChunk = false;
+                        }
+                        out.write(buffer, 0, read);
+                        totalWritten += read;
                     }
                 }
-                if (looksLikeText && data.length < 1024) {
-                    log("[AVISO] El archivo '" + fileName + "' parece ser texto plano, no un binario de firmware.");
-                    log("Formatos esperados: .bin, .rom, .img (binario crudo) o .hex (Intel HEX).");
-                }
             }
 
-            byte[] dataToStore = data;
-            if (isIntelHex) {
-                dataToStore = parseIntelHex(data);
-                if (dataToStore.length == 0) {
-                    log("Error: El Intel HEX no contiene datos útiles para convertir a binario.");
-                    return;
-                }
-            }
-
-            // Limpiar datos anteriores antes de cargar un nuevo archivo
-            clearTransientRomState(false);
-
-            // Escribir datos validados
-            try (OutputStream out = new FileOutputStream(new File(getFilesDir(), "bios.bin"))) {
-                out.write(dataToStore);
+            if (totalWritten == 0) {
+                log("Error: El archivo seleccionado está vacío. No es un binario válido.");
+                return;
             }
 
             String sizeStr;
-            if (dataToStore.length >= 1024 * 1024) {
-                sizeStr = String.format(java.util.Locale.US, "%.2f MB", dataToStore.length / (1024.0 * 1024.0));
+            if (totalWritten >= 1024 * 1024) {
+                sizeStr = String.format(java.util.Locale.US, "%.2f MB", totalWritten / (1024.0 * 1024.0));
             } else {
-                sizeStr = String.format(java.util.Locale.US, "%.1f KB", dataToStore.length / 1024.0);
+                sizeStr = String.format(java.util.Locale.US, "%.1f KB", totalWritten / 1024.0);
             }
 
             log("ROM importada: '" + fileName + "' (" + sizeStr + ", " + (isIntelHex ? "Intel HEX" : "binario crudo")
@@ -710,9 +727,7 @@ public class MainActivity extends AppCompatActivity {
                 log("Conversión Intel HEX → binario aplicada correctamente.");
             }
             log("Archivo guardado como 'bios.bin' — listo para Flashear o Verificar.");
-            log("(Para exportar, usa 'Leer Backup' para leer datos del chip primero.)");
 
-            // Guardar origen del archivo para el visor HEX
             SharedPreferences.Editor editor = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
             editor.putString(KEY_BIOS_SOURCE, "Importado: " + fileName + " (" + sizeStr + ")");
             editor.putString(KEY_LAST_READ_FILE, "bios.bin");
@@ -896,8 +911,9 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 flags |= PendingIntent.FLAG_MUTABLE;
             }
-            PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION),
-                    flags);
+            Intent intent = new Intent(ACTION_USB_PERMISSION);
+            intent.setPackage(getPackageName());
+            PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, intent, flags);
             usbManager.requestPermission(device, permissionIntent);
         }
     }
@@ -1045,22 +1061,27 @@ public class MainActivity extends AppCompatActivity {
                 log("Preparando puente serial para " + selectedProgrammer + "...");
             }
 
+            final com.diamon.curso.core.PtyBridge currentBridge = ptyBridge;
             executor.execute(() -> {
+                if (currentBridge == null) {
+                    runOnUiThread(() -> log("[ERROR] Conexión PTY perdida."));
+                    return;
+                }
                 // Serprog espera beacon 0xAA 0x55 del firmware Arduino;
                 // los demás (buspirate, spidriver) solo activan DTR/RTS + purge.
                 boolean ready = isSerprog
-                        ? ptyBridge.prepareForFlashromSession(8000)
-                        : ptyBridge.prepareForSerialSession();
+                        ? currentBridge.prepareForFlashromSession(8000)
+                        : currentBridge.prepareForSerialSession();
                 runOnUiThread(() -> {
                     if (!ready) {
                         log("[ERROR] No se pudo preparar sesión serial — abortando.");
-                        ptyBridge.close();
-                        ptyBridge = null;
+                        currentBridge.close();
+                        if (ptyBridge == currentBridge) ptyBridge = null;
                         return;
                     }
-                    ptyBridge.purge();
-                    if (!ptyBridge.isForwardingActive()) {
-                        ptyBridge.startForwarding();
+                    currentBridge.purge();
+                    if (!currentBridge.isForwardingActive()) {
+                        currentBridge.startForwarding();
                         log("Hilos de forwarding activos.");
                     }
                     log("Puente PTY↔USB listo — lanzando flashrom.");
@@ -1571,7 +1592,7 @@ public class MainActivity extends AppCompatActivity {
                 "Bus Pirate → Flash SPI",
                 "SPIDriver → Flash SPI",
                 "Bus SPI (Serial Peripheral)",
-                "Bus I2C (Inter-Integrated Circuit)"
+                "Bus LPC/FWH (BIOS Chips)"
         };
 
         new android.app.AlertDialog.Builder(this)
@@ -1608,8 +1629,8 @@ public class MainActivity extends AppCompatActivity {
                             PinoutView.dibujarSPI(this, iv);
                             break;
                         default:
-                            title = "Bus I2C — Inter-Integrated Circuit";
-                            PinoutView.dibujarI2C(this, iv);
+                            title = "Bus LPC/FWH — Low Pin Count";
+                            PinoutView.dibujarLPC(this, iv);
                             break;
                     }
                     ScrollView scroll = new ScrollView(this);

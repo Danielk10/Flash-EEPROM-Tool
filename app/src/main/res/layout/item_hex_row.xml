@@ -15,7 +15,7 @@
         android:fontFamily="monospace"
         android:textColor="#2196F3"
         android:textSize="14sp"
-        android:text="00000000" />
+        android:text="@string/str_00000000" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -23,7 +23,7 @@
         android:fontFamily="monospace"
         android:textColor="#757575"
         android:textSize="14sp"
-        android:text=" | " />
+        android:text="@string/str___" />
 
     <TextView
         android:id="@+id/tvHex"
@@ -32,7 +32,7 @@
         android:fontFamily="monospace"
         android:textColor="#E0E0E0"
         android:textSize="14sp"
-        android:text="FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF " />
+        android:text="@string/str_ff_ff_ff_ff_ff_" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -40,7 +40,7 @@
         android:fontFamily="monospace"
         android:textColor="#757575"
         android:textSize="14sp"
-        android:text="| " />
+        android:text="@string/str__" />
 
     <TextView
         android:id="@+id/tvAscii"
@@ -49,6 +49,6 @@
         android:fontFamily="monospace"
         android:textColor="#4CAF50"
         android:textSize="14sp"
-        android:text="................" />
+        android:text="@string/str_str" />
 
 </LinearLayout>

@@ -10,7 +10,7 @@
         android:id="@+id/tvDiffSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Selecciona dos archivos para comparar"
+        android:text="@string/str_selecciona_dos_"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
         android:textStyle="bold"
@@ -27,7 +27,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Archivo A"
+            android:text="@string/str_archivo_a"
             android:backgroundTint="#1976D2"
             android:textColor="#FFFFFF" />
 
@@ -40,7 +40,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Archivo B"
+            android:text="@string/str_archivo_b"
             android:backgroundTint="#FF9800"
             android:textColor="#FFFFFF" />
     </LinearLayout>

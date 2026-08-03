@@ -1,4 +1,4 @@
-package com.diamon.curso;
+package com.diamon.curso.ads;
 
 import android.app.Activity;
 

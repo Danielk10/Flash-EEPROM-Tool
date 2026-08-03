@@ -1,4 +1,6 @@
-package com.diamon.curso;
+package com.diamon.curso.ui.activities;
+
+import com.diamon.curso.R;
 
 import android.content.Intent;
 import android.net.Uri;

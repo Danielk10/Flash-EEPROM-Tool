@@ -10,7 +10,7 @@
         android:id="@+id/tvHexSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cargando archivo..."
+        android:text="@string/str_cargando_archiv"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
         android:textStyle="bold"
