@@ -51,6 +51,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -183,7 +184,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvOperationStatus;
     private static final Pattern PROGRESS_PATTERN = Pattern.compile("(\\d{1,3})\\s*%");
     private Button btnConnect, btnProbe, btnVerify, btnRead, btnWrite, btnImport, btnExport;
-    private Button btnRunCustomCommand, btnClearLogs, btnQuickClear, btnEraseChip;
+    private Button btnRunCustomCommand, btnClearLogs, btnQuickClear, btnEraseChip, btnAbort;
+    private android.widget.CheckBox cbFastWrite;
+    private Process currentFlashromProcess;
     private EditText etCustomCommand;
 
     private final StringBuilder logBuffer = new StringBuilder();
@@ -334,6 +337,9 @@ public class MainActivity extends AppCompatActivity {
         btnEraseChip = findViewById(R.id.btnEraseChip);
         btnRunCustomCommand = findViewById(R.id.btnRunCustomCommand);
         btnClearLogs = findViewById(R.id.btnClearLogs);
+        btnAbort = findViewById(R.id.btnAbort);
+        cbFastWrite = findViewById(R.id.cbFastWrite);
+        btnAbort.setOnClickListener(v -> abortFlashromProcess());
         etCustomCommand = findViewById(R.id.etCustomCommand);
 
         clearTransientRomState(false);
@@ -1127,6 +1133,16 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    private void abortFlashromProcess() {
+        if (currentFlashromProcess != null) {
+            log("[ABORTAR] Enviando señal de terminación a flashrom...");
+            currentFlashromProcess.destroy();
+            if (ptyBridge != null && ptyBridge.isOpen()) {
+                ptyBridge.purge(); 
+            }
+        }
+    }
+
     private void executeCustomFlashromCommand(String rawCommand) {
         String[] args = rawCommand.split("\\s+");
         for (int i = 0; i < args.length; i++) {
@@ -1313,18 +1329,68 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
             }
+            
+            if (cbFastWrite != null && cbFastWrite.isChecked() && opLabel.equals("Escribiendo flash")) {
+                List<String> newArgs = new ArrayList<>(Arrays.asList(args));
+                newArgs.add("-n");
+                args = newArgs.toArray(new String[0]);
+                log("Fast Write activado: Saltando verificación (-n)");
+            }
             final String operationLabel = opLabel;
 
+
             Process process = pb.start();
+            currentFlashromProcess = process;
+            runOnUiThread(() -> {
+                if (btnAbort != null) btnAbort.setVisibility(View.VISIBLE);
+            });
+            
+            boolean multipleChipsFound = false;
+            java.util.List<String> suggestedChips = new ArrayList<>();
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     log("[native] " + line);
+                    
+                    if (line.contains("Multiple flash chip definitions match")) {
+                        multipleChipsFound = true;
+                    }
+                    if (multipleChipsFound && line.startsWith("Found ") && line.contains("flash chip")) {
+                        int startQuote = line.indexOf('"');
+                        int endQuote = line.indexOf('"', startQuote + 1);
+                        if (startQuote != -1 && endQuote != -1) {
+                            suggestedChips.add(line.substring(startQuote + 1, endQuote));
+                        }
+                    }
                 }
             }
 
             int exitCode = process.waitFor();
+            currentFlashromProcess = null;
+            runOnUiThread(() -> {
+                if (btnAbort != null) btnAbort.setVisibility(View.GONE);
+            });
+
+            if (exitCode != 0 && multipleChipsFound && !suggestedChips.isEmpty()) {
+                final String[] finalOldArgs = args;
+                runOnUiThread(() -> {
+                    String[] items = suggestedChips.toArray(new String[0]);
+                    new android.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Ambigüedad Detectada")
+                        .setMessage("flashrom detectó múltiples chips posibles. Selecciona el modelo exacto:")
+                        .setItems(items, (dialog, which) -> {
+                            String chosenChip = items[which];
+                            java.util.List<String> newArgs = new ArrayList<>(Arrays.asList(finalOldArgs));
+                            newArgs.add("-c");
+                            newArgs.add(chosenChip);
+                            executor.execute(() -> runFlashromProcess(flashromBin, newArgs.toArray(new String[0])));
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+                });
+                return;
+            }
 
             if (exitCode == 0) {
                 log("[PROCESO TERMINADO] Exit Code: " + exitCode + " (OK)\n");

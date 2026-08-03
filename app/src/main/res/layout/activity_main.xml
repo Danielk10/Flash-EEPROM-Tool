@@ -200,8 +200,18 @@
             android:textColor="#4DB6AC"
             android:layout_marginBottom="4dp" />
 
+        
+        <CheckBox
+            android:id="@+id/cbFastWrite"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Escritura Rápida (Ignorar Verificación)"
+            android:textColor="#E0E0E0"
+            android:layout_marginBottom="4dp"/>
+            
         <Button
             android:id="@+id/btnRunCustomCommand"
+
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_ejecutar_instru"
@@ -232,6 +242,19 @@
                     android:layout_gravity="center_vertical"
                     android:singleLine="true"
                     android:ellipsize="end" />
+
+                                <Button
+                    android:id="@+id/btnAbort"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/str_detener"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#D32F2F"
+                    android:minHeight="0dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:visibility="gone"
+                    android:layout_marginEnd="4dp" />
 
                 <Button
                     android:id="@+id/btnClearLogs"

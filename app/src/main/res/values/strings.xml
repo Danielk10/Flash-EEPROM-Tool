@@ -52,4 +52,5 @@
     <string name="str_opciones">Options</string>
     <string name="str_archivo">File</string>
     <string name="str_salir">Exit</string>
+    <string name="str_detener">Detener</string>
 </resources>
