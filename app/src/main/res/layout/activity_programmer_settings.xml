@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background_dark"
     android:padding="16dp">
 
     <LinearLayout
@@ -13,6 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_seleccionar_dis"
+            android:textColor="@color/text_primary"
             android:textStyle="bold"
             android:textSize="14sp"
             android:layout_marginBottom="4dp" />
@@ -29,6 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_ajustes_manuale"
+            android:textColor="@color/text_primary"
             android:textStyle="bold"
             android:textSize="14sp"
             android:layout_marginBottom="4dp" />
@@ -38,6 +42,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#9E9E9E"
             android:hint="Ej: ch341a_spi o ft2232_spi:type=2232H"
             android:layout_marginBottom="12dp" />
 
@@ -46,13 +52,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_guardar_configu"
+            app:backgroundTint="@color/btn_tint_blue"
+            android:textColor="#FFFFFF"
             android:layout_marginBottom="24dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_hardware_soport"
-            android:textColor="#388E3C"
+            android:textColor="#4CAF50"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
@@ -61,15 +69,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_asm106x_atavia_"
-            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
             android:layout_marginBottom="24dp"
-            android:lineSpacingExtra="2dp" />
+            android:lineSpacingExtra="3dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_hardware_no_sop"
-            android:textColor="#D32F2F"
+            android:textColor="#F44336"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
@@ -78,8 +87,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_atahpt_atapromi"
-            android:textSize="13sp"
-            android:lineSpacingExtra="2dp"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
             android:layout_marginBottom="16dp" />
 
     </LinearLayout>

@@ -4,12 +4,12 @@
     <string name="str_selecciona_dos_">Select two files to compare</string>
     <string name="str_archivo_a">File A</string>
     <string name="str_archivo_b">File B</string>
-    <string name="str_seleccionar_dis">Seleccionar Dispositivo (Base):</string>
-    <string name="str_ajustes_manuale">Ajustes Manuales de Parámetros (-p):</string>
-    <string name="str_guardar_configu">Guardar Configuración</string>
-    <string name="str_hardware_soport">Hardware Soportado en esta compilación:</string>
+    <string name="str_seleccionar_dis">Select Base Device:</string>
+    <string name="str_ajustes_manuale">Manual Parameter Settings (-p):</string>
+    <string name="str_guardar_configu">Save Configuration</string>
+    <string name="str_hardware_soport">Hardware Supported in this build:</string>
     <string name="str_asm106x_atavia_">asm106x, atavia, buspirate_spi, ch341a_spi, ch347_spi, dediprog, developerbox_spi, digilent_spi, dirtyjtag_spi, drkaiser, dummy, ft2232_spi, gfxnvidia, internal, it8212, jlink_spi, linux_mtd, linux_spi, mediatek_i2c_spi, mstarddc_spi, nicintel, nicintel_eeprom, nicintel_spi, nv_sma_spi, ogp_spi, parade_lspcon, pickit2_spi, pony_spi, raiden_debug_spi, realtek_mst_i2c_spi, satasii, serprog, spidriver, stlinkv3_spi, usbblaster_spi</string>
-    <string name="str_hardware_no_sop">Hardware NO SOPORTADO o Excluido:</string>
+    <string name="str_hardware_no_sop">Hardware NOT SUPPORTED or Excluded:</string>
     <string name="str_atahpt_atapromi">atahpt, atapromise, ft232r_spi, ni845x_spi, nic3com, nicnatsemi, nicrealtek, rayer_spi, satamv</string>
     <string name="str_cargando_archiv">Loading file...</string>
     <string name="str_preparando_depe">Preparing native dependencies...</string>
@@ -52,5 +52,95 @@
     <string name="str_opciones">Options</string>
     <string name="str_archivo">File</string>
     <string name="str_salir">Exit</string>
-    <string name="str_detener">Detener</string>
+    <string name="str_detener">Stop</string>
+    
+    <!-- Extracted strings from Java code -->
+    <string name="str_file_a">File A: %1$s</string>
+    <string name="str_file_b">File B: %1$s</string>
+    <string name="str_err_load_file_a">Error loading File A: %1$s</string>
+    <string name="str_err_load_file_b">Error loading File B: %1$s</string>
+    <string name="str_load_both_files">Load both files to compare.</string>
+    <string name="str_files_identical">✅ Identical files — 0 differences.</string>
+    <string name="str_files_different">⚠ %1$d bytes different (%2$.1f%%) out of %3$d total bytes.</string>
+    <string name="str_err_no_data_visualize">Error: No data to visualize.\nRead a chip or import a file.</string>
+    <string name="str_err_load_data">Error loading data: %1$s</string>
+    <string name="str_err_hex_no_records">HEX file does not contain valid data records.</string>
+    <string name="str_err_hex_too_large">HEX file too large to visualize (%1$s MB).</string>
+    <string name="str_err_parse_hex">Error parsing Intel HEX: %1$s</string>
+    <string name="str_extracting_libs">Extracting native binaries for the first time...</string>
+    <string name="str_verifying_dependencies">Verifying local dependencies...</string>
+    <string name="str_confirm_erase_title">⚠ Confirm Chip Erase</string>
+    <string name="str_confirm_erase_msg">This operation will completely ERASE the flash chip content.\n\nAll data on the chip will be lost (filled with 0xFF).\n\nAre you sure you want to continue?</string>
+    <string name="str_select_usb_device">Select USB Device</string>
+    <string name="str_status_usb_connected">Status: %1$s Connected</string>
+    <string name="str_ambiguity_title">Ambiguity Detected</string>
+    <string name="str_ambiguity_msg">flashrom detected multiple possible chips. Select the exact model:</string>
+    <string name="str_logs_copied">Logs copied to clipboard.</string>
+    <string name="str_saved">Saved: %1$s</string>
+    <string name="str_dummy_read">Read emulated chip</string>
+    <string name="str_dummy_write">Write and verify</string>
+    <string name="str_dummy_erase">Erase emulated chip</string>
+    <string name="str_dummy_probe">Identify emulated chip</string>
+    <string name="str_dummy_select_chip">Select predefined chip</string>
+    <string name="str_dummy_valid_chips">Valid chips for emulation</string>
+    <string name="str_dummy_chip_emulate">Select chip to emulate</string>
+    <string name="str_dummy_chip_selected">Chip selected for emulation: %1$s</string>
+    <string name="str_dummy_info_title">Dummy Programmer Info</string>
+    <string name="str_pinout_ch341a">CH341A — SPI Header</string>
+    <string name="str_pinout_soic8">SOIC8 / DIP8 Flash Clip</string>
+    <string name="str_pinout_arduino">Arduino UNO serprog to Flash SPI</string>
+    <string name="str_pinout_buspirate">Bus Pirate to Flash SPI</string>
+    <string name="str_pinout_spidriver">SPIDriver to Flash SPI</string>
+    <string name="str_pinout_spi_bus">SPI Bus Serial Peripheral Interface</string>
+    <string name="str_pinout_lpc_bus">LPC/FWH Bus BIOS Chips</string>
+    <string name="str_bios_internal">bios.bin (internal)</string>
+    <string name="str_compare_summary">A: %1$s (%2$d bytes) vs B: %3$s (%4$d bytes)</string>
+    <string name="str_err_open_file">Could not open the file.</string>
+    <string name="str_hex_detected">Intel HEX detected | Range: 0x%1$08X - 0x%2$08X</string>
+    <string name="str_source_label">\nSource: %1$s</string>
+    <string name="str_binary_summary">File: %1$s | Size: %2$d bytes</string>
+    <string name="str_log_new_install">--- New installation detected ---</string>
+    <string name="str_log_preparing_resources">Preparing local resources in internal storage...</string>
+    <string name="str_log_update_detected">--- Update detected (v%1$d -> v%2$d) ---</string>
+    <string name="str_log_verifying_resources">Verifying local resources for the new version...</string>
+    <string name="str_log_warn_dependencies_failed">[WARN] Failed to prepare all local dependencies.</string>
+    <string name="str_log_assets_copied">Assets copied successfully to internal storage.</string>
+    <string name="str_log_resources_verified">Resources verified and updated successfully.</string>
+    <string name="str_log_started">Flash EEPROM Tool started successfully.</string>
+    <string name="str_log_android_info">Android: %1$s (API %2$d)</string>
+    <string name="str_log_programmer_selected">Selected programmer: %1$s</string>
+    <string name="str_log_connect_help">To begin, connect your USB programmer and press \'Detect and Connect Automatically\'.</string>
+    <string name="str_yes_erase">Yes, Erase</string>
+    <string name="str_log_write_command_help">Write a command to execute. E.g.: --version or -p ch341a_spi -r bios.bin</string>
+    <string name="str_log_warn_no_usb">[WARNING] The command uses \'-p\' but no USB is connected.</string>
+    <string name="str_log_dummy_ok">If you are using \'dummy\', that is fine. For real hardware, connect the programmer first.</string>
+    <string name="str_log_terminal_reset">Terminal reset.</string>
+    <string name="str_usb_device">USB Device</string>
+    <string name="str_unknown_manufacturer">Unknown manufacturer</string>
+    <string name="str_close">Close</string>
+    <string name="str_dummy_test_mode">Dummy Programmer Test Mode</string>
+    <string name="str_dummy_info_msg">The flashrom \'dummy\' programmer is a virtual simulator.\n\nIt does NOT use real USB hardware. Ignores ANDROID_USB_FD.\n\nValid chips for emulation (v1.7.0):\n\n• VARIABLE_SIZE — Custom size (use with size=N)\n• MX25L6436 — 8 MB\n• SST25VF032B — 4 MB\n• SST25VF040.REMS — 512 KB\n• M25P10.RES — 128 KB\n\nCorrect command example:\nflashrom -p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r read_test.bin\n\n⚠ Do NOT use real chip names (e.g. W25Q128). Only the ones listed above are valid.\n\nFor real hardware, use the appropriate programmer:\n• CH341A → ch341a_spi\n• FT2232H → ft2232_spi\n• ST-Link → stlinkv3_spi</string>
+    <string name="str_log_test_file_created">Test file created: bios_test.bin (%1$d KB)</string>
+    <string name="str_pinout_ch341a_header">CH341A Mini Programmer — SPI Header</string>
+    <string name="str_pinout_soic8_header">SOIC8 / DIP8 Flash Chip — Connection to CH341A</string>
+    <string name="str_pinout_arduino_header">Arduino UNO serprog — Connection to Flash SPI</string>
+    <string name="str_pinout_buspirate_header">Bus Pirate — Connection to Flash SPI</string>
+    <string name="str_pinout_spidriver_header">SPIDriver — Connection to Flash SPI</string>
+    <string name="str_pinout_ch341a_note">⚠ Jumper 1-2: SPI  ⚠ Jumper 2-3: UART/I2C  ⚠ 3.3V ONLY</string>
+    <string name="str_pinout_soic8_note">⚠ HOLD and WP → VCC if unused  ⚠ 3.3V maximum</string>
+    <string name="str_pinout_spi_note">CPOL=0, CPHA=0 | Mode 0  |  Typical speed: 1–50 MHz</string>
+    <string name="str_pinout_lpc_note">flashrom supports LPC/FWH natively in PLCC32</string>
+    <string name="str_pinout_arduino_note">⚠ Arduino UNO is 5V — use HEF4050 level shifter to 3.3V</string>
+    <string name="str_pinout_buspirate_note">⚠ Bus Pirate v3: max ~8MHz SPI  ⚠ Power chip from Vout</string>
+    <string name="str_pinout_spidriver_note">⚠ SPIDriver operates at native 3.3V — no level shifter required</string>
+    <string name="str_pinout_pin_chip">Pin chip</string>
+    <string name="str_pinout_flash_to_ch341a">Flash Chip → CH341A</string>
+    <string name="str_pinout_clock_desc">CLK  = Clock generated by the Master</string>
+    <string name="str_pinout_cs_desc">CS   = Chip Select active low</string>
+    <string name="str_pinout_lpc_desc_fwh">FWH uses a physical protocol very similar to LPC</string>
+    <string name="str_pinout_lpc_desc_lad">LAD0-3 = Multiplexed Data/Address Bus (4 bits)</string>
+    <string name="str_pinout_lpc_desc_frame">LFRAME# = LPC cycle start active low</string>
+    <string name="str_pinout_lpc_desc_clk">LCLK    = Clock typically 33 MHz</string>
+    <string name="str_pinout_spi_conn_header">SPI Connector</string>
+    <string name="str_hint_comando">E.g. --version | -p ch341a_spi -L</string>
 </resources>

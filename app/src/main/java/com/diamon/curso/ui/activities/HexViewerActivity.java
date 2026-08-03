@@ -32,7 +32,7 @@ public class HexViewerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_hex_viewer);
 
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Visor Hexadecimal Profesional");
+            getSupportActionBar().setTitle(R.string.str_visor_hexadecim);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -67,7 +67,7 @@ public class HexViewerActivity extends AppCompatActivity {
                     dataFile = new File(getFilesDir(), "bios.bin");
                 }
                 if (!dataFile.exists()) {
-                    tvHexSummary.setText("Error: No hay datos para visualizar.\nLee un chip o importa un archivo.");
+                    tvHexSummary.setText(R.string.str_err_no_data_visualize);
                     return;
                 }
                 fileName = dataFile.getName();
@@ -81,14 +81,14 @@ public class HexViewerActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            tvHexSummary.setText("Error al cargar datos: " + e.getMessage());
+            tvHexSummary.setText(getString(R.string.str_err_load_data, e.getMessage()));
         }
     }
 
     private byte[] readUriToBytes(Uri uri) throws Exception {
         try (InputStream is = getContentResolver().openInputStream(uri)) {
             if (is == null)
-                throw new IllegalStateException("No se pudo abrir el archivo.");
+                throw new IllegalStateException(getString(R.string.str_err_open_file));
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             int nRead;
             byte[] data = new byte[16384];
@@ -100,9 +100,9 @@ public class HexViewerActivity extends AppCompatActivity {
     }
 
     private void displayBinary(byte[] data, String name, String biosSource) {
-        String summary = String.format("Archivo: %s | Tamaño: %d bytes", name, data.length);
+        String summary = getString(R.string.str_binary_summary, name, data.length);
         if (biosSource != null) {
-            summary += "\nOrigen: " + biosSource;
+            summary += getString(R.string.str_source_label, biosSource);
         }
         tvHexSummary.setText(summary);
         hexAdapter = new HexAdapter(data, 0);
@@ -141,15 +141,14 @@ public class HexViewerActivity extends AppCompatActivity {
             }
 
             if (minAddr == Long.MAX_VALUE) {
-                tvHexSummary.setText("Archivo HEX no contiene registros de datos válidos.");
+                tvHexSummary.setText(R.string.str_err_hex_no_records);
                 return;
             }
 
             // Limitar el tamaño del buffer para evitar OOM
             long bufferSize = maxAddr - minAddr;
             if (bufferSize > 32L * 1024 * 1024) { // 32 MB máximo para visualización
-                tvHexSummary.setText("Archivo HEX demasiado grande para visualizar ("
-                        + (bufferSize / 1024 / 1024) + " MB).");
+                tvHexSummary.setText(getString(R.string.str_err_hex_too_large, String.valueOf(bufferSize / 1024 / 1024)));
                 return;
             }
 
@@ -171,7 +170,7 @@ public class HexViewerActivity extends AppCompatActivity {
                     for (int i = 0; i < byteCount; i++) {
                         if (offset + i < binBuffer.length) {
                             binBuffer[offset + i] = (byte) Integer.parseInt(
-                                    line.substring(9 + i * 2, 11 + i * 2), 16);
+                                     line.substring(9 + i * 2, 11 + i * 2), 16);
                         }
                     }
                 } else if (type == 0x04 && line.length() >= 15) {
@@ -183,17 +182,16 @@ public class HexViewerActivity extends AppCompatActivity {
                 }
             }
 
-            String summary = String.format("Intel HEX detectado | Rango: 0x%08X - 0x%08X",
-                    (int) minAddr, (int) (maxAddr - 1));
+            String summary = getString(R.string.str_hex_detected, (int) minAddr, (int) (maxAddr - 1));
             if (biosSource != null) {
-                summary += "\nOrigen: " + biosSource;
+                summary += getString(R.string.str_source_label, biosSource);
             }
             tvHexSummary.setText(summary);
             hexAdapter = new HexAdapter(binBuffer, (int) minAddr);
             recyclerHex.setAdapter(hexAdapter);
 
         } catch (Exception e) {
-            tvHexSummary.setText("Error parseando Intel HEX: " + e.getMessage());
+            tvHexSummary.setText(getString(R.string.str_err_parse_hex, e.getMessage()));
         }
     }
 

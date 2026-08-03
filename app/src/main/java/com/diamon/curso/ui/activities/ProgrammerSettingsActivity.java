@@ -83,7 +83,7 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
                 value = "ch341a_spi";
             }
             prefs.edit().putString(KEY_PROGRAMMER, value).apply();
-            Toast.makeText(this, "Guardado: " + value, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.str_saved, value), Toast.LENGTH_SHORT).show();
             finish();
         });
     }

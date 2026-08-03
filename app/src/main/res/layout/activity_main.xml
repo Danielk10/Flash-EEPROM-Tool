@@ -71,6 +71,8 @@
                     android:id="@+id/btnConnect"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    app:backgroundTint="@color/btn_tint_blue"
+                    android:textColor="@color/btn_text_color"
                     android:text="@string/str_detectar_y_cone"
                     android:layout_marginBottom="4dp" />
 
@@ -86,6 +88,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:enabled="false"
+                        app:backgroundTint="@color/btn_tint_teal"
+                        android:textColor="@color/btn_text_color"
                         android:text="@string/str_identificar_chi" />
 
                     <Space
@@ -98,6 +102,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:enabled="false"
+                        app:backgroundTint="@color/btn_tint_purple"
+                        android:textColor="@color/btn_text_color"
                         android:text="@string/str_verificar_rom" />
                 </LinearLayout>
 
@@ -115,6 +121,7 @@
                         android:layout_weight="1"
                         android:enabled="false"
                         app:backgroundTint="@color/btn_tint_green"
+                        android:textColor="@color/btn_text_color"
                         android:textSize="14sp"
                         android:text="@string/str_leer_backup" />
 
@@ -130,6 +137,7 @@
                         android:layout_weight="1"
                         android:enabled="false"
                         app:backgroundTint="@color/btn_tint_red"
+                        android:textColor="@color/btn_text_color"
                         android:textSize="14sp"
                         android:text="@string/str_flashear_rom" />
                 </LinearLayout>
@@ -146,6 +154,8 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:layout_weight="1"
+                        app:backgroundTint="@color/btn_tint_grey"
+                        android:textColor="@color/btn_text_color"
                         android:textSize="14sp"
                         android:text="@string/str_cargar_rom" />
 
@@ -159,6 +169,8 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:layout_weight="1"
+                        app:backgroundTint="@color/btn_tint_grey"
+                        android:textColor="@color/btn_text_color"
                         android:textSize="14sp"
                         android:text="@string/str_guardar_rom" />
                 </LinearLayout>
@@ -178,7 +190,7 @@
                         android:enabled="false"
                         android:text="@string/str_borrar_chip"
                         app:backgroundTint="@color/btn_tint_orange"
-                        android:textColor="#FFFFFF" />
+                        android:textColor="@color/btn_text_color" />
 
                     <Space
                         android:layout_width="8dp"
@@ -192,61 +204,14 @@
                         android:minHeight="44dp"
                         android:text="@string/str_borrar_rom"
                         app:backgroundTint="@color/btn_tint_grey"
-                        android:textColor="#FFFFFF" />
-                </LinearLayout>
-
-                <!-- Nuevos botones agregados explícitamente para asegurar visibilidad de funciones principales -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="4dp">
-
-                    <Button
-                        android:id="@+id/btnProgSettings"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:minHeight="44dp"
-                        android:text="Selección de Dispositivo"
-                        app:backgroundTint="@color/btn_tint_purple"
-                        android:textColor="#FFFFFF" />
-
-                    <Space
-                        android:layout_width="8dp"
-                        android:layout_height="wrap_content"/>
-
-                    <Button
-                        android:id="@+id/btnDiagrams"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:minHeight="44dp"
-                        android:text="Ver Diagramas"
-                        app:backgroundTint="@color/btn_tint_teal"
-                        android:textColor="#FFFFFF" />
-                </LinearLayout>
-                
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="4dp">
-                    <Button
-                        android:id="@+id/btnDummy"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="44dp"
-                        android:text="Pruebas Dispositivo Virtual (Dummy)"
-                        app:backgroundTint="@color/btn_tint_brown"
-                        android:textColor="#FFFFFF" />
+                        android:textColor="@color/btn_text_color" />
                 </LinearLayout>
 
                 <EditText
                     android:id="@+id/etCustomCommand"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Ej: -p ch341a_spi -L"
+                    android:hint="@string/str_hint_comando"
                     android:inputType="text"
                     android:maxLines="1"
                     android:ellipsize="end"
@@ -271,7 +236,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/str_ejecutar_instru"
                     app:backgroundTint="@color/btn_tint_blue"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/btn_text_color"
                     android:layout_marginBottom="8dp" />
                     
             </LinearLayout>
@@ -306,7 +271,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/str_detener"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/btn_text_color"
                     app:backgroundTint="@color/btn_tint_darkred"
                     android:minHeight="0dp"
                     android:paddingTop="4dp"

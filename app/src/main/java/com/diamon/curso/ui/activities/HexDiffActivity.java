@@ -30,8 +30,8 @@ public class HexDiffActivity extends AppCompatActivity {
 
     private byte[] dataA = null;
     private byte[] dataB = null;
-    private String nameA = "Archivo A";
-    private String nameB = "Archivo B";
+    private String nameA = "";
+    private String nameB = "";
 
     private final ActivityResultLauncher<Intent> file1Launcher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -42,10 +42,10 @@ public class HexDiffActivity extends AppCompatActivity {
                         try {
                             dataA = readUriToBytes(uri);
                             nameA = getFileName(uri);
-                            btnLoadFile1.setText("A: " + nameA);
+                            btnLoadFile1.setText(getString(R.string.str_file_a, nameA));
                             tryCompare();
                         } catch (Exception e) {
-                            tvDiffSummary.setText("Error cargando Archivo A: " + e.getMessage());
+                            tvDiffSummary.setText(getString(R.string.str_err_load_file_a, e.getMessage()));
                         }
                     }
                 }
@@ -60,10 +60,10 @@ public class HexDiffActivity extends AppCompatActivity {
                         try {
                             dataB = readUriToBytes(uri);
                             nameB = getFileName(uri);
-                            btnLoadFile2.setText("B: " + nameB);
+                            btnLoadFile2.setText(getString(R.string.str_file_b, nameB));
                             tryCompare();
                         } catch (Exception e) {
-                            tvDiffSummary.setText("Error cargando Archivo B: " + e.getMessage());
+                            tvDiffSummary.setText(getString(R.string.str_err_load_file_b, e.getMessage()));
                         }
                     }
                 }
@@ -74,8 +74,11 @@ public class HexDiffActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hex_diff);
 
+        nameA = getString(R.string.str_archivo_a);
+        nameB = getString(R.string.str_archivo_b);
+
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Comparar HEX (Diff)");
+            getSupportActionBar().setTitle(R.string.str_comparar_hex);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -91,8 +94,8 @@ public class HexDiffActivity extends AppCompatActivity {
         if (biosFile.exists()) {
             try {
                 dataA = java.nio.file.Files.readAllBytes(biosFile.toPath());
-                nameA = "bios.bin (interno)";
-                btnLoadFile1.setText("A: " + nameA);
+                nameA = getString(R.string.str_bios_internal);
+                btnLoadFile1.setText(getString(R.string.str_file_a, nameA));
             } catch (Exception ignored) {
             }
         }
@@ -114,7 +117,7 @@ public class HexDiffActivity extends AppCompatActivity {
 
     private void tryCompare() {
         if (dataA == null || dataB == null) {
-            tvDiffSummary.setText("Carga ambos archivos para comparar.");
+            tvDiffSummary.setText(R.string.str_load_both_files);
             return;
         }
 
@@ -129,17 +132,15 @@ public class HexDiffActivity extends AppCompatActivity {
                 diffCount++;
         }
 
-        tvDiffSummary.setText(String.format("A: %s (%d bytes) vs B: %s (%d bytes)",
-                nameA, dataA.length, nameB, dataB.length));
+        tvDiffSummary.setText(getString(R.string.str_compare_summary, nameA, dataA.length, nameB, dataB.length));
 
         tvDiffStats.setVisibility(View.VISIBLE);
         if (diffCount == 0) {
-            tvDiffStats.setText("✅ Archivos idénticos — 0 diferencias.");
+            tvDiffStats.setText(R.string.str_files_identical);
             tvDiffStats.setTextColor(0xFF4CAF50);
         } else {
             double pct = (diffCount * 100.0) / maxLen;
-            tvDiffStats.setText(String.format("⚠ %d bytes diferentes (%.1f%%) de %d bytes totales.",
-                    diffCount, pct, maxLen));
+            tvDiffStats.setText(getString(R.string.str_files_different, diffCount, pct, maxLen));
             tvDiffStats.setTextColor(0xFFFF5252);
         }
 
@@ -149,7 +150,7 @@ public class HexDiffActivity extends AppCompatActivity {
     private byte[] readUriToBytes(Uri uri) throws Exception {
         try (InputStream is = getContentResolver().openInputStream(uri)) {
             if (is == null)
-                throw new IllegalStateException("No se pudo abrir el archivo.");
+                throw new IllegalStateException(getString(R.string.str_err_open_file));
             
             android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
             if (cursor != null && cursor.moveToFirst()) {

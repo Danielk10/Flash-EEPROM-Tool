@@ -9,7 +9,7 @@
 
     <item
         android:id="@+id/action_hex_diff"
-        android:title="Comparar HEX (Diff)"
+        android:title="Comparar archivos HEX"
         app:showAsAction="never" />
 
     <item
@@ -24,7 +24,7 @@
 
     <item
         android:id="@+id/action_dummy_test"
-        android:title="Modo Prueba (Dummy)"
+        android:title="Modo de prueba"
         app:showAsAction="never" />
 
     <item

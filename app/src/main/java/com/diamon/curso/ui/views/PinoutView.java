@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.widget.ImageView;
+import com.diamon.curso.R;
 
 /**
  * PinoutView: dibuja diagramas de pinout de hardware usando
@@ -27,92 +28,93 @@ public class PinoutView {
     private static final int COL_SPI = 0xFF66BB6A;
     private static final int COL_CHIP = 0xFF1565C0;
 
-    private static final int W = 520;
-    private static final int H = 380;
+    private static final int W = 800;
+    private static final int H = 550;
     
     private static final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public static void dibujarCH341A(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "CH341A Mini Programmer — Header SPI");
-        dibujarChipSOIC8(canvas, 40, 90, new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" }, true);
-        dibujarPinHeader(canvas, 290, 90, new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" });
-        dibujarNota(canvas, "⚠ Jumper 1-2: SPI  ⚠ Jumper 2-3: UART/I2C  ⚠ SOLO 3.3V");
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_ch341a_header));
+        dibujarChipSOIC8(canvas, 90, 100, new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" }, true);
+        dibujarPinHeader(canvas, 360, 100, ctx.getString(R.string.str_pinout_spi_conn_header), new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" });
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_ch341a_note));
         aplicar(bmp, target);
     }
 
     public static void dibujarSOIC8(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "Chip Flash SOIC8 / DIP8 — Conexión a CH341A");
-        dibujarChipSOIC8(canvas, 54, 90, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
-        dibujarFlecha(canvas, 270, 190);
-        dibujarTablaConexion(canvas, 310, 80,
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_soic8_header));
+        dibujarChipSOIC8(canvas, 90, 100, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
+        dibujarFlecha(canvas, 310, 200);
+        dibujarTablaConexion(canvas, 360, 90,
+                ctx.getString(R.string.str_pinout_flash_to_ch341a), ctx.getString(R.string.str_pinout_pin_chip),
                 new String[] { "1-CS", "2-DO", "3-WP", "4-GND", "5-DI", "6-CLK", "7-HOLD", "8-VCC" },
-                new String[] { "1-CS", "2-MISO", "3-WP(VCC)", "4-GND", "5-MOSI", "6-CLK", "7-HOLD(VCC)", "8-VCC" });
-        dibujarNota(canvas, "⚠ HOLD y WP → VCC si no se usan  ⚠ 3.3V máximo");
+                new String[] { "1-CS", "2-MISO", "3-WP (VCC)", "4-GND", "5-MOSI", "6-CLK", "7-HOLD (VCC)", "8-VCC" });
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_soic8_note));
         aplicar(bmp, target);
     }
 
     public static void dibujarSPI(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "Bus SPI — Serial Peripheral Interface");
-        dibujarBusSPI(canvas);
-        dibujarNota(canvas, "CPOL=0, CPHA=0 (Modo 0)  |  Velocidad típica: 1–50 MHz");
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_spi_bus));
+        dibujarBusSPI(ctx, canvas);
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_spi_note));
         aplicar(bmp, target);
     }
 
     public static void dibujarLPC(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "Bus LPC / FWH — (Chips BIOS)");
-        dibujarBusLPC(canvas);
-        dibujarNota(canvas, "flashrom soporta LPC/FWH de forma nativa (PLCC32)");
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_lpc_bus));
+        dibujarBusLPC(ctx, canvas);
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_lpc_note));
         aplicar(bmp, target);
     }
 
     public static void dibujarArduinoSerprog(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "Arduino UNO (serprog) — Conexión a Flash SPI");
-        dibujarChipSOIC8(canvas, 54, 55, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
-        dibujarFlecha(canvas, 270, 155);
-        dibujarTablaConexionGeneral(canvas, 310, 50,
-                "Flash Chip", "Arduino UNO",
-                new String[] { "1-CS", "2-DO(MISO)", "3-WP", "4-GND", "5-DI(MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_arduino_header));
+        dibujarChipSOIC8(canvas, 90, 65, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
+        dibujarFlecha(canvas, 310, 165);
+        dibujarTablaConexionGeneral(canvas, 360, 60,
+                "Flash Chip", "Arduino UNO", ctx.getString(R.string.str_pinout_pin_chip),
+                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "Pin 10 (SS)", "Pin 12 (MISO)", "3.3V", "GND", "Pin 11 (MOSI)", "Pin 13 (SCK)", "3.3V",
                         "3.3V" });
-        dibujarNota(canvas, "⚠ Arduino UNO es 5V — usar level shifter (HEF4050) a 3.3V");
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_arduino_note));
         aplicar(bmp, target);
     }
 
     public static void dibujarBusPirate(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "Bus Pirate — Conexión a Flash SPI");
-        dibujarChipSOIC8(canvas, 54, 55, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
-        dibujarFlecha(canvas, 270, 155);
-        dibujarTablaConexionGeneral(canvas, 310, 50,
-                "Flash Chip", "Bus Pirate",
-                new String[] { "1-CS", "2-DO(MISO)", "3-WP", "4-GND", "5-DI(MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_buspirate_header));
+        dibujarChipSOIC8(canvas, 90, 65, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
+        dibujarFlecha(canvas, 310, 165);
+        dibujarTablaConexionGeneral(canvas, 360, 60,
+                "Flash Chip", "Bus Pirate", ctx.getString(R.string.str_pinout_pin_chip),
+                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "CS", "MISO", "3.3V", "GND", "MOSI", "CLK", "3.3V", "3.3V (Vout)" });
-        dibujarNota(canvas, "⚠ Bus Pirate v3: max ~8MHz SPI  ⚠ Alimentar chip desde Vout");
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_buspirate_note));
         aplicar(bmp, target);
     }
 
     public static void dibujarSPIDriver(Context ctx, ImageView target) {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
-        dibujarHeaderPinout(canvas, "SPIDriver — Conexión a Flash SPI");
-        dibujarChipSOIC8(canvas, 54, 55, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
-        dibujarFlecha(canvas, 270, 155);
-        dibujarTablaConexionGeneral(canvas, 310, 50,
-                "Flash Chip", "SPIDriver",
-                new String[] { "1-CS", "2-DO(MISO)", "3-WP", "4-GND", "5-DI(MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+        dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_spidriver_header));
+        dibujarChipSOIC8(canvas, 90, 65, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
+        dibujarFlecha(canvas, 310, 165);
+        dibujarTablaConexionGeneral(canvas, 360, 60,
+                "Flash Chip", "SPIDriver", ctx.getString(R.string.str_pinout_pin_chip),
+                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "CS (A)", "MISO", "3.3V", "GND", "MOSI", "SCK", "3.3V", "3.3V" });
-        dibujarNota(canvas, "⚠ SPIDriver opera a 3.3V nativo — no requiere level shifter");
+        dibujarNota(canvas, ctx.getString(R.string.str_pinout_spidriver_note));
         aplicar(bmp, target);
     }
 
@@ -124,22 +126,22 @@ public class PinoutView {
 
     private static void dibujarHeaderPinout(Canvas g, String titulo) {
         g.drawColor(COL_BG);
-        dibujarRectangulo(g, 0, 0, W, 32, 0xFF1A237E);
+        dibujarRectangulo(g, 0, 0, W, 36, 0xFF1A237E);
         configurarTexto(15f, true);
-        dibujarTexto(g, titulo, 12, 22, COL_TITULO);
-        dibujarLinea(g, 0, 32, W, 32, COL_BORDE);
+        dibujarTexto(g, titulo, 12, 24, COL_TITULO);
+        dibujarLinea(g, 0, 36, W, 36, COL_BORDE);
     }
 
     private static void dibujarNota(Canvas g, String nota) {
-        dibujarRectangulo(g, 0, H - 26, W, 26, 0xFF1A1C27);
-        dibujarLinea(g, 0, H - 26, W, H - 26, COL_AVISO);
+        dibujarRectangulo(g, 0, H - 30, W, 30, 0xFF1A1C27);
+        dibujarLinea(g, 0, H - 30, W, H - 30, COL_AVISO);
         configurarTexto(11f, false);
-        dibujarTexto(g, nota, 8, H - 9, COL_AVISO);
+        dibujarTexto(g, nota, 8, H - 11, COL_AVISO);
     }
 
     private static void dibujarChipSOIC8(Canvas g, float x, float y,
             String[] pines, boolean conPunto) {
-        float CW = 100, CH = 170;
+        float CW = 100, CH = 180;
         float pinW = 22, pinH = 16, gap = (CH - 4 * pinH) / 5f;
 
         dibujarRectangulo(g, x, y, CW, CH, COL_CHIP);
@@ -183,10 +185,10 @@ public class PinoutView {
         }
     }
 
-    private static void dibujarPinHeader(Canvas g, float x, float y, String[] etiquetas) {
+    private static void dibujarPinHeader(Canvas g, float x, float y, String label, String[] etiquetas) {
         float pH = 20, pW = 14, espacio = 4;
         configurarTexto(11f, true);
-        dibujarTexto(g, "Conector SPI", x, y - 6, COL_LABEL);
+        dibujarTexto(g, label, x, y - 6, COL_LABEL);
         for (int i = 0; i < 8; i++) {
             float py = y + i * (pH + espacio);
             dibujarRectangulo(g, x, py, pW, pH, COL_PANEL);
@@ -198,8 +200,8 @@ public class PinoutView {
         }
     }
 
-    private static void dibujarBusSPI(Canvas g) {
-        float mx = 50, sy = 70, bW = 140, bH = 160;
+    private static void dibujarBusSPI(Context ctx, Canvas g) {
+        float mx = 60, sy = 70, bW = 140, bH = 160;
 
         dibujarRectangulo(g, mx, sy, bW, bH, COL_CHIP);
         bordes(g, mx, sy, bW, bH, COL_BORDE);
@@ -208,7 +210,7 @@ public class PinoutView {
         configurarTexto(10f, false);
         dibujarTexto(g, "CH341A", mx + 35, sy + 35, COL_LABEL);
 
-        float sx = mx + bW + 120;
+        float sx = 400;
         dibujarRectangulo(g, sx, sy, bW, bH, 0xFF1B5E20);
         bordes(g, sx, sy, bW, bH, COL_BORDE);
         configurarTexto(12f, true);
@@ -232,7 +234,9 @@ public class PinoutView {
             } else {
                 flecha(g, midX + 6, fy, midX - 8, fy, cols[i]);
             }
-            dibujarTexto(g, sigs[i], midX - 14, fy - 4, cols[i]);
+            float offset = 15;
+            if ("MISO".equals(sigs[i]) || "MOSI".equals(sigs[i])) offset = 18;
+            dibujarTexto(g, sigs[i], midX - offset, fy - 4, cols[i]);
             dibujarTexto(g, sigs[i], mx + bW - 38, fy + 4, cols[i]);
             String slaveLabel = esEntrada[i] ? "→" + sigs[i] : sigs[i] + "→";
             dibujarTexto(g, slaveLabel, sx + 4, fy + 4, cols[i]);
@@ -241,27 +245,27 @@ public class PinoutView {
         configurarTexto(10f, false);
         dibujarTexto(g, "MOSI = Master Out Slave In", 20, sy + bH + 22, COL_LABEL);
         dibujarTexto(g, "MISO = Master In Slave Out", 20, sy + bH + 36, COL_LABEL);
-        dibujarTexto(g, "CLK  = Reloj (genera Master)", 20, sy + bH + 50, COL_LABEL);
-        dibujarTexto(g, "CS   = Chip Select (bajo = activo)", 280, sy + bH + 22, COL_LABEL);
+        dibujarTexto(g, ctx.getString(R.string.str_pinout_clock_desc), 20, sy + bH + 50, COL_LABEL);
+        dibujarTexto(g, ctx.getString(R.string.str_pinout_cs_desc), 310, sy + bH + 22, COL_LABEL);
     }
 
-    private static void dibujarBusLPC(Canvas g) {
-        float mx = 50, sy = 70, bW = 140, bH = 160;
+    private static void dibujarBusLPC(Context ctx, Canvas g) {
+        float mx = 60, sy = 70, bW = 140, bH = 160;
 
         dibujarRectangulo(g, mx, sy, bW, bH, COL_CHIP);
         bordes(g, mx, sy, bW, bH, COL_BORDE);
         configurarTexto(12f, true);
         dibujarTexto(g, "HOST / CPU", mx + 20, sy + 20, COL_TITULO);
         configurarTexto(10f, false);
-        dibujarTexto(g, "(Southbridge)", mx + 15, sy + 35, COL_LABEL);
+        dibujarTexto(g, "Southbridge", mx + 22, sy + 35, COL_LABEL);
 
-        float sx = mx + bW + 120;
+        float sx = 400;
         dibujarRectangulo(g, sx, sy, bW, bH, 0xFF1B5E20);
         bordes(g, sx, sy, bW, bH, COL_BORDE);
         configurarTexto(12f, true);
         dibujarTexto(g, "BIOS CHIP", sx + 25, sy + 20, COL_TITULO);
         configurarTexto(10f, false);
-        dibujarTexto(g, "(LPC / FWH)", sx + 20, sy + 35, COL_LABEL);
+        dibujarTexto(g, "LPC / FWH", sx + 32, sy + 35, COL_LABEL);
 
         String[] sigs = { "LAD0-LAD3", "LFRAME#", "LCLK", "LRESET#" };
         int[] cols = { 0xFF29B6F6, 0xFFCE93D8, 0xFFFFCA28, COL_AVISO };
@@ -279,25 +283,30 @@ public class PinoutView {
             } else {
                 flecha(g, midX - 6, fy, midX + 8, fy, cols[i]);
             }
-            dibujarTexto(g, sigs[i], midX - 25, fy - 4, cols[i]);
+            float offset = 15;
+            if (i == 0) offset = 35;
+            else if (i == 1) offset = 28;
+            else if (i == 3) offset = 28;
+            dibujarTexto(g, sigs[i], midX - offset, fy - 4, cols[i]);
             dibujarTexto(g, sigs[i], mx + bW - 45, fy + 4, cols[i]);
             dibujarTexto(g, sigs[i], sx + 4, fy + 4, cols[i]);
         }
 
         configurarTexto(10f, false);
-        dibujarTexto(g, "LAD0-3 = Bus multiplexado Datos/Dir (4 bits)", 20, sy + bH + 22, COL_LABEL);
-        dibujarTexto(g, "LFRAME# = Inicio de ciclo LPC (activo en bajo)", 20, sy + bH + 36, COL_LABEL);
-        dibujarTexto(g, "LCLK    = Reloj típicamente 33 MHz", 20, sy + bH + 50, COL_LABEL);
-        dibujarTexto(g, "FWH usa un protocolo físico muy similar a LPC", 20, sy + bH + 64, 0xFF90CAF9);
+        dibujarTexto(g, ctx.getString(R.string.str_pinout_lpc_desc_lad), 20, sy + bH + 22, COL_LABEL);
+        dibujarTexto(g, ctx.getString(R.string.str_pinout_lpc_desc_frame), 20, sy + bH + 36, COL_LABEL);
+        dibujarTexto(g, ctx.getString(R.string.str_pinout_lpc_desc_clk), 20, sy + bH + 50, COL_LABEL);
+        dibujarTexto(g, ctx.getString(R.string.str_pinout_lpc_desc_fwh), 20, sy + bH + 64, 0xFF90CAF9);
     }
 
     private static void dibujarTablaConexion(Canvas g, float x, float y,
+            String label, String pinChipLabel,
             String[] col1, String[] col2) {
         float rowH = 22, col1W = 80, col2W = 100;
         configurarTexto(11f, true);
-        dibujarTexto(g, "Flash Chip → CH341A", x, y - 6, COL_LABEL);
+        dibujarTexto(g, label, x, y - 6, COL_LABEL);
         dibujarRectangulo(g, x, y, col1W + col2W, rowH, 0xFF1A237E);
-        dibujarTexto(g, "Pin chip", x + 4, y + 15, COL_TITULO);
+        dibujarTexto(g, pinChipLabel, x + 4, y + 15, COL_TITULO);
         dibujarTexto(g, "CH341A", x + col1W + 4, y + 15, COL_TITULO);
         for (int i = 0; i < col1.length; i++) {
             float ry = y + (i + 1) * rowH;
@@ -310,13 +319,13 @@ public class PinoutView {
     }
 
     private static void dibujarTablaConexionGeneral(Canvas g, float x, float y,
-            String headerLeft, String headerRight,
+            String headerLeft, String headerRight, String pinChipLabel,
             String[] col1, String[] col2) {
         float rowH = 22, col1W = 80, col2W = 110;
         configurarTexto(11f, true);
         dibujarTexto(g, headerLeft + " → " + headerRight, x, y - 6, COL_LABEL);
         dibujarRectangulo(g, x, y, col1W + col2W, rowH, 0xFF1A237E);
-        dibujarTexto(g, "Pin chip", x + 4, y + 15, COL_TITULO);
+        dibujarTexto(g, pinChipLabel, x + 4, y + 15, COL_TITULO);
         dibujarTexto(g, headerRight, x + col1W + 4, y + 15, COL_TITULO);
         for (int i = 0; i < col1.length; i++) {
             float ry = y + (i + 1) * rowH;
