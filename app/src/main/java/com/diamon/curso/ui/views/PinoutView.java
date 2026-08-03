@@ -38,10 +38,14 @@ public class PinoutView {
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_ch341a_header));
         canvas.save();
-        canvas.translate(74, 10);
+        canvas.translate(-13, 4);
         canvas.scale(1.45f, 1.45f);
-        dibujarChipSOIC8(canvas, 90, 100, new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" }, true);
-        dibujarPinHeader(canvas, 360, 100, ctx.getString(R.string.str_pinout_spi_conn_header), new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" });
+        dibujarChipSOIC8(canvas, 90, 100, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
+        dibujarFlecha(canvas, 310, 200);
+        dibujarTablaConexionGeneral(canvas, 360, 90,
+                "Flash Chip", "CH341A SPI", ctx.getString(R.string.str_pinout_pin_chip),
+                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+                new String[] { "1-CS", "2-MISO", "3-WP (VCC)", "4-GND", "5-MOSI", "6-CLK", "7-HOLD (VCC)", "8-VCC" });
         canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_ch341a_note));
         aplicar(bmp, target);
