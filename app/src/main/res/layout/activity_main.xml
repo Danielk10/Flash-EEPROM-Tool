@@ -23,7 +23,8 @@
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/secondary" />
 
         <TextView
             android:id="@+id/tvLoadingText"
@@ -264,7 +265,7 @@
                     android:id="@+id/cbVerifyWrite"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Verificar escritura (Recomendado)"
+                    android:text="Verificar escritura"
                     android:textColor="#E0E0E0"
                     android:checked="true"
                     android:layout_marginBottom="2dp"/>
