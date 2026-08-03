@@ -7,17 +7,17 @@ Este reporte documenta los archivos y carpetas dentro de `app/src/main/assets/da
 
 Los siguientes recursos correspondían a cabeceras de compilación, configuraciones de enlazadores y documentación, que no son empleados en tiempo de ejecución en Android por `flashrom` ni por las utilidades de `pciutils`.
 
-**A. Cabeceras y Archivos de Código Fuente C/C++**
-*   **Ruta:** `usr/include/` (Directorio completo)
+**A. Cabeceras y Archivos de Código Fuente C/C++ (NDK)**
+*   **Ruta Original:** `usr/include/` (Directorio completo)
 *   **Descripción:** Contenía cabeceras `.h` de libflashrom, libftdi1, libjaylink, libusb-1.0 y pciutils.
-*   **Razón:** Solo se necesitan durante el tiempo de compilación nativa en Termux. El ejecutable del APK no enlaza cabeceras.
-*   **Ahorro de espacio:** ~450 KB
+*   **Razón de exclusión en assets:** Solo se necesitan durante el tiempo de desarrollo y compilación nativa (NDK) del proyecto Android. No se eliminaron, sino que deben ir en el entorno de desarrollo NDK del proyecto Android ya que el ejecutable del APK no requiere cabeceras en tiempo de ejecución. Los originales se mantienen de referencia en `fake_root`.
+*   **Ahorro de espacio en APK:** ~450 KB
 
-**B. Librerías Estáticas (.a)**
-*   **Ruta:** `usr/lib/*.a` (Múltiples archivos)
+**B. Librerías Estáticas (.a) (NDK)**
+*   **Ruta Original:** `usr/lib/*.a` (Múltiples archivos)
 *   **Descripción:** `libflashrom.a`, `libftdi1.a`, `libftdipp1.a`, `libjaylink.a`, `libusb-1.0.a`.
-*   **Razón:** Las librerías estáticas ya están enlazadas y compiladas dentro de los ejecutables PIE (`flashrom`, `lspci`) o librerías `.so`. No se usan en runtime por Android.
-*   **Ahorro de espacio:** ~2.1 MB
+*   **Razón de exclusión en assets:** Al igual que las cabeceras, estas librerías son para desarrollo NDK y deben ir en el lugar correcto del proyecto Android para compilación. No se usan en runtime por Android. Los originales se mantienen en `fake_root`.
+*   **Ahorro de espacio en APK:** ~2.1 MB
 
 **C. Archivos de Configuración de Desarrollo y CMake/PkgConfig**
 *   **Rutas:** `usr/lib/cmake/` y `usr/lib/pkgconfig/`

@@ -310,7 +310,6 @@ public class AssetHelper {
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libusb-1.0.so");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libjaylink.so");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libcrypto.so.3");
-        ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libssl.so.3");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libz.so.1");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libconfuse.so");
         ok &= linkRuntimeSoname(usrLib, nativeLibDir, "libc++_shared.so");
@@ -324,10 +323,6 @@ public class AssetHelper {
         // Validación mínima de dependencias críticas para herramientas principales.
         if (!ensurePresent(new File(usrLib, "libcrypto.so.3"))) {
             Log.e(TAG, "Falta libcrypto.so.3 en runtime");
-            ok = false;
-        }
-        if (!ensurePresent(new File(usrLib, "libssl.so.3"))) {
-            Log.e(TAG, "Falta libssl.so.3 en runtime");
             ok = false;
         }
         if (!ensurePresent(new File(usrLib, "libconfuse.so"))) {
