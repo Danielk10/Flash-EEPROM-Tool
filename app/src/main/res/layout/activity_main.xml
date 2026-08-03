@@ -50,7 +50,7 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="2.2">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -71,10 +71,15 @@
                     android:id="@+id/btnConnect"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="38dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
                     app:backgroundTint="@color/btn_tint_blue"
                     android:textColor="@color/btn_text_color"
                     android:text="@string/str_detectar_y_cone"
-                    android:layout_marginBottom="4dp" />
+                    android:layout_marginBottom="3dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -88,6 +93,11 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:enabled="false"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         app:backgroundTint="@color/btn_tint_teal"
                         android:textColor="@color/btn_text_color"
                         android:text="@string/str_identificar_chi" />
@@ -102,6 +112,11 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:enabled="false"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         app:backgroundTint="@color/btn_tint_purple"
                         android:textColor="@color/btn_text_color"
                         android:text="@string/str_verificar_rom" />
@@ -117,7 +132,11 @@
                         android:id="@+id/btnRead"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         android:layout_weight="1"
                         android:enabled="false"
                         app:backgroundTint="@color/btn_tint_green"
@@ -133,7 +152,11 @@
                         android:id="@+id/btnWrite"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         android:layout_weight="1"
                         android:enabled="false"
                         app:backgroundTint="@color/btn_tint_red"
@@ -152,7 +175,11 @@
                         android:id="@+id/btnImport"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         android:layout_weight="1"
                         app:backgroundTint="@color/btn_tint_grey"
                         android:textColor="@color/btn_text_color"
@@ -167,7 +194,11 @@
                         android:id="@+id/btnExport"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         android:layout_weight="1"
                         app:backgroundTint="@color/btn_tint_grey"
                         android:textColor="@color/btn_text_color"
@@ -186,7 +217,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:minHeight="44dp"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         android:enabled="false"
                         android:text="@string/str_borrar_chip"
                         app:backgroundTint="@color/btn_tint_orange"
@@ -201,7 +236,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:minHeight="44dp"
+                        android:minHeight="38dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
                         android:text="@string/str_borrar_rom"
                         app:backgroundTint="@color/btn_tint_grey"
                         android:textColor="@color/btn_text_color" />
@@ -216,10 +255,10 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:background="#1B1E2B"
-                    android:padding="8dp"
+                    android:padding="6dp"
                     android:textColorHint="#757575"
                     android:textColor="#4DB6AC"
-                    android:layout_marginBottom="4dp" />
+                    android:layout_marginBottom="3dp" />
 
                 <CheckBox
                     android:id="@+id/cbVerifyWrite"
@@ -228,16 +267,21 @@
                     android:text="Verificar escritura (Recomendado)"
                     android:textColor="#E0E0E0"
                     android:checked="true"
-                    android:layout_marginBottom="4dp"/>
+                    android:layout_marginBottom="2dp"/>
 
                 <Button
                     android:id="@+id/btnRunCustomCommand"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="38dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
                     android:text="@string/str_ejecutar_instru"
                     app:backgroundTint="@color/btn_tint_blue"
                     android:textColor="@color/btn_text_color"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="4dp" />
                     
             </LinearLayout>
         </ScrollView>
@@ -295,7 +339,7 @@
             android:id="@+id/scrollLog"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_weight="0.8"
             android:background="#0A0E17"
             android:padding="8dp">
 

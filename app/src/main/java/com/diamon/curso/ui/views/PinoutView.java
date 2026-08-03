@@ -37,8 +37,12 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_ch341a_header));
+        canvas.save();
+        canvas.translate(74, 10);
+        canvas.scale(1.45f, 1.45f);
         dibujarChipSOIC8(canvas, 90, 100, new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" }, true);
         dibujarPinHeader(canvas, 360, 100, ctx.getString(R.string.str_pinout_spi_conn_header), new String[] { "CS", "MISO", "WP", "GND", "MOSI", "CLK", "HOLD", "VCC" });
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_ch341a_note));
         aplicar(bmp, target);
     }
@@ -47,12 +51,16 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_soic8_header));
+        canvas.save();
+        canvas.translate(-13, 4);
+        canvas.scale(1.45f, 1.45f);
         dibujarChipSOIC8(canvas, 90, 100, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
         dibujarFlecha(canvas, 310, 200);
         dibujarTablaConexion(canvas, 360, 90,
                 ctx.getString(R.string.str_pinout_flash_to_ch341a), ctx.getString(R.string.str_pinout_pin_chip),
                 new String[] { "1-CS", "2-DO", "3-WP", "4-GND", "5-DI", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "1-CS", "2-MISO", "3-WP (VCC)", "4-GND", "5-MOSI", "6-CLK", "7-HOLD (VCC)", "8-VCC" });
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_soic8_note));
         aplicar(bmp, target);
     }
@@ -61,7 +69,11 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_spi_bus));
+        canvas.save();
+        canvas.translate(-6, 14);
+        canvas.scale(1.45f, 1.45f);
         dibujarBusSPI(ctx, canvas);
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_spi_note));
         aplicar(bmp, target);
     }
@@ -70,7 +82,11 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_lpc_bus));
+        canvas.save();
+        canvas.translate(-6, 14);
+        canvas.scale(1.45f, 1.45f);
         dibujarBusLPC(ctx, canvas);
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_lpc_note));
         aplicar(bmp, target);
     }
@@ -79,6 +95,9 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_arduino_header));
+        canvas.save();
+        canvas.translate(-20, 47);
+        canvas.scale(1.45f, 1.45f);
         dibujarChipSOIC8(canvas, 90, 65, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
         dibujarFlecha(canvas, 310, 165);
         dibujarTablaConexionGeneral(canvas, 360, 60,
@@ -86,6 +105,7 @@ public class PinoutView {
                 new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "Pin 10 (SS)", "Pin 12 (MISO)", "3.3V", "GND", "Pin 11 (MOSI)", "Pin 13 (SCK)", "3.3V",
                         "3.3V" });
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_arduino_note));
         aplicar(bmp, target);
     }
@@ -94,12 +114,16 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_buspirate_header));
+        canvas.save();
+        canvas.translate(-20, 47);
+        canvas.scale(1.45f, 1.45f);
         dibujarChipSOIC8(canvas, 90, 65, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
         dibujarFlecha(canvas, 310, 165);
         dibujarTablaConexionGeneral(canvas, 360, 60,
                 "Flash Chip", "Bus Pirate", ctx.getString(R.string.str_pinout_pin_chip),
                 new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "CS", "MISO", "3.3V", "GND", "MOSI", "CLK", "3.3V", "3.3V (Vout)" });
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_buspirate_note));
         aplicar(bmp, target);
     }
@@ -108,12 +132,16 @@ public class PinoutView {
         Bitmap bmp = crearBitmap();
         Canvas canvas = new Canvas(bmp);
         dibujarHeaderPinout(canvas, ctx.getString(R.string.str_pinout_spidriver_header));
+        canvas.save();
+        canvas.translate(-20, 47);
+        canvas.scale(1.45f, 1.45f);
         dibujarChipSOIC8(canvas, 90, 65, new String[] { "CS", "DO", "WP", "GND", "DI", "CLK", "HOLD", "VCC" }, false);
         dibujarFlecha(canvas, 310, 165);
         dibujarTablaConexionGeneral(canvas, 360, 60,
                 "Flash Chip", "SPIDriver", ctx.getString(R.string.str_pinout_pin_chip),
                 new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "CS (A)", "MISO", "3.3V", "GND", "MOSI", "SCK", "3.3V", "3.3V" });
+        canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_spidriver_note));
         aplicar(bmp, target);
     }

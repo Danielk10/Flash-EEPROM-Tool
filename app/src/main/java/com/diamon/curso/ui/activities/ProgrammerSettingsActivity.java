@@ -48,15 +48,26 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
         String current = prefs.getString(KEY_PROGRAMMER, "ch341a_spi");
         etProgrammerParam.setText(current);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_item,
                 SUPPORTED_PROGRAMMERS);
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spinnerProgrammer.setAdapter(adapter);
 
         // Intentar pre-seleccionar el programador base que el usuario ya tenia guardado
+        boolean found = false;
         for (int i = 0; i < SUPPORTED_PROGRAMMERS.length; i++) {
             if (current != null && current.startsWith(SUPPORTED_PROGRAMMERS[i])) {
                 spinnerProgrammer.setSelection(i);
+                found = true;
                 break;
+            }
+        }
+        if (!found) {
+            for (int i = 0; i < SUPPORTED_PROGRAMMERS.length; i++) {
+                if ("ch341a_spi".equals(SUPPORTED_PROGRAMMERS[i])) {
+                    spinnerProgrammer.setSelection(i);
+                    break;
+                }
             }
         }
 
