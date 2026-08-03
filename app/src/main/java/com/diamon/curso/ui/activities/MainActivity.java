@@ -185,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
     private static final Pattern PROGRESS_PATTERN = Pattern.compile("(\\d{1,3})\\s*%");
     private Button btnConnect, btnProbe, btnVerify, btnRead, btnWrite, btnImport, btnExport;
     private Button btnRunCustomCommand, btnClearLogs, btnQuickClear, btnEraseChip, btnAbort;
+    private Button btnProgSettings, btnDiagrams, btnDummy;
     private android.widget.CheckBox cbVerifyWrite;
     private Process currentFlashromProcess;
     private EditText etCustomCommand;
@@ -338,9 +339,16 @@ public class MainActivity extends AppCompatActivity {
         btnRunCustomCommand = findViewById(R.id.btnRunCustomCommand);
         btnClearLogs = findViewById(R.id.btnClearLogs);
         btnAbort = findViewById(R.id.btnAbort);
+        btnProgSettings = findViewById(R.id.btnProgSettings);
+        btnDiagrams = findViewById(R.id.btnDiagrams);
+        btnDummy = findViewById(R.id.btnDummy);
         cbVerifyWrite = findViewById(R.id.cbVerifyWrite);
-        btnAbort.setOnClickListener(v -> abortFlashromProcess());
         etCustomCommand = findViewById(R.id.etCustomCommand);
+
+        btnAbort.setOnClickListener(v -> abortFlashromProcess());
+        btnProgSettings.setOnClickListener(v -> startActivity(new Intent(this, ProgrammerSettingsActivity.class)));
+        btnDiagrams.setOnClickListener(v -> showPinoutsDialog());
+        btnDummy.setOnClickListener(v -> showDummyTestDialog());
 
         clearTransientRomState(false);
 
