@@ -12,6 +12,7 @@
         <item name="android:statusBarColor">@color/primary_variant</item>
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnSurface">@color/white</item>
         
         <!-- Text Colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>

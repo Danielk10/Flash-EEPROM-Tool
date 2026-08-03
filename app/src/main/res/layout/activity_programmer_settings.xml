@@ -21,7 +21,9 @@
             android:id="@+id/spinnerProgrammer"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="12dp"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark"
+            android:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
 
         <TextView
             android:layout_width="match_parent"

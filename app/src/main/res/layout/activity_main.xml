@@ -114,7 +114,7 @@
                         android:minHeight="48dp"
                         android:layout_weight="1"
                         android:enabled="false"
-                        android:backgroundTint="#4CAF50"
+                        app:backgroundTint="@color/btn_tint_green"
                         android:textSize="14sp"
                         android:text="@string/str_leer_backup" />
 
@@ -129,7 +129,7 @@
                         android:minHeight="48dp"
                         android:layout_weight="1"
                         android:enabled="false"
-                        android:backgroundTint="#F44336"
+                        app:backgroundTint="@color/btn_tint_red"
                         android:textSize="14sp"
                         android:text="@string/str_flashear_rom" />
                 </LinearLayout>
@@ -177,7 +177,7 @@
                         android:minHeight="44dp"
                         android:enabled="false"
                         android:text="@string/str_borrar_chip"
-                        android:backgroundTint="#FF9800"
+                        app:backgroundTint="@color/btn_tint_orange"
                         android:textColor="#FFFFFF" />
 
                     <Space
@@ -191,7 +191,7 @@
                         android:layout_weight="1"
                         android:minHeight="44dp"
                         android:text="@string/str_borrar_rom"
-                        android:backgroundTint="#616161"
+                        app:backgroundTint="@color/btn_tint_grey"
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
 
@@ -209,7 +209,7 @@
                         android:layout_weight="1"
                         android:minHeight="44dp"
                         android:text="Selección de Dispositivo"
-                        android:backgroundTint="#673AB7"
+                        app:backgroundTint="@color/btn_tint_purple"
                         android:textColor="#FFFFFF" />
 
                     <Space
@@ -223,7 +223,7 @@
                         android:layout_weight="1"
                         android:minHeight="44dp"
                         android:text="Ver Diagramas"
-                        android:backgroundTint="#009688"
+                        app:backgroundTint="@color/btn_tint_teal"
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
                 
@@ -238,7 +238,7 @@
                         android:layout_height="wrap_content"
                         android:minHeight="44dp"
                         android:text="Pruebas Dispositivo Virtual (Dummy)"
-                        android:backgroundTint="#795548"
+                        app:backgroundTint="@color/btn_tint_brown"
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
 
@@ -270,7 +270,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/str_ejecutar_instru"
-                    android:backgroundTint="#1976D2"
+                    app:backgroundTint="@color/btn_tint_blue"
                     android:textColor="#FFFFFF"
                     android:layout_marginBottom="8dp" />
                     
@@ -307,7 +307,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/str_detener"
                     android:textColor="#FFFFFF"
-                    android:backgroundTint="#D32F2F"
+                    app:backgroundTint="@color/btn_tint_darkred"
                     android:minHeight="0dp"
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp"

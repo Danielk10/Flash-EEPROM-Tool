@@ -1384,7 +1384,7 @@ public class MainActivity extends AppCompatActivity {
                 final String[] finalOldArgs = args;
                 runOnUiThread(() -> {
                     String[] items = suggestedChips.toArray(new String[0]);
-                    new android.app.AlertDialog.Builder(MainActivity.this)
+                    new android.app.AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                         .setTitle("Ambigüedad Detectada")
                         .setMessage("flashrom detectó múltiples chips posibles. Selecciona el modelo exacto:")
                         .setItems(items, (dialog, which) -> {
@@ -1629,7 +1629,7 @@ public class MainActivity extends AppCompatActivity {
         // Permitir que el texto tome el color por defecto (adapta al Dark theme)
         aboutText.setMovementMethod(LinkMovementMethod.getInstance());
         String aboutHtml = "<h2>Flash EEPROM Tool</h2>"
-                + "<p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (SPI/I2C/NAND) con <b>flashrom</b> nativo.</p>"
+                + "<p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI/EEPROM) con <b>flashrom</b> nativo.</p>"
                 + "<hr>"
                 + "<b>Licencia del proyecto:</b> GPLv3.<br/><br/>"
                 + "<b>Dependencias Nativas Integradas:</b><br/>"
@@ -1637,9 +1637,7 @@ public class MainActivity extends AppCompatActivity {
                 + "• <a href='https://github.com/pciutils/pciutils'>pciutils</a> (GPL-2.0+)<br/>"
                 + "• <a href='https://developer.intra2net.com/git/libftdi'>libftdi</a> (LGPL-2.1+)<br/>"
                 + "• <a href='https://gitlab.zapb.de/libjaylink/libjaylink'>libjaylink</a> (GPL-2.0+)<br/>"
-                + "• <a href='https://github.com/flashrom/flashrom'>flashrom</a> (GPL-2.0)<br/>"
-                + "• <a href='https://github.com/stefanct/ch341eeprom'>ch341eeprom</a> (GPL-3.0+)<br/>"
-                + "• <a href='https://github.com/mik3y/usb-serial-for-android'>usb-serial-for-android</a> (MIT)<br/><br/>"
+                + "• <a href='https://github.com/flashrom/flashrom'>flashrom</a> (GPL-2.0)<br/><br/>"
                 + "<b>Proyectos Relacionados del Desarrollador:</b><br/>"
                 + "• <a href='https://github.com/Danielk10/PIC-k150-Programing'>PIC k150 Programming</a> — Programador de PIC vía Android con protocolo P018A<br/>";
 
