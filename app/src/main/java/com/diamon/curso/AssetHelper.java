@@ -374,6 +374,10 @@ public class AssetHelper {
         Set<String> candidates = new LinkedHashSet<>();
         candidates.add(runtimeSoname);
 
+        if ("libusb-1.0.so".equals(runtimeSoname)) {
+            candidates.add("libusb_1_0.so");
+        }
+
         int soMarker = runtimeSoname.indexOf(".so.");
         if (soMarker > 0) {
             String base = runtimeSoname.substring(0, soMarker);

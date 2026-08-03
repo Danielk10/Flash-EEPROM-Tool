@@ -24,8 +24,8 @@ Todas las dependencias listadas en el reporte han sido verificadas dentro de `jn
 
 | Binario | Dependencias Exigidas (DT_NEEDED) | Estado en `arm64-v8a` / App |
 |---|---|---|
-| **`flashrom`** | `libcrypto.so.3`, `libpci.so.3`, `libusb-1.0.so`, `libftdi1.so.2`, `libjaylink.so`, `libc.so` | ✅ Todas las dependencias presentes. (`libcrypto_3.so`, `libpci_3.so`, `libftdi1_2.so`, etc.) |
-| **`ftdi_eeprom`** | `liblog.so`, `libftdi1.so.2`, `libconfuse.so`, `libusb-1.0.so`, `libdl.so`, `libc.so` | ✅ Todas las dependencias presentes. |
+| **`flashrom`** | `libcrypto.so.3`, `libpci.so.3`, `libusb-1.0.so`, `libftdi1.so.2`, `libjaylink.so`, `libc.so` | ✅ Todas las dependencias presentes. (`libcrypto_3.so`, `libpci_3.so`, `libusb_1_0.so`, `libftdi1_2.so`, etc.) |
+| **`ftdi_eeprom`** | `liblog.so`, `libftdi1.so.2`, `libconfuse.so`, `libusb-1.0.so`, `libdl.so`, `libc.so` | ✅ Todas las dependencias presentes. (`libusb_1_0.so`, etc.) |
 | **`lspci`** | `libpci.so.3`, `libdl.so`, `libc.so` | ✅ Todas las dependencias presentes. |
 | **`pcilmr`** | `libpci.so.3`, `libdl.so`, `libc.so` | ✅ Todas las dependencias presentes. |
 | **`setpci`** | `libpci.so.3`, `libdl.so`, `libc.so` | ✅ Todas las dependencias presentes. |
