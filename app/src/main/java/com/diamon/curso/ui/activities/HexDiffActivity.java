@@ -149,11 +149,30 @@ public class HexDiffActivity extends AppCompatActivity {
     private byte[] readUriToBytes(Uri uri) throws Exception {
         try (InputStream is = getContentResolver().openInputStream(uri)) {
             if (is == null)
-                throw new IllegalStateException("No se pudo abrir.");
+                throw new IllegalStateException("No se pudo abrir el archivo.");
+            
+            android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int sizeIdx = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                if (sizeIdx >= 0) {
+                    long size = cursor.getLong(sizeIdx);
+                    if (size > 16 * 1024 * 1024) {
+                        cursor.close();
+                        throw new IllegalArgumentException("El archivo es demasiado grande (>16MB). Imposible comparar en memoria.");
+                    }
+                }
+                cursor.close();
+            }
+
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             byte[] buf = new byte[16384];
             int nRead;
+            long totalRead = 0;
             while ((nRead = is.read(buf)) != -1) {
+                totalRead += nRead;
+                if (totalRead > 16 * 1024 * 1024) {
+                    throw new IllegalArgumentException("El archivo excede el límite de 16MB. Imposible comparar en memoria.");
+                }
                 buffer.write(buf, 0, nRead);
             }
             return buffer.toByteArray();
