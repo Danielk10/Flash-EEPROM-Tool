@@ -1,0 +1,71 @@
+.TH "libusb_version" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_version \- Structure providing the version of the libusb runtime\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "uint16_t \fBmajor\fP"
+.br
+.RI "Library major version\&. "
+.ti -1c
+.RI "uint16_t \fBminor\fP"
+.br
+.RI "Library minor version\&. "
+.ti -1c
+.RI "uint16_t \fBmicro\fP"
+.br
+.RI "Library micro version\&. "
+.ti -1c
+.RI "uint16_t \fBnano\fP"
+.br
+.RI "Library nano version\&. "
+.ti -1c
+.RI "const char * \fBrc\fP"
+.br
+.RI "Library release candidate suffix string, e\&.g\&. "
+.ti -1c
+.RI "const char * \fBdescribe\fP"
+.br
+.RI "Human-readable build identifier\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+Structure providing the version of the libusb runtime\&. 
+.SH "Field Documentation"
+.PP 
+.SS "uint16_t libusb_version::nano"
+
+.PP
+Library nano version\&. Deprecated since 1\&.0\&.31: this value is frozen and no longer updated per build\&. Use \fBlibusb_version::describe\fP for a unique-per-build identifier\&. 
+.SS "const char* libusb_version::rc"
+
+.PP
+Library release candidate suffix string, e\&.g\&. "-rc4"\&. 
+.SS "const char* libusb_version::describe"
+
+.PP
+Human-readable build identifier\&. Examples: "v1\&.0\&.30" (release), "v1\&.0\&.30-42-g77503a7" (git build), "v1\&.0\&.30-42-g77503a7-dirty" (git build with uncommitted changes), or "Unknown source (\&.\&.\&.)" (built outside both a git checkout and a release tarball)\&.
+
+.PP
+Guarantees:
+.IP "\(bu" 2
+never NULL;
+.IP "\(bu" 2
+intended for display, logs and bug reports; the overall format is not stable, do not parse;
+.IP "\(bu" 2
+if the string does not start with "Unknown" and does not end with "-dirty", it is a valid revision identifier accepted by \fRgit rev-parse\fP / \fRgit checkout\fP against the libusb repository, allowing the exact source tree to be recovered\&. 
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.

@@ -1,0 +1,46 @@
+.TH "libusb_bos_dev_capability_descriptor" 3 "Sun Aug 2 2026 13:25:33" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+libusb_bos_dev_capability_descriptor \- A generic representation of a BOS Device Capability descriptor\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <libusb\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "uint8_t \fBbLength\fP"
+.br
+.RI "Size of this descriptor (in bytes)\&. "
+.ti -1c
+.RI "uint8_t \fBbDescriptorType\fP"
+.br
+.RI "Descriptor type\&. "
+.ti -1c
+.RI "uint8_t \fBbDevCapabilityType\fP"
+.br
+.RI "Device Capability type\&. "
+.ti -1c
+.RI "uint8_t \fBdev_capability_data\fP [LIBUSB_FLEXIBLE_ARRAY]"
+.br
+.RI "Device Capability data (bLength - 3 bytes)\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+A generic representation of a BOS Device Capability descriptor\&. 
+
+It is advised to check bDevCapabilityType and call the matching libusb_get_*_descriptor function to get a structure fully matching the type\&. 
+.SH "Field Documentation"
+.PP 
+.SS "uint8_t libusb_bos_dev_capability_descriptor::bDescriptorType"
+
+.PP
+Descriptor type\&. Will have value \fBlibusb_descriptor_type::LIBUSB_DT_DEVICE_CAPABILITY\fP LIBUSB_DT_DEVICE_CAPABILITY in this context\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libusb from the source code\&.
