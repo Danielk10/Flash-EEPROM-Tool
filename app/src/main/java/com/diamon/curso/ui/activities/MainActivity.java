@@ -420,84 +420,64 @@ public class MainActivity extends AppCompatActivity {
 
         log("--- Aplicación Iniciada ---");
 
-        // Lógica de inicio: primera instalación vs. aperturas posteriores
+        // Lógica de inicio: mostrar siempre la barra de progreso mientras se verifican o extraen los recursos
         int currentVersion = getVersionCode();
         int lastVersion = getSharedPreferences(PREFS, MODE_PRIVATE).getInt(KEY_LAST_VERSION, -1);
-        boolean assetsReady = AssetHelper.areAssetsExtracted(getApplicationContext());
-        boolean skipLoading = assetsReady && (currentVersion == lastVersion);
 
-        if (skipLoading) {
-            // --- APERTURA POSTERIOR: UI inmediata, sin barra de progreso ---
-            layoutMainUI.setVisibility(View.VISIBLE);
-            layoutLoading.setVisibility(View.GONE);
-            log("Sistema flashrom y assets listos.");
+        layoutMainUI.setVisibility(View.GONE);
+        layoutLoading.setVisibility(View.VISIBLE);
 
-            // Verificación silenciosa en background (solo repara enlaces/pci.ids si faltan)
-            executor.execute(() -> {
-                // Limpieza de directorios erróneos
-                File buggedDir = new File(getFilesDir(), "usr/usr");
-                if (buggedDir.exists()) {
-                    deleteRecursively(buggedDir);
-                }
-                AssetHelper.ensureRuntimeReady(getApplicationContext());
-            });
-        } else {
-            // --- PRIMERA INSTALACIÓN / ACTUALIZACIÓN / DATOS BORRADOS ---
-            layoutMainUI.setVisibility(View.GONE);
-            layoutLoading.setVisibility(View.VISIBLE);
+        executor.execute(() -> {
+            // Limpieza de directorios erróneos
+            File buggedDir = new File(getFilesDir(), "usr/usr");
+            if (buggedDir.exists()) {
+                deleteRecursively(buggedDir);
+                Log.d("MainActivity", "Carpeta residual usr/usr eliminada automáticamente.");
+            }
 
-            executor.execute(() -> {
-                // Limpieza de directorios erróneos
-                File buggedDir = new File(getFilesDir(), "usr/usr");
-                if (buggedDir.exists()) {
-                    deleteRecursively(buggedDir);
-                    Log.d("MainActivity", "Carpeta residual usr/usr eliminada automáticamente.");
-                }
+            boolean wasExtracted = AssetHelper.areAssetsExtracted(getApplicationContext());
+            if (!wasExtracted) {
+                runOnUiThread(() -> tvLoadingText.setText(R.string.str_extracting_libs));
+            } else {
+                runOnUiThread(() -> tvLoadingText.setText(R.string.str_verifying_dependencies));
+            }
 
-                boolean wasExtracted = AssetHelper.areAssetsExtracted(getApplicationContext());
+            boolean runtimeReady = AssetHelper.ensureRuntimeReady(getApplicationContext());
+
+            runOnUiThread(() -> {
+                layoutLoading.setVisibility(View.GONE);
+                layoutMainUI.setVisibility(View.VISIBLE);
+
+                boolean isUpdate = (lastVersion != -1 && currentVersion != lastVersion);
                 if (!wasExtracted) {
-                    runOnUiThread(() -> tvLoadingText.setText(R.string.str_extracting_libs));
-                } else {
-                    runOnUiThread(() -> tvLoadingText.setText(R.string.str_verifying_dependencies));
+                    log(getString(R.string.str_log_new_install));
+                    log(getString(R.string.str_log_preparing_resources));
+                } else if (isUpdate) {
+                    log(getString(R.string.str_log_update_detected, lastVersion, currentVersion));
+                    log(getString(R.string.str_log_verifying_resources));
                 }
 
-                boolean runtimeReady = AssetHelper.ensureRuntimeReady(getApplicationContext());
+                // Mostrar información útil para el usuario
+                logRuntimeInfo();
 
-                runOnUiThread(() -> {
-                    layoutLoading.setVisibility(View.GONE);
-                    layoutMainUI.setVisibility(View.VISIBLE);
-
-                    boolean isUpdate = (lastVersion != -1 && currentVersion != lastVersion);
+                if (!runtimeReady) {
+                    log(getString(R.string.str_log_warn_dependencies_failed));
+                } else {
                     if (!wasExtracted) {
-                        log(getString(R.string.str_log_new_install));
-                        log(getString(R.string.str_log_preparing_resources));
-                    } else if (isUpdate) {
-                        log(getString(R.string.str_log_update_detected, lastVersion, currentVersion));
-                        log(getString(R.string.str_log_verifying_resources));
-                    }
-
-                    // Mostrar información útil para el usuario
-                    logRuntimeInfo();
-
-                    if (!runtimeReady) {
-                        log(getString(R.string.str_log_warn_dependencies_failed));
+                        log(getString(R.string.str_log_assets_copied));
                     } else {
-                        if (!wasExtracted) {
-                            log(getString(R.string.str_log_assets_copied));
-                        } else {
-                            log(getString(R.string.str_log_resources_verified));
-                        }
-                        // Guardar versión actual tras éxito
-                        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_LAST_VERSION, currentVersion)
-                                .apply();
+                        log(getString(R.string.str_log_resources_verified));
                     }
+                    // Guardar versión actual tras éxito
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_LAST_VERSION, currentVersion)
+                            .apply();
+                }
 
-                    // Forzar actualización inmediata del log tras la carga
-                    logHandler.removeCallbacks(logUpdater);
-                    logUpdater.run();
-                });
+                // Forzar actualización inmediata del log tras la carga
+                logHandler.removeCallbacks(logUpdater);
+                logUpdater.run();
             });
-        }
+        });
 
         // Setup Broadcast Receiver via UsbController
         usbController.registerReceiver();
