@@ -202,11 +202,12 @@
 
         
         <CheckBox
-            android:id="@+id/cbFastWrite"
+            android:id="@+id/cbVerifyWrite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Escritura Rápida (Ignorar Verificación)"
+            android:text="Verificar escritura (Recomendado)"
             android:textColor="#E0E0E0"
+            android:checked="true"
             android:layout_marginBottom="4dp"/>
             
         <Button

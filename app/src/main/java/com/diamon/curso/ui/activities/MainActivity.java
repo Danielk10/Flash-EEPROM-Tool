@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
     private static final Pattern PROGRESS_PATTERN = Pattern.compile("(\\d{1,3})\\s*%");
     private Button btnConnect, btnProbe, btnVerify, btnRead, btnWrite, btnImport, btnExport;
     private Button btnRunCustomCommand, btnClearLogs, btnQuickClear, btnEraseChip, btnAbort;
-    private android.widget.CheckBox cbFastWrite;
+    private android.widget.CheckBox cbVerifyWrite;
     private Process currentFlashromProcess;
     private EditText etCustomCommand;
 
@@ -338,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
         btnRunCustomCommand = findViewById(R.id.btnRunCustomCommand);
         btnClearLogs = findViewById(R.id.btnClearLogs);
         btnAbort = findViewById(R.id.btnAbort);
-        cbFastWrite = findViewById(R.id.cbFastWrite);
+        cbVerifyWrite = findViewById(R.id.cbVerifyWrite);
         btnAbort.setOnClickListener(v -> abortFlashromProcess());
         etCustomCommand = findViewById(R.id.etCustomCommand);
 
@@ -1330,11 +1330,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             
-            if (cbFastWrite != null && cbFastWrite.isChecked() && opLabel.equals("Escribiendo flash")) {
+            if (cbVerifyWrite != null && !cbVerifyWrite.isChecked() && opLabel.equals("Escribiendo flash")) {
                 List<String> newArgs = new ArrayList<>(Arrays.asList(args));
                 newArgs.add("-n");
                 args = newArgs.toArray(new String[0]);
-                log("Fast Write activado: Saltando verificación (-n)");
+                log("Verificación deshabilitada: Saltando paso de verificación (-n)");
             }
             final String operationLabel = opLabel;
 
