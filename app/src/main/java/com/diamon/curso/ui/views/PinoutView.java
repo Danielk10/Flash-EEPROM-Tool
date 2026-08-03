@@ -44,7 +44,7 @@ public class PinoutView {
         dibujarFlecha(canvas, 310, 200);
         dibujarTablaConexionGeneral(canvas, 360, 90,
                 "Flash Chip", "CH341A SPI", ctx.getString(R.string.str_pinout_pin_chip),
-                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+                new String[] { "1-CS", "2-DO", "3-WP", "4-GND", "5-DI", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "1-CS", "2-MISO", "3-WP (VCC)", "4-GND", "5-MOSI", "6-CLK", "7-HOLD (VCC)", "8-VCC" });
         canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_ch341a_note));
@@ -106,7 +106,7 @@ public class PinoutView {
         dibujarFlecha(canvas, 310, 165);
         dibujarTablaConexionGeneral(canvas, 360, 60,
                 "Flash Chip", "Arduino UNO", ctx.getString(R.string.str_pinout_pin_chip),
-                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+                new String[] { "1-CS", "2-DO", "3-WP", "4-GND", "5-DI", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "Pin 10 (SS)", "Pin 12 (MISO)", "3.3V", "GND", "Pin 11 (MOSI)", "Pin 13 (SCK)", "3.3V",
                         "3.3V" });
         canvas.restore();
@@ -125,7 +125,7 @@ public class PinoutView {
         dibujarFlecha(canvas, 310, 165);
         dibujarTablaConexionGeneral(canvas, 360, 60,
                 "Flash Chip", "Bus Pirate", ctx.getString(R.string.str_pinout_pin_chip),
-                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+                new String[] { "1-CS", "2-DO", "3-WP", "4-GND", "5-DI", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "CS", "MISO", "3.3V", "GND", "MOSI", "CLK", "3.3V", "3.3V (Vout)" });
         canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_buspirate_note));
@@ -143,7 +143,7 @@ public class PinoutView {
         dibujarFlecha(canvas, 310, 165);
         dibujarTablaConexionGeneral(canvas, 360, 60,
                 "Flash Chip", "SPIDriver", ctx.getString(R.string.str_pinout_pin_chip),
-                new String[] { "1-CS", "2-DO (MISO)", "3-WP", "4-GND", "5-DI (MOSI)", "6-CLK", "7-HOLD", "8-VCC" },
+                new String[] { "1-CS", "2-DO", "3-WP", "4-GND", "5-DI", "6-CLK", "7-HOLD", "8-VCC" },
                 new String[] { "CS (A)", "MISO", "3.3V", "GND", "MOSI", "SCK", "3.3V", "3.3V" });
         canvas.restore();
         dibujarNota(canvas, ctx.getString(R.string.str_pinout_spidriver_note));
