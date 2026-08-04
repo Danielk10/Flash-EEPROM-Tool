@@ -51,7 +51,7 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="2.2">
+            android:layout_weight="1.0">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -282,7 +282,7 @@
                     android:text="@string/str_ejecutar_instru"
                     app:backgroundTint="@color/btn_tint_blue"
                     android:textColor="@color/btn_text_color"
-                    android:layout_marginBottom="4dp" />
+                    android:layout_marginBottom="2dp" />
                     
             </LinearLayout>
         </ScrollView>
@@ -340,7 +340,7 @@
             android:id="@+id/scrollLog"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.8"
+            android:layout_weight="1.8"
             android:background="#0A0E17"
             android:padding="8dp">
 
