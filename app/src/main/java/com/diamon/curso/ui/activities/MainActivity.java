@@ -1140,10 +1140,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void appendLogOnUi(String message) {
-        String time = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-                .format(new java.util.Date());
         synchronized (logBuffer) {
-            logBuffer.append("\n[").append(time).append("] ").append(message);
+            if (logBuffer.length() > 0 || tvLog.length() > 0) {
+                logBuffer.append("\n");
+            }
+            logBuffer.append(message);
             if (!isLogUpdatePending) {
                 isLogUpdatePending = true;
                 logHandler.postDelayed(logUpdater, 150);
