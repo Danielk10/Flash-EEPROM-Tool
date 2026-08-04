@@ -80,11 +80,6 @@ public class FlashromExecutor {
             env.put("LD_LIBRARY_PATH", jniLibs + ":" + new File(context.getFilesDir(), "usr/lib").getAbsolutePath());
             env.put("PATH", jniLibs + (fallbackPath != null ? ":" + fallbackPath : ""));
 
-            String fdLogValue = needsPty
-                    ? "NO DEFINIDO (" + selectedProgrammer + " por PTY)"
-                    : (currentFd >= 0 ? String.valueOf(currentFd) : "NO DEFINIDO");
-            callback.log("Ejecutando: flashrom " + String.join(" ", command));
-
             synchronized (this) {
                 currentProcess = pb.start();
             }
@@ -96,7 +91,7 @@ public class FlashromExecutor {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(currentProcess.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    callback.log("[native] " + line);
+                    callback.log(line);
 
                     if (line.contains("Multiple flash chip definitions match")) {
                         multipleChipsFound = true;

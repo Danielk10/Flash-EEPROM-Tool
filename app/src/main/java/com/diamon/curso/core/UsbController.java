@@ -78,6 +78,7 @@ public class UsbController {
         put("2341:0001", "serprog");
         put("1a86:7523", "serprog");
         put("10c4:ea60", "serprog");
+        put("067b:2303", "serprog");
     }};
 
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {

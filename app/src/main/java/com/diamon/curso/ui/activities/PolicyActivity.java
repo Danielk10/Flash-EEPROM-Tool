@@ -18,7 +18,7 @@ public class PolicyActivity extends AppCompatActivity {
         setContentView(R.layout.activity_policy);
 
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Política de Privacidad");
+            getSupportActionBar().setTitle(R.string.str_polticas_de_pri);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 

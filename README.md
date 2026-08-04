@@ -6,7 +6,7 @@
 [![Flashrom](https://img.shields.io/badge/flashrom-integrado-orange)](https://github.com/flashrom/flashrom)
 [![Licencia](https://img.shields.io/badge/Licencia-GPLv3-blue)](./LICENSE.txt)
 
-Aplicación Android para lectura/escritura/verificación de memorias **SPI e I2C** usando **flashrom** y librerías nativas compiladas para **ARM64**.
+Aplicación Android para lectura/escritura/verificación de memorias **SPI, LPC/FWH y MTD** usando **flashrom** y librerías nativas compiladas para **ARM64**.
 Soporta programadores **USB directos** (CH341A, FT2232, Dediprog, etc.) vía libusb parcheada y programadores **seriales** (serprog/Arduino, Bus Pirate, SPIDriver) vía puente PTY↔USB.
 
 > Nombre visible de la app: **Flash EEPROM Tool**.
@@ -162,7 +162,7 @@ La app detecta automáticamente el programador USB conectado usando un mapa de *
 | Bus Pirate | `0403:6001` | `buspirate_spi` | **PTY** |
 | ST-Link | `0483:3748`–`3754` | `stlinkv3_spi` | libusb |
 | J-Link | `1366:0101/0105`, `1fc9:000c` | `jlink_spi` | libusb |
-| Serprog | `2341:0043/0001`, `1a86:7523`, `10c4:ea60` | `serprog` | **PTY** |
+| Serprog | `2341:0043/0001`, `1a86:7523`, `10c4:ea60`, `067b:2303` | `serprog` | **PTY** |
 
 ### Flujo de detección
 
@@ -304,7 +304,7 @@ Guía de referencia rápida accesible desde el menú con diagramas renderizados:
 - **Bus Pirate** — conexión Flash SPI a header Bus Pirate con alimentación Vout.
 - **SPIDriver** — conexión Flash SPI a SPIDriver (3.3V nativo).
 - **Interfaz SPI** — diagrama de conexión Master-Slave.
-- **Interfaz I2C** — diagrama de bus con pull-ups y pinout de EEPROM.
+- **Interfaz LPC/FWH** — diagrama de bus LPC para chips de bios de motherboard.
 
 ### Puente PTY↔USB para Programadores Seriales
 - `PtyBridge.java` maneja la comunicación serial entre flashrom y dispositivos USB-serial.

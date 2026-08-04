@@ -24,7 +24,7 @@
     <string name="str_borrar_chip">Borrar Chip</string>
     <string name="str_borrar_rom">Borrar ROM</string>
     <string name="str_ejecutar_instru">Ejecutar Instrucción por Consola</string>
-    <string name="str_terminal_salida">Terminal Salida:</string>
+    <string name="str_terminal_salida">Terminal</string>
     <string name="str_limpiar">Limpiar</string>
     <string name="str__log_">--- Log ---</string>
     <string name="str_00000000">00000000</string>
@@ -126,7 +126,7 @@
     <string name="str_pinout_arduino_header">Arduino UNO serprog — Conexión a Flash SPI</string>
     <string name="str_pinout_buspirate_header">Bus Pirate — Conexión a Flash SPI</string>
     <string name="str_pinout_spidriver_header">SPIDriver — Conexión a Flash SPI</string>
-    <string name="str_pinout_ch341a_note">⚠ Jumper 1-2: SPI  ⚠ Jumper 2-3: UART/I2C  ⚠ SOLO 3.3V</string>
+    <string name="str_pinout_ch341a_note">⚠ Jumper 1-2: SPI  ⚠ Jumper 2-3: TTL/UART  ⚠ SOLO 3.3V</string>
     <string name="str_pinout_soic8_note">⚠ HOLD y WP → VCC si no se usan  ⚠ 3.3V máximo</string>
     <string name="str_pinout_spi_note">CPOL=0, CPHA=0 | Modo 0  |  Velocidad típica: 1–50 MHz</string>
     <string name="str_pinout_lpc_note">flashrom soporta LPC/FWH de forma nativa en PLCC32</string>

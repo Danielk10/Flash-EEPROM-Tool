@@ -51,10 +51,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Collections;
@@ -129,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
             put("2341:0001", "serprog"); // Uno R3
             put("1a86:7523", "serprog"); // CH340 clones
             put("10c4:ea60", "serprog"); // CP2102
+            put("067b:2303", "serprog"); // Prolific PL2303
         }
     };
 
@@ -356,7 +355,6 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 if (exitCode == 0) {
-                    MainActivity.this.log("[PROCESO TERMINADO] Exit Code: " + exitCode + " (OK)\n");
                     for (int i = 0; i < args.length; i++) {
                         if ("-r".equals(args[i]) && i + 1 < args.length) {
                             String readFile = args[i + 1];
@@ -370,11 +368,9 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 } else {
-                    MainActivity.this.log("[PROCESO TERMINADO] Exit Code: " + exitCode + " (ERROR)");
                     if (UsbController.needsPtyBridge(selectedProgrammer) && usbController.getPtyBridge() != null) {
                         MainActivity.this.log("[DIAG PtyBridge] " + usbController.getPtyBridge().getDiagnosticReport());
                     }
-                    MainActivity.this.log("");
                 }
             }
 
@@ -653,7 +649,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnClearLogs.setOnClickListener(v -> {
-            tvLog.setText(R.string.str__log_);
+            synchronized (logBuffer) {
+                logBuffer.setLength(0);
+            }
+            tvLog.setText("");
             log(getString(R.string.str_log_terminal_reset));
         });
     }
@@ -1054,11 +1053,7 @@ public class MainActivity extends AppCompatActivity {
             log("Fallo crítico: Binario 'flashrom' no existe. (" + preferredFlashromBin.getAbsolutePath() + ")");
             return;
         }
-        log("Comando manual solicitado: flashrom " + String.join(" ", args));
-
-        if (!usbController.isConnected()) {
-            log("Ejecutando sin USB conectado: útil para comandos como --version, -L o --help.");
-        }
+        log("$ flashrom " + String.join(" ", args));
 
         flashromExecutor.execute(preferredFlashromBin, args, usbController.getCurrentFd(),
                 UsbController.needsPtyBridge(detectedSerialProg != null ? detectedSerialProg : ""),
@@ -1110,9 +1105,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        log("------------\n[INICIANDO OPERACIÓN] flashrom " + String.join(" ", resolvedArgs));
-        log("Directorio de trabajo: " + getFilesDir().getAbsolutePath());
-        log("Binario objetivo: " + preferredFlashromBin.getAbsolutePath());
+        log("$ flashrom " + String.join(" ", args));
 
         // Configurar si saltar verificación en escritura
         String opLabel = "";
@@ -1274,7 +1267,8 @@ public class MainActivity extends AppCompatActivity {
                 + "<p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI/EEPROM) con <b>flashrom</b> nativo.</p>"
                 + "<hr>"
                 + "<b>Licencia del proyecto:</b> GPLv3.<br/><br/>"
-                + "<b>Dependencias Nativas Integradas:</b><br/>"
+                + "<b>Dependencias y Librerías:</b><br/>"
+                + "• <a href='https://github.com/mik3y/usb-serial-for-android'>usb-serial-for-android</a> (MIT)<br/>"
                 + "• <a href='https://github.com/libusb/libusb'>libusb</a> (LGPL-2.1+)<br/>"
                 + "• <a href='https://github.com/pciutils/pciutils'>pciutils</a> (GPL-2.0+)<br/>"
                 + "• <a href='https://developer.intra2net.com/git/libftdi'>libftdi</a> (LGPL-2.1+)<br/>"
@@ -1292,9 +1286,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         new android.app.AlertDialog.Builder(this)
-                .setTitle("Acerca de")
+                .setTitle(R.string.str_acerca_de)
                 .setView(aboutText)
-                .setPositiveButton("Cerrar", null)
+                .setPositiveButton(R.string.str_close, null)
                 .show();
     }
 

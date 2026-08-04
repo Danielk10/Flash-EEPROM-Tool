@@ -38,7 +38,7 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_programmer_settings);
 
-        setTitle("Configuración de Programador");
+        setTitle(R.string.str_configuracin_de);
 
         etProgrammerParam = findViewById(R.id.etProgrammerParam);
         btnSaveProgrammer = findViewById(R.id.btnSaveProgrammer);
