@@ -22,3 +22,7 @@ local.properties
 *.keystore
 keystore.properties
 
+*.json
+
+*.apk
+*.aab
