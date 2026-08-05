@@ -33,11 +33,6 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_about"
-        android:title="Acerca de"
-        app:showAsAction="never" />
-        
-    <item
         android:id="@+id/action_export_serprog"
         android:title="@string/menu_export_serprog"
         app:showAsAction="never" />
@@ -45,5 +40,10 @@
     <item
         android:id="@+id/action_policy"
         android:title="Política de Privacidad"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="Acerca de"
         app:showAsAction="never" />
 </menu>

@@ -1280,7 +1280,7 @@ public class MainActivity extends AppCompatActivity {
         // Permitir que el texto tome el color por defecto (adapta al Dark theme)
         aboutText.setMovementMethod(LinkMovementMethod.getInstance());
         String aboutHtml = "<h2>Flash EEPROM Tool</h2>"
-                + "<p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI/EEPROM) con <b>flashrom</b> nativo.</p>"
+                + "<p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI) con <b>flashrom</b> nativo.</p>"
                 + "<hr>"
                 + "<b>Licencia del proyecto:</b> GPLv3.<br/><br/>"
                 + "<b>Dependencias y Librerías:</b><br/>"
@@ -1409,7 +1409,7 @@ public class MainActivity extends AppCompatActivity {
                 "Escribir y verificar",
                 "Borrar chip emulado",
                 "Identificar chip emulado",
-                "Seleccionar chip predefinido (" + DUMMY_CHIPS[selectedDummyChipIndex][0] + ")",
+                "Seleccionar chip predefinido",
                 "Chips válidos para emulación"
         };
 
