@@ -1170,11 +1170,20 @@ address of the card you want to use with the <code class="docutils literal notra
 <section id="linux-mtd-programmer">
 <h3>linux_mtd programmer<a class="headerlink" href="#linux-mtd-programmer" title="Link to this heading">¶</a></h3>
 <p>You may specify the MTD device to use with the:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">linux_mtd</span><span class="p">:</span><span class="n">dev</span><span class="o">=/</span><span class="n">dev</span><span class="o">/</span><span class="n">mtdX</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">linux_mtd</span><span class="p">:</span><span class="n">dev</span><span class="o">=</span><span class="n">N</span>
 </pre></div>
 </div>
-<p>syntax where <code class="docutils literal notranslate"><span class="pre">/dev/mtdX</span></code> is the Linux device node for your MTD device. If left unspecified the first MTD device found
-(e.g. /dev/mtd0) will be used by default.</p>
+<p>syntax where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the number of the Linux device node (<code class="docutils literal notranslate"><span class="pre">/dev/mtdN</span></code>) for your MTD device. If left unspecified
+the first MTD device found (e.g. /dev/mtd0) will be used by default.</p>
+<p>Some controllers refuse to read firmware-protected ranges (e.g. Intel PCH protected range registers) and fail the
+whole read. With the optional <code class="docutils literal notranslate"><span class="pre">ignore_read_errors=yes</span></code> parameter unreadable blocks are replaced by the erased
+value (usually <code class="docutils literal notranslate"><span class="pre">0xff</span></code>) and a warning is printed, allowing the accessible remainder of the flash to be dumped:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">linux_mtd</span><span class="p">:</span><span class="n">dev</span><span class="o">=</span><span class="n">N</span><span class="p">,</span><span class="n">ignore_read_errors</span><span class="o">=</span><span class="n">yes</span> <span class="o">-</span><span class="n">r</span> <span class="n">dump</span><span class="o">.</span><span class="n">bin</span>
+</pre></div>
+</div>
+<p>Note that this suppresses every read error reported by the kernel, not only refusals caused by firmware-protected
+ranges. Any block that cannot be read, for whatever reason, is replaced by the erased value, so the resulting dump
+may differ from the actual flash contents.</p>
 <p>Please note that the linux_mtd driver only works on Linux.</p>
 </section>
 <section id="linux-spi-programmer">
