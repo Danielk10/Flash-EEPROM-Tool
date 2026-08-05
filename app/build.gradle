@@ -15,8 +15,8 @@ android {
         applicationId "com.diamon.curso"
         minSdk 23
         targetSdk 37
-        versionCode 62
-        versionName "1.7.0"
+        versionCode 59
+        versionName "1.6.7"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -25,8 +25,18 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            storeFile file("/home/danielpdiamon/Juego Java 30 Pasos.jks")
+            storePassword "20270806Sa"
+            keyAlias "Juego Java 30 Pasos"
+            keyPassword "20270806Sa"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             ndk {
