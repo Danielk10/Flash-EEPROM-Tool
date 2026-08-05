@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_BIOS_SOURCE = "bios_source";
     private static final String KEY_LAST_READ_FILE = "last_read_file";
     private static final String KEY_LAST_VERSION = "last_version_code";
+    private static final String KEY_DUMMY_CHIP_INDEX = "dummy_chip_index";
 
 
     private static final Map<String, String> USB_AUTO_MAP = new java.util.HashMap<String, String>() {
@@ -181,6 +182,18 @@ public class MainActivity extends AppCompatActivity {
                     mostrarPublicidad.cargarInterstial(); // Precarga para la próxima vez
                 }
             });
+
+    // Chips predefinidos que el programador dummy reconoce.
+    // Formato: [etiqueta, nombre emulate=, tamaño bytes, chipname para -c (o null si no hay ambigüedad)]
+    private final String[][] DUMMY_CHIPS = {
+            { "VARIABLE_SIZE 16 MB", "VARIABLE_SIZE", "16777216", null },
+            { "W25Q128.V 16 MB", "W25Q128.V", "16777216", "W25Q128.V" },
+            { "MX25L6436 8 MB", "MX25L6436", "8388608", "MX25L6436E/MX25L6445E/MX25L6465E" },
+            { "SST25VF032B 4 MB", "SST25VF032B", "4194304", null },
+            { "SST25VF040/REMS 512 KB", "SST25VF040.REMS", "524288", "SST25VF040" },
+            { "M25P10 128 KB", "M25P10.RES", "131072", null }
+    };
+    private int selectedDummyChipIndex = 0;
 
     // API para importar (Cargar archivo de cualquier carpeta)
     private final ActivityResultLauncher<Intent> fileOpenLauncher = registerForActivityResult(
@@ -400,6 +413,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         selectedProgrammer = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_PROGRAMMER, "ch341a_spi");
+        selectedDummyChipIndex = getSharedPreferences(PREFS, MODE_PRIVATE).getInt(KEY_DUMMY_CHIP_INDEX, 0);
+        if (selectedDummyChipIndex < 0 || selectedDummyChipIndex >= DUMMY_CHIPS.length) {
+            selectedDummyChipIndex = 0;
+        }
+
         // Si el programador es dummy, habilitar botones sin necesidad de USB
         if (isDummyProgrammer()) {
             btnProbe.setEnabled(true);
@@ -507,19 +525,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnProbe.setOnClickListener(v -> ensureProgrammerThenRun(() -> {
             if (isDummyProgrammer()) {
-                // Probe con dummy: si hay bios.bin del usuario, usarlo;
-                // si no, generar archivo de prueba automáticamente.
-                File userBios = new File(getFilesDir(), "bios.bin");
-                if (userBios.exists() && userBios.length() > 0) {
-                    long size = userBios.length();
-                    executeCustomFlashromCommand(
-                            "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios.bin");
-                } else {
-                    log("No hay bios.bin cargado. Generando archivo de prueba para identificación...");
-                    ensureDummyTestFile(16777216);
-                    executeCustomFlashromCommand(
-                            "-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin");
-                }
+                executeMainDummyCommand("");
             } else {
                 executeFlashromTask("-p", selectedProgrammer);
             }
@@ -527,14 +533,7 @@ public class MainActivity extends AppCompatActivity {
         btnVerify.setOnClickListener(
                 v -> ensureProgrammerThenRun(() -> {
                     if (isDummyProgrammer()) {
-                        File userBios = new File(getFilesDir(), "bios.bin");
-                        if (!userBios.exists() || userBios.length() == 0) {
-                            log("Error: No hay bios.bin cargado. Usa 'Cargar ROM' primero.");
-                            return;
-                        }
-                        long size = userBios.length();
-                        executeCustomFlashromCommand(
-                                "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios.bin -v bios.bin");
+                        executeMainDummyCommand("-v");
                     } else {
                         executeFlashromTask("-p", selectedProgrammer, "-v", "bios.bin");
                     }
@@ -542,14 +541,7 @@ public class MainActivity extends AppCompatActivity {
         btnRead.setOnClickListener(
                 v -> ensureProgrammerThenRun(() -> {
                     if (isDummyProgrammer()) {
-                        File userBios = new File(getFilesDir(), "bios.bin");
-                        if (!userBios.exists() || userBios.length() == 0) {
-                            log("Error: No hay bios.bin cargado. Usa 'Cargar ROM' primero.");
-                            return;
-                        }
-                        long size = userBios.length();
-                        executeCustomFlashromCommand(
-                                "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios.bin -r bios.bin");
+                        executeMainDummyCommand("-r");
                     } else {
                         executeFlashromTask("-p", selectedProgrammer, "-r", "bios.bin");
                     }
@@ -557,14 +549,7 @@ public class MainActivity extends AppCompatActivity {
         btnWrite.setOnClickListener(
                 v -> ensureProgrammerThenRun(() -> {
                     if (isDummyProgrammer()) {
-                        File userBios = new File(getFilesDir(), "bios.bin");
-                        if (!userBios.exists() || userBios.length() == 0) {
-                            log("Error: No hay bios.bin cargado. Usa 'Cargar ROM' primero.");
-                            return;
-                        }
-                        long size = userBios.length();
-                        executeCustomFlashromCommand(
-                                "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios.bin -w bios.bin");
+                        executeMainDummyCommand("-w");
                     } else {
                         executeFlashromTask("-p", selectedProgrammer, "-w", "bios.bin");
                     }
@@ -619,17 +604,7 @@ public class MainActivity extends AppCompatActivity {
                     .setMessage(R.string.str_confirm_erase_msg)
                     .setPositiveButton(R.string.str_yes_erase, (dialog, which) -> {
                         if (isDummyProgrammer()) {
-                            File userBios = new File(getFilesDir(), "bios.bin");
-                            if (userBios.exists() && userBios.length() > 0) {
-                                long size = userBios.length();
-                                executeCustomFlashromCommand(
-                                        "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios.bin --erase");
-                            } else {
-                                log("No hay bios.bin cargado. Usando archivo de prueba para borrado emulado...");
-                                ensureDummyTestFile(16777216);
-                                executeCustomFlashromCommand(
-                                        "-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin --erase");
-                            }
+                            executeMainDummyCommand("--erase");
                         } else {
                             executeFlashromTask("-p", selectedProgrammer, "--erase");
                         }
@@ -1387,57 +1362,83 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showDummyTestDialog() {
-        // Chips predefinidos que el programador dummy reconoce.
-        // Formato: [etiqueta, nombre emulate=, tamaño bytes, chipname para -c (o null si no hay ambigüedad)]
-        final String[][] DUMMY_CHIPS = {
-                // VARIABLE_SIZE — chip virtual sin ambigüedad, -c no necesario
-                { "VARIABLE_SIZE 16 MB", "VARIABLE_SIZE", "16777216", null },
-                // MX25L6436 — flashrom detecta 6 variantes; usamos la exacta que coincide con el emulate=
-                { "MX25L6436 8 MB", "MX25L6436", "8388608", "MX25L6436E/MX25L6445E/MX25L6465E" },
-                // SST25VF032B — una sola definición en flashrom v1.7
-                { "SST25VF032B 4 MB", "SST25VF032B", "4194304", null },
-                // SST25VF040.REMS — flashrom detecta SST25LF040A + SST25VF040; elegimos SST25VF040
-                { "SST25VF040/REMS 512 KB", "SST25VF040.REMS", "524288", "SST25VF040" },
-                // M25P10.RES — una sola definición
-                { "M25P10 128 KB", "M25P10.RES", "131072", null }
-        };
+    private void executeMainDummyCommand(String action) {
+        String chipName = DUMMY_CHIPS[selectedDummyChipIndex][1];
+        int chipSize = Integer.parseInt(DUMMY_CHIPS[selectedDummyChipIndex][2]);
+        String chipFlag = DUMMY_CHIPS[selectedDummyChipIndex].length > 3 ? DUMMY_CHIPS[selectedDummyChipIndex][3] : null;
 
+        File userBios = new File(getFilesDir(), "bios.bin");
+        
+        // Si la acción requiere un archivo (read, write, verify) pero no hay bios.bin
+        if (("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) && (!userBios.exists() || userBios.length() == 0)) {
+            log("Error: No hay bios.bin cargado. Usa 'Cargar ROM' primero.");
+            return;
+        }
+
+        if (userBios.exists() && userBios.length() > 0) {
+            long actualSize = userBios.length();
+            if (actualSize != chipSize) {
+                log("Aviso: El archivo bios.bin (" + actualSize + " bytes) no coincide con el chip dummy seleccionado (" + chipSize + " bytes).");
+                log("Forzando emulación a VARIABLE_SIZE para evitar error de flashrom.");
+                String cmd = "-p dummy:emulate=VARIABLE_SIZE,size=" + actualSize + ",image=bios.bin " + action;
+                if ("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) {
+                    cmd += " bios.bin";
+                }
+                executeCustomFlashromCommand(cmd.trim());
+                return;
+            }
+            
+            String cmd = buildDummyCmd(chipName, chipSize, chipFlag, action);
+            if ("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) {
+                cmd += " bios.bin";
+            }
+            // Cambiar image=bios_test.bin a image=bios.bin
+            cmd = cmd.replace("image=bios_test.bin", "image=bios.bin");
+            executeCustomFlashromCommand(cmd);
+        } else {
+            // Para probe o erase sin archivo cargado
+            log("No hay bios.bin cargado. Generando/usando archivo de prueba...");
+            ensureDummyTestFile(chipSize);
+            executeCustomFlashromCommand(buildDummyCmd(chipName, chipSize, chipFlag, action));
+        }
+    }
+
+    private void showDummyTestDialog() {
         String[] testOptions = {
                 "Leer chip emulado",
                 "Escribir y verificar",
                 "Borrar chip emulado",
                 "Identificar chip emulado",
-                "Seleccionar chip predefinido",
+                "Seleccionar chip predefinido (" + DUMMY_CHIPS[selectedDummyChipIndex][0] + ")",
                 "Chips válidos para emulación"
         };
 
         new android.app.AlertDialog.Builder(this)
                 .setTitle(R.string.str_dummy_test_mode)
                 .setItems(testOptions, (dialog, which) -> {
+                    String chipName = DUMMY_CHIPS[selectedDummyChipIndex][1];
+                    int size = Integer.parseInt(DUMMY_CHIPS[selectedDummyChipIndex][2]);
+                    String chipFlag = DUMMY_CHIPS[selectedDummyChipIndex].length > 3 ? DUMMY_CHIPS[selectedDummyChipIndex][3] : null;
+                    
                     switch (which) {
                         case 0: // Leer
-                            ensureDummyTestFile(16777216);
-                            executeCustomFlashromCommand(
-                                    "-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r read_test.bin");
+                            ensureDummyTestFile(size);
+                            executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, "-r read_test.bin"));
                             break;
                         case 1: // Escribir + verificar
-                            ensureDummyTestFile(16777216);
-                            executeCustomFlashromCommand(
-                                    "-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -w bios_test.bin");
+                            ensureDummyTestFile(size);
+                            executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, "-w bios_test.bin"));
                             break;
                         case 2: // Borrar chip emulado
-                            ensureDummyTestFile(16777216);
-                            executeCustomFlashromCommand(
-                                    "-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin --erase");
+                            ensureDummyTestFile(size);
+                            executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, "--erase"));
                             break;
                         case 3: // Probe
-                            ensureDummyTestFile(16777216);
-                            executeCustomFlashromCommand(
-                                    "-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin");
+                            ensureDummyTestFile(size);
+                            executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, ""));
                             break;
                         case 4: // Seleccionar chip
-                            showDummyChipSelector(DUMMY_CHIPS);
+                            showDummyChipSelector();
                             break;
                         case 5: // Info
                             showDummyChipInfo();
@@ -1448,32 +1449,37 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showDummyChipSelector(String[][] chips) {
-        String[] labels = new String[chips.length];
-        for (int i = 0; i < chips.length; i++) {
-            labels[i] = chips[i][0];
+    private String buildDummyCmd(String chipName, int size, String chipFlag, String action) {
+        String cmd;
+        if ("VARIABLE_SIZE".equals(chipName)) {
+            cmd = "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios_test.bin " + action;
+        } else if (chipFlag != null) {
+            cmd = "-p dummy:emulate=" + chipName + ",image=bios_test.bin -c " + chipFlag + " " + action;
+        } else {
+            cmd = "-p dummy:emulate=" + chipName + ",image=bios_test.bin " + action;
+        }
+        return cmd.trim();
+    }
+
+    private void showDummyChipSelector() {
+        String[] labels = new String[DUMMY_CHIPS.length];
+        for (int i = 0; i < DUMMY_CHIPS.length; i++) {
+            labels[i] = DUMMY_CHIPS[i][0];
         }
 
         new android.app.AlertDialog.Builder(this)
                 .setTitle(R.string.str_dummy_chip_emulate)
                 .setItems(labels, (dialog, which) -> {
-                    String chipName = chips[which][1];
-                    int size = Integer.parseInt(chips[which][2]);
-                    // Columna [3]: nombre exacto para -c (null si no hay ambigüedad)
-                    String chipFlag = chips[which].length > 3 ? chips[which][3] : null;
+                    selectedDummyChipIndex = which;
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_DUMMY_CHIP_INDEX, which).apply();
+                    
+                    String chipName = DUMMY_CHIPS[which][1];
+                    int size = Integer.parseInt(DUMMY_CHIPS[which][2]);
+                    String chipFlag = DUMMY_CHIPS[which].length > 3 ? DUMMY_CHIPS[which][3] : null;
                     ensureDummyTestFile(size);
 
-                    String cmd;
-                    if ("VARIABLE_SIZE".equals(chipName)) {
-                        cmd = "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios_test.bin -r read_test.bin";
-                    } else if (chipFlag != null) {
-                        // Incluir -c para evitar "Multiple flash chip definitions match"
-                        cmd = "-p dummy:emulate=" + chipName + ",image=bios_test.bin -c " + chipFlag
-                                + " -r read_test.bin";
-                    } else {
-                        cmd = "-p dummy:emulate=" + chipName + ",image=bios_test.bin -r read_test.bin";
-                    }
-                    log(getString(R.string.str_dummy_chip_selected, chips[which][0]
+                    String cmd = buildDummyCmd(chipName, size, chipFlag, "-r read_test.bin");
+                    log(getString(R.string.str_dummy_chip_selected, DUMMY_CHIPS[which][0]
                             + (chipFlag != null ? " -c " + chipFlag : "")));
                     executeCustomFlashromCommand(cmd);
                 })
