@@ -16,6 +16,15 @@ import java.util.concurrent.Executors;
 public class FlashromExecutor {
     private static final String TAG = "FlashromExecutor";
 
+    // JNI: duplica el FD USB sin O_CLOEXEC para que sea heredable por procesos hijos
+    private static native int dupFdForChild(int fd);
+    // JNI: cierra el FD duplicado tras finalizar flashrom
+    private static native void closeDupedFd(int fd);
+
+    static {
+        System.loadLibrary("curso");
+    }
+
     public interface Callback {
         void log(String message);
         void onProcessStarted();
@@ -61,6 +70,12 @@ public class FlashromExecutor {
             command.add(arg);
         }
 
+        // ── Duplicar el FD USB para herencia en el proceso hijo ──
+        // El FD original de UsbDeviceConnection tiene O_CLOEXEC: Android lo
+        // cierra durante exec(). dup() crea un nuevo FD sin esa flag,
+        // permitiendo que flashrom lo use a través de ANDROID_USB_FD.
+        int inheritableFd = -1;
+
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.directory(context.getFilesDir());
@@ -70,7 +85,15 @@ public class FlashromExecutor {
             if (needsPty) {
                 env.remove("ANDROID_USB_FD");
             } else if (currentFd >= 0) {
-                env.put("ANDROID_USB_FD", String.valueOf(currentFd));
+                inheritableFd = dupFdForChild(currentFd);
+                if (inheritableFd >= 0) {
+                    env.put("ANDROID_USB_FD", String.valueOf(inheritableFd));
+                    Log.i(TAG, "USB FD duplicado: " + currentFd + " -> " + inheritableFd + " (heredable)");
+                } else {
+                    // Fallback: pasar el FD original (puede no funcionar en todos los devices)
+                    env.put("ANDROID_USB_FD", String.valueOf(currentFd));
+                    Log.w(TAG, "dup() falló, usando FD original: " + currentFd);
+                }
             } else {
                 env.remove("ANDROID_USB_FD");
             }
@@ -126,6 +149,12 @@ public class FlashromExecutor {
                 currentProcess = null;
             }
             callback.onProcessFinished(-1, args);
+        } finally {
+            // ── Cerrar el FD duplicado DESPUÉS de que flashrom terminó ──
+            if (inheritableFd >= 0) {
+                closeDupedFd(inheritableFd);
+                Log.i(TAG, "FD duplicado " + inheritableFd + " cerrado");
+            }
         }
     }
 

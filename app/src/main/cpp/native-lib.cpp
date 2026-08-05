@@ -6,39 +6,64 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <poll.h>
+#include <errno.h>
 #include <android/log.h>
 
 #define LOG_TAG "FlashromJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
+// ════════════════════════════════════════════════════════════════════════
+// FD Duplication para FlashromExecutor:
+// dup() crea un nuevo FD SIN O_CLOEXEC, permitiendo que el proceso hijo
+// (flashrom via ProcessBuilder) herede el file descriptor del USB.
+// Sin esto, Android cierra el FD original durante exec() porque tiene
+// O_CLOEXEC, y flashrom recibe un FD inválido.
+// ════════════════════════════════════════════════════════════════════════
+
+/**
+ * Duplica el file descriptor USB para que sea heredable por procesos hijos.
+ * dup() en Linux crea un nuevo FD sin la flag O_CLOEXEC, lo que permite
+ * que sobreviva a fork()+exec() cuando ProcessBuilder lanza flashrom.
+ *
+ * @param fd  El FD original de UsbDeviceConnection.getFileDescriptor()
+ * @return    Nuevo FD heredable (>= 0), o -1 en error.
+ */
 extern "C" JNIEXPORT jint JNICALL
-Java_com_diamon_curso_MainActivity_runNativeFlashrom(JNIEnv *env, jobject thiz, jint fd, jstring binPath, jstring args) {
-    const char *nativeBinPath = env->GetStringUTFChars(binPath, nullptr);
-    const char *nativeArgs = env->GetStringUTFChars(args, nullptr);
+Java_com_diamon_curso_core_FlashromExecutor_dupFdForChild(JNIEnv *env, jclass clazz, jint fd) {
+    if (fd < 0) {
+        LOGE("dupFdForChild: FD inválido (%d)", (int) fd);
+        return -1;
+    }
 
-    // 1. Establecer el File Descriptor en el entorno para nuestra libusb parcheada
-    std::string fd_str = std::to_string(fd);
-    setenv("ANDROID_USB_FD", fd_str.c_str(), 1);
-    LOGI("ANDROID_USB_FD set to %s", fd_str.c_str());
+    int newFd = dup((int) fd);
+    if (newFd < 0) {
+        LOGE("dupFdForChild: dup(%d) falló, errno=%d", (int) fd, errno);
+        return -1;
+    }
 
-    // 2. Ejecutar el comando de flashrom almacenado en el data del app
-    // Como args contendrá parametros separados por espacio, usar system()
-    // es más sencillo que armar un vector de C-strings para execve
-    std::string command = std::string(nativeBinPath) + " " + std::string(nativeArgs) + " 2>&1";
-    LOGI("Ejecutando: %s", command.c_str());
+    // Garantizar que O_CLOEXEC NO está activo (dup() ya lo hace, pero
+    // lo forzamos explícitamente por seguridad ante variantes de kernel).
+    int flags = fcntl(newFd, F_GETFD);
+    if (flags >= 0 && (flags & FD_CLOEXEC)) {
+        fcntl(newFd, F_SETFD, flags & ~FD_CLOEXEC);
+        LOGI("dupFdForChild: O_CLOEXEC removido explícitamente del FD %d", newFd);
+    }
 
-    // NOTA: libusb_wrap_sys_device es interceptado automáticamente
-    // por nuestro binario precompilado que usa la libusb parcheada.
-    int result = system(command.c_str());
+    LOGI("dupFdForChild: FD %d -> %d (heredable por proceso hijo)", (int) fd, newFd);
+    return (jint) newFd;
+}
 
-    int exitCode = WEXITSTATUS(result);
-    LOGI("Comando finalizó con código: %d", exitCode);
-
-    env->ReleaseStringUTFChars(binPath, nativeBinPath);
-    env->ReleaseStringUTFChars(args, nativeArgs);
-
-    return exitCode;
+/**
+ * Cierra un FD duplicado previamente por dupFdForChild().
+ * Llamar DESPUÉS de que el proceso hijo (flashrom) haya terminado.
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_com_diamon_curso_core_FlashromExecutor_closeDupedFd(JNIEnv *env, jclass clazz, jint fd) {
+    if (fd >= 0) {
+        LOGI("closeDupedFd: cerrando FD %d", (int) fd);
+        close((int) fd);
+    }
 }
 
 /**
@@ -50,7 +75,7 @@ Java_com_diamon_curso_MainActivity_runNativeFlashrom(JNIEnv *env, jobject thiz, 
  * Retorna null si el sistema no soporta devpts.
  */
 extern "C" JNIEXPORT jobjectArray JNICALL
-Java_com_diamon_curso_PtyBridge_createPty(JNIEnv *env, jclass clazz) {
+Java_com_diamon_curso_core_PtyBridge_createPty(JNIEnv *env, jclass clazz) {
     // Abrir el master PTY
     int masterFd = posix_openpt(O_RDWR | O_NOCTTY);
     if (masterFd < 0) {
@@ -112,7 +137,7 @@ Java_com_diamon_curso_PtyBridge_createPty(JNIEnv *env, jclass clazz) {
  * cuando la operación de flashrom termina.
  */
 extern "C" JNIEXPORT void JNICALL
-Java_com_diamon_curso_PtyBridge_closeFd(JNIEnv *env, jclass clazz, jint fd) {
+Java_com_diamon_curso_core_PtyBridge_closeFd(JNIEnv *env, jclass clazz, jint fd) {
     if (fd >= 0) {
         LOGI("Cerrando FD nativo: %d", fd);
         close((int) fd);
@@ -124,7 +149,7 @@ Java_com_diamon_curso_PtyBridge_closeFd(JNIEnv *env, jclass clazz, jint fd) {
  * Retorna cantidad escrita o -1 en error.
  */
 extern "C" JNIEXPORT jint JNICALL
-Java_com_diamon_curso_PtyBridge_writeFd(JNIEnv *env, jclass clazz, jint fd, jbyteArray data, jint len) {
+Java_com_diamon_curso_core_PtyBridge_writeFd(JNIEnv *env, jclass clazz, jint fd, jbyteArray data, jint len) {
     if (fd < 0 || data == nullptr || len <= 0) {
         return -1;
     }
@@ -155,7 +180,7 @@ Java_com_diamon_curso_PtyBridge_writeFd(JNIEnv *env, jclass clazz, jint fd, jbyt
  * Retorna un string de diagnóstico legible.
  */
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_diamon_curso_PtyBridge_nativeTestRoundTrip(JNIEnv *env, jclass clazz, jstring jSlavePath) {
+Java_com_diamon_curso_core_PtyBridge_nativeTestRoundTrip(JNIEnv *env, jclass clazz, jstring jSlavePath) {
     const char *slavePath = env->GetStringUTFChars(jSlavePath, nullptr);
 
     // Abrir slave exactamente como flashrom: O_RDWR | O_NOCTTY
