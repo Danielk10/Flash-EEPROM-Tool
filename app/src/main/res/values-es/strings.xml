@@ -45,6 +45,7 @@
     <string name="str_polticas_de_pri">Políticas de Privacidad</string>
     <string name="str_pinouts_de_hard">Pinouts de Hardware</string>
     <string name="str_acerca_de">Acerca de</string>
+    <string name="menu_export_serprog">Exportar Firmware serprog Arduino</string>
     <string name="str_advertencia">Advertencia</string>
     <string name="str_operacin_exitos">Operación Exitosa</string>
     <string name="str_error">Error</string>

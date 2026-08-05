@@ -21,6 +21,7 @@ import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Looper;
 import android.text.InputType;
 import android.text.Html;
@@ -291,8 +292,11 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.log("¡Permiso otorgado! Token interno de USB: " + fd);
                     MainActivity.this.log("Conectado a USB VID:PID " + vidPid);
 
-                    if (isRecognized) {
+                    if (isRecognized && autoProg != null && !autoProg.isEmpty()) {
+                        selectedProgrammer = autoProg;
+                        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_PROGRAMMER, selectedProgrammer).apply();
                         MainActivity.this.log("[OK] Dispositivo reconocido: " + deviceName + " → programador '" + autoProg + "'");
+                        MainActivity.this.log("Auto-configuración: Programador cambiado automáticamente a '" + selectedProgrammer + "'");
                     } else {
                         MainActivity.this.log("════════════════════════════════════════");
                         MainActivity.this.log("[AVISO] Dispositivo NO reconocido como programador flashrom.");
@@ -1253,9 +1257,45 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.action_policy) {
             startActivity(new Intent(this, PolicyActivity.class));
             return true;
+        } else if (id == R.id.action_export_serprog) {
+            exportSerprogFirmware();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void exportSerprogFirmware() {
+        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        if (downloadsDir != null) {
+            boolean successIno = exportAssetToDir("serprog_arduino.ino", downloadsDir);
+            boolean successHex = exportAssetToDir("serprog_arduino.hex", downloadsDir);
+            
+            if (successIno && successHex) {
+                log("Archivos serprog_arduino.ino y serprog_arduino.hex exportados a la carpeta Descargas con éxito.");
+                android.widget.Toast.makeText(this, "Archivos exportados a Descargas", android.widget.Toast.LENGTH_LONG).show();
+            } else {
+                log("Error al exportar los archivos. Puede que falten permisos de almacenamiento.");
+            }
+        }
+    }
+
+    private boolean exportAssetToDir(String assetName, File targetDir) {
+        try {
+            File outFile = new File(targetDir, assetName);
+            try (InputStream in = getAssets().open(assetName);
+                 OutputStream out = new FileOutputStream(outFile)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            log("Error copiando " + assetName + ": " + e.getMessage());
+            return false;
+        }
     }
 
     private void showAboutDialog() {
