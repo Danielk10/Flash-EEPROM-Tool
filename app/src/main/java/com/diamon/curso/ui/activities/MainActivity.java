@@ -188,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
     private final String[][] DUMMY_CHIPS = {
             { "VARIABLE_SIZE 16 MB", "VARIABLE_SIZE", "16777216", null },
             { "W25Q128.V (16 MB)", "W25Q128FV", "16777216", "W25Q128.V" },
+            { "MX25L6405D (8 MB)", "MX25L6436", "8388608", "MX25L6405D" },
             { "SST25VF032B (4 MB)", "SST25VF032B", "4194304", null },
             { "SST25VF040 (512 KB)", "SST25VF040.REMS", "524288", "SST25VF040" },
             { "M25P10.RES (128 KB)", "M25P10.RES", "131072", null },
