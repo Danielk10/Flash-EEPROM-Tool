@@ -22,8 +22,8 @@ export CXX=clang++
 
 # Eliminado -fPIE para no romper las librerías compartidas. 
 # Añadido LTO y mitigaciones de seguridad en memoria.
-export COMMON_CFLAGS="-fPIC -Oz -flto -fstack-protector-strong -D_FORTIFY_SOURCE=2 -ffile-prefix-map=$DESTDIR= -I$FAKE_USR/include -I$TMX_PREFIX/include"
-export COMMON_CXXFLAGS="-fPIC -Oz -flto -fstack-protector-strong -D_FORTIFY_SOURCE=2 -ffile-prefix-map=$DESTDIR= -I$FAKE_USR/include -I$TMX_PREFIX/include"
+export COMMON_CFLAGS="-fPIC -Oz -flto -fstack-protector-strong -D_FORTIFY_SOURCE=2 -ffile-prefix-map=$DESTDIR= -I$FAKE_USR/include -I$TMX_PREFIX/include -DPyInt_AsLong=PyLong_AsLong -DPyInt_AsUnsignedLongMask=PyLong_AsUnsignedLongMask -DPyInt_FromLong=PyLong_FromLong"
+export COMMON_CXXFLAGS="-fPIC -Oz -flto -fstack-protector-strong -D_FORTIFY_SOURCE=2 -ffile-prefix-map=$DESTDIR= -I$FAKE_USR/include -I$TMX_PREFIX/include -DPyInt_AsLong=PyLong_AsLong -DPyInt_AsUnsignedLongMask=PyLong_AsUnsignedLongMask -DPyInt_FromLong=PyLong_FromLong"
 
 # Añadido LTO y RELRO completo a la base del enlazador.
 export BASE_LDFLAGS="-flto -Wl,-z,max-page-size=16384 -Wl,-z,relro,-z,now -llog -L$FAKE_USR/lib -L$TMX_PREFIX/lib"
