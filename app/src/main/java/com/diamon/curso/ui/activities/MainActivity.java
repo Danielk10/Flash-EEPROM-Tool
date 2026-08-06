@@ -187,11 +187,12 @@ public class MainActivity extends AppCompatActivity {
     // Formato: [etiqueta, nombre emulate=, tamaño bytes, chipname para -c (o null si no hay ambigüedad)]
     private final String[][] DUMMY_CHIPS = {
             { "VARIABLE_SIZE 16 MB", "VARIABLE_SIZE", "16777216", null },
-            { "W25Q128.V 16 MB", "W25Q128.V", "16777216", "W25Q128.V" },
-            { "MX25L6436 8 MB", "MX25L6436", "8388608", "MX25L6436E/MX25L6445E/MX25L6465E" },
-            { "SST25VF032B 4 MB", "SST25VF032B", "4194304", null },
-            { "SST25VF040/REMS 512 KB", "SST25VF040.REMS", "524288", "SST25VF040" },
-            { "M25P10 128 KB", "M25P10.RES", "131072", null }
+            { "W25Q128.V (16 MB)", "W25Q128FV", "16777216", "W25Q128.V" },
+            { "MX25L6436E... (8 MB)", "MX25L6436", "8388608", "MX25L6436E/MX25L6445E/MX25L6465E/MX25L6473E/MX25L6473F" },
+            { "SST25VF032B (4 MB)", "SST25VF032B", "4194304", null },
+            { "SST25VF040 (512 KB)", "SST25VF040.REMS", "524288", "SST25VF040" },
+            { "M25P10.RES (128 KB)", "M25P10.RES", "131072", null },
+            { "S25FL128L 16 MB", "S25FL128L", "16777216", null }
     };
     private int selectedDummyChipIndex = 0;
 
@@ -848,11 +849,19 @@ public class MainActivity extends AppCompatActivity {
 
     private void clearTransientRomState(boolean notifyUser) {
         String[] transientFiles = { "bios.bin", "read_test.bin", "bios_test.bin" };
+        List<String> deletedFiles = new ArrayList<>();
+        boolean anyDeleted = false;
+
         for (String fileName : transientFiles) {
             try {
                 File f = new File(getFilesDir(), fileName);
-                if (f.exists() && !f.delete()) {
-                    Log.w(TAG, "No se pudo eliminar archivo temporal: " + fileName);
+                if (f.exists()) {
+                    if (f.delete()) {
+                        deletedFiles.add(fileName);
+                        anyDeleted = true;
+                    } else {
+                        Log.w(TAG, "No se pudo eliminar archivo temporal: " + fileName);
+                    }
                 }
             } catch (Exception e) {
                 Log.w(TAG, "Error eliminando archivo temporal " + fileName, e);
@@ -867,7 +876,11 @@ public class MainActivity extends AppCompatActivity {
                 .apply();
 
         if (notifyUser) {
-            log("Datos ROM temporales eliminados (bios.bin / read_test.bin / bios_test.bin).");
+            if (anyDeleted) {
+                log("Datos temporales eliminados (" + String.join(", ", deletedFiles) + ").");
+            } else {
+                log("No se encontraron archivos temporales para eliminar.");
+            }
         }
     }
 

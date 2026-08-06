@@ -17,12 +17,12 @@
     <string name="str_detectar_y_cone">Detectar y Conectar Automáticamente</string>
     <string name="str_identificar_chi">Identificar Chip</string>
     <string name="str_verificar_rom">Verificar ROM</string>
-    <string name="str_leer_backup">Leer Backup</string>
-    <string name="str_flashear_rom">Flashear ROM</string>
+    <string name="str_leer_backup">Leer Chip</string>
+    <string name="str_flashear_rom">Flashear Chip</string>
     <string name="str_cargar_rom">Cargar ROM</string>
     <string name="str_guardar_rom">Guardar ROM</string>
     <string name="str_borrar_chip">Borrar Chip</string>
-    <string name="str_borrar_rom">Borrar ROM</string>
+    <string name="str_borrar_rom">Borrar Archivos</string>
     <string name="str_ejecutar_instru">Ejecutar Instrucción por Consola</string>
     <string name="str_terminal_salida">Terminal</string>
     <string name="str_limpiar">Limpiar</string>
@@ -120,7 +120,7 @@
     <string name="str_unknown_manufacturer">Fabricante desconocido</string>
     <string name="str_close">Cerrar</string>
     <string name="str_dummy_test_mode">Modo de prueba de programador virtual</string>
-    <string name="str_dummy_info_msg">El programador \'dummy\' de flashrom es un simulador virtual.\n\nNO usa hardware USB real.\n\nChips válidos para emulación (v1.7.0):\n\n• VARIABLE_SIZE — Tamaño libre (usar con size=N)\n• W25Q128.V — 16 MB\n• MX25L6436 — 8 MB\n• SST25VF032B — 4 MB\n• SST25VF040.REMS — 512 KB\n• M25P10.RES — 128 KB\n\nEjemplo de comando correcto:\n-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r read_test.bin\n\n⚠ NO uses nombres de chips reales (ej: W25Q128). Solo los listados arriba son válidos.\n\nPara hardware real, usa el programador correspondiente:\n• CH341A → ch341a_spi\n• FT2232H → ft2232_spi\n• ST-Link → stlinkv3_spi</string>
+    <string name="str_dummy_info_msg">El programador \'dummy\' de flashrom es un simulador virtual.\n\nNO utiliza hardware USB real.\n\nChips válidos para emular (v1.7.0):\n\n• VARIABLE_SIZE — Tamaño a medida (usa size=N)\n• W25Q128.V — 16 MB\n• MX25L6436E... — 8 MB\n• SST25VF032B — 4 MB\n• SST25VF040 — 512 KB\n• M25P10.RES — 128 KB\n• S25FL128L — 16 MB\n\nEjemplo de comando correcto:\n-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r read_test.bin\n\n⚠ NO uses nombres de chips reales (ej. W25Q128) en emulate si difieren. Solo los mencionados son válidos.\n\nPara hardware real, usa el programador adecuado:\n• CH341A → ch341a_spi\n• FT2232H → ft2232_spi\n• ST-Link → stlinkv3_spi</string>
     <string name="str_log_test_file_created">Archivo de prueba creado: bios_test.bin (%1$d KB)</string>
     <string name="str_pinout_ch341a_header">Miniprogramador CH341A — Header SPI</string>
     <string name="str_pinout_soic8_header">Chip Flash SOIC8 / DIP8 — Conexión a CH341A</string>

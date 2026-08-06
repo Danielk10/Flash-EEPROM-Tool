@@ -94,7 +94,7 @@
                     android:insetBottom="0dp"
                     android:paddingTop="2dp"
                     android:paddingBottom="2dp"
-                    app:backgroundTint="@color/btn_tint_teal"
+                    app:backgroundTint="@color/btn_tint_blue"
                     android:textColor="@color/btn_text_color"
                     android:text="@string/str_identificar_chi" />
 
@@ -113,7 +113,7 @@
                     android:insetBottom="0dp"
                     android:paddingTop="2dp"
                     android:paddingBottom="2dp"
-                    app:backgroundTint="@color/btn_tint_purple"
+                    app:backgroundTint="@color/btn_tint_green"
                     android:textColor="@color/btn_text_color"
                     android:text="@string/str_verificar_rom" />
             </LinearLayout>
@@ -135,7 +135,7 @@
                     android:paddingBottom="2dp"
                     android:layout_weight="1"
                     android:enabled="false"
-                    app:backgroundTint="@color/btn_tint_green"
+                    app:backgroundTint="@color/btn_tint_blue"
                     android:textColor="@color/btn_text_color"
                     android:textSize="14sp"
                     android:text="@string/str_leer_backup" />
@@ -220,7 +220,7 @@
                     android:paddingBottom="2dp"
                     android:enabled="false"
                     android:text="@string/str_borrar_chip"
-                    app:backgroundTint="@color/btn_tint_orange"
+                    app:backgroundTint="@color/btn_tint_red"
                     android:textColor="@color/btn_text_color" />
 
                 <Space
