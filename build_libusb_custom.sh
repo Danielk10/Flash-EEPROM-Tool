@@ -42,17 +42,10 @@ def run_patch():
                 break
 
         for i, line in enumerate(lines):
-            if 'int API_EXPORTED libusb_init(' in line:
-                for j in range(i, i + 15):
-                    if '{' in lines[j]:
-                        lines[j+1:j+1] = [
-                            '\n\tchar *f3 = getenv("ANDROID_USB_FD");\n',
-                            '\tif (f3) {\n',
-                            '\t\tfprintf(stderr, "[LIBUSB-HACK] libusb_init interceptado\\n");\n',
-                            '\t\tif (ctx) *ctx = NULL;\n',
-                            '\t\treturn 0;\n',
-                            '\t}\n'
-                        ]
+            if 'r = usbi_backend.init(_ctx);' in line:
+                for j in range(i, i + 10):
+                    if 'if (r) {' in lines[j] or 'if (r)' in lines[j]:
+                        lines[j] = '\t\t\tif (r) { r = 0; /* HACK para Android: Ignorar fallo netlink */ }\n\t\t\tif (0)\n'
                         break
                 break
 
@@ -62,14 +55,16 @@ def run_patch():
                     if 'ssize_t i, len' in lines[j]:
                         lines[j+1:j+1] = [
                             '\n\tchar *f1 = getenv("ANDROID_USB_FD");\n',
-                            '\tif (f1) {\n',
-                            '\t\tfprintf(stderr, "[LIBUSB-HACK] Creando dispositivo emulado en la lista\\n");\n',
-                            '\t\tret = calloc(2, sizeof(void*));\n',
-                            '\t\tstruct libusb_device *d = usbi_alloc_device(usbi_get_context(ctx), 0);\n',
-                            '\t\tret[0] = d; ret[1] = NULL; *list = ret;\n',
-                            '\t\tif (discdevs) discovered_devs_free(discdevs);\n',
-                            '\t\treturn 1;\n',
-                            '\t}\n'
+                            '\tif (!f1) {\n',
+                            '\t\t*list = calloc(1, sizeof(void*));\n',
+                            '\t\treturn 0;\n',
+                            '\t}\n',
+                            '\tfprintf(stderr, "[LIBUSB-HACK] Creando dispositivo emulado en la lista\\n");\n',
+                            '\tret = calloc(2, sizeof(void*));\n',
+                            '\tstruct libusb_device *d = usbi_alloc_device(usbi_get_context(ctx), 0);\n',
+                            '\tret[0] = d; ret[1] = NULL; *list = ret;\n',
+                            '\tif (discdevs) discovered_devs_free(discdevs);\n',
+                            '\treturn 1;\n'
                         ]
                         break
                 break
@@ -94,12 +89,10 @@ def run_patch():
 
     desc_path = 'descriptor.c'
     if os.path.exists(desc_path):
-        with open(desc_path, 'r') as f:
-            lines = f.readlines()
-
+        with open(desc_path, 'r') as f: lines = f.readlines()
         for i, line in enumerate(lines):
             if '#include <stdio.h>' in line or '#include <string.h>' in line:
-                lines.insert(i + 1, '#include <stdlib.h>\n#include <unistd.h>\n')
+                lines.insert(i + 1, '#include <stdio.h>\n#include <stdlib.h>\n#include <unistd.h>\n#include <errno.h>\n#include <string.h>\n#include <sys/ioctl.h>\n#include <linux/usbdevice_fs.h>\n')
                 break
 
         for i, line in enumerate(lines):
@@ -109,30 +102,46 @@ def run_patch():
                         lines[j+1:j+1] = [
                             '\n\tchar *f_fd = getenv("ANDROID_USB_FD");\n',
                             '\tif (f_fd) {\n',
+                            '\t\tstatic unsigned char cached_desc[18];\n',
+                            '\t\tstatic int has_cached_desc = 0;\n',
                             '\t\tint fd = atoi(f_fd);\n',
                             '\t\tunsigned char buf[18];\n',
-                            '\t\tfprintf(stderr, "[LIBUSB-HACK] Leyendo Descriptor del FD %d... ", fd);\n',
-                            '\t\tssize_t res = pread(fd, buf, 18, 0);\n',
-                            '\t\tif (res == 18) {\n',
-                            '\t\t\tdesc->bLength = buf[0];\n',
-                            '\t\t\tdesc->bDescriptorType = buf[1];\n',
-                            '\t\t\tdesc->bcdUSB = (buf[3] << 8) | buf[2];\n',
-                            '\t\t\tdesc->bDeviceClass = buf[4];\n',
-                            '\t\t\tdesc->bDeviceSubClass = buf[5];\n',
-                            '\t\t\tdesc->bDeviceProtocol = buf[6];\n',
-                            '\t\t\tdesc->bMaxPacketSize0 = buf[7];\n',
-                            '\t\t\tdesc->idVendor = (buf[9] << 8) | buf[8];\n',
-                            '\t\t\tdesc->idProduct = (buf[11] << 8) | buf[10];\n',
-                            '\t\t\tdesc->bcdDevice = (buf[13] << 8) | buf[12];\n',
-                            '\t\t\tdesc->iManufacturer = buf[14];\n',
-                            '\t\t\tdesc->iProduct = buf[15];\n',
-                            '\t\t\tdesc->iSerialNumber = buf[16];\n',
-                            '\t\t\tdesc->bNumConfigurations = buf[17];\n',
-                            '\t\t\tfprintf(stderr, "EXITO! VID=%04x PID=%04x\\n", desc->idVendor, desc->idProduct);\n',
-                            '\t\t\treturn 0;\n',
-                            '\t\t} else {\n',
-                            '\t\t\tfprintf(stderr, "FALLO! (res=%ld)\\n", (long)res);\n',
+                            '\t\tif (!has_cached_desc) {\n',
+                            '\t\t\tfprintf(stderr, "[LIBUSB-HACK] Obteniendo Descriptor por ioctl (FD %d)... ", fd);\n',
+                            '\t\t\tstruct usbdevfs_ctrltransfer ctrl;\n',
+                            '\t\t\tctrl.bRequestType = 0x80;\n',
+                            '\t\t\tctrl.bRequest = 0x06;\n',
+                            '\t\t\tctrl.wValue = 0x0100;\n',
+                            '\t\t\tctrl.wIndex = 0;\n',
+                            '\t\t\tctrl.wLength = 18;\n',
+                            '\t\t\tctrl.timeout = 1000;\n',
+                            '\t\t\tctrl.data = buf;\n',
+                            '\t\t\tint res = ioctl(fd, 0xC0185500, &ctrl); // USBDEVFS_CONTROL\n',
+                            '\t\t\tif (res == 18) {\n',
+                            '\t\t\t\tmemcpy(cached_desc, buf, 18);\n',
+                            '\t\t\t\thas_cached_desc = 1;\n',
+                            '\t\t\t} else {\n',
+                            '\t\t\t\tfprintf(stderr, "FALLO IOCTL! (res=%d, errno=%d: %s)\\n", res, errno, strerror(errno));\n',
+                            '\t\t\t\treturn -1;\n',
+                            '\t\t\t}\n',
                             '\t\t}\n',
+                            '\t\tmemcpy(buf, cached_desc, 18);\n',
+                            '\t\tdesc->bLength = buf[0];\n',
+                            '\t\tdesc->bDescriptorType = buf[1];\n',
+                            '\t\tdesc->bcdUSB = (buf[3] << 8) | buf[2];\n',
+                            '\t\tdesc->bDeviceClass = buf[4];\n',
+                            '\t\tdesc->bDeviceSubClass = buf[5];\n',
+                            '\t\tdesc->bDeviceProtocol = buf[6];\n',
+                            '\t\tdesc->bMaxPacketSize0 = buf[7];\n',
+                            '\t\tdesc->idVendor = (buf[9] << 8) | buf[8];\n',
+                            '\t\tdesc->idProduct = (buf[11] << 8) | buf[10];\n',
+                            '\t\tdesc->bcdDevice = (buf[13] << 8) | buf[12];\n',
+                            '\t\tdesc->iManufacturer = buf[14];\n',
+                            '\t\tdesc->iProduct = buf[15];\n',
+                            '\t\tdesc->iSerialNumber = buf[16];\n',
+                            '\t\tdesc->bNumConfigurations = buf[17];\n',
+                            '\t\tfprintf(stderr, "[LIBUSB-HACK] EXITO (Desde Caché)! VID=%04x PID=%04x\\n", desc->idVendor, desc->idProduct);\n',
+                            '\t\treturn 0;\n',
                             '\t}\n'
                         ]
                         break
@@ -141,9 +150,18 @@ def run_patch():
         with open(desc_path, 'w') as f:
             f.writelines(lines)
 
+    linux_usbfs_path = 'os/linux_usbfs.c'
+    if os.path.exists(linux_usbfs_path):
+        with open(linux_usbfs_path, 'r') as f: lines = f.readlines()
+        for i, line in enumerate(lines):
+            if 'assert(init_count != 0);' in line:
+                lines[i] = '\tif (init_count == 0) return;\n'
+        with open(linux_usbfs_path, 'w') as f: f.writelines(lines)
+
 if __name__ == "__main__":
     run_patch()
 EOF
+
 
 python3 patch_libusb.py
 

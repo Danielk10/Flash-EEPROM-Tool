@@ -21,6 +21,11 @@ public class FlashromExecutor {
     // JNI: cierra el FD duplicado tras finalizar flashrom
     private static native void closeDupedFd(int fd);
 
+    // Native process control to bypass ProcessBuilder FD closure
+    private static native int[] startNativeProcess(String executable, String[] args, int usbFd, String ldLibraryPath, String miniproData);
+    private static native int waitForNativeProcess(int pid);
+    private static native void terminateNativeProcess(int pid);
+
     static {
         System.loadLibrary("curso");
     }
@@ -35,7 +40,7 @@ public class FlashromExecutor {
     private final Context context;
     private final Callback callback;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private Process currentProcess;
+    private volatile int currentPid = -1;
 
     public FlashromExecutor(Context context, Callback callback) {
         this.context = context;
@@ -43,15 +48,20 @@ public class FlashromExecutor {
     }
 
     public synchronized void abort() {
-        if (currentProcess != null) {
-            currentProcess.destroy();
-            currentProcess = null;
-            callback.log("\n[PROCESO ABORTADO POR EL USUARIO]\n");
+        int pid = currentPid;
+        if (pid > 0) {
+            try {
+                terminateNativeProcess(pid);
+                callback.log("\n[PROCESO ABORTADO POR EL USUARIO]\n");
+            } catch (Exception e) {
+                callback.log("[ERROR] No se pudo detener el proceso nativo: " + e.getMessage());
+            }
+            currentPid = -1;
         }
     }
 
     public synchronized boolean isRunning() {
-        return currentProcess != null;
+        return currentPid > 0;
     }
 
     public void execute(File flashromBin, String[] args, int currentFd, boolean needsPty, String selectedProgrammer) {
@@ -69,49 +79,44 @@ public class FlashromExecutor {
         for (String arg : args) {
             command.add(arg);
         }
+        String[] commandArgs = command.subList(1, command.size()).toArray(new String[0]);
 
-        // ── Duplicar el FD USB para herencia en el proceso hijo ──
-        // El FD original de UsbDeviceConnection tiene O_CLOEXEC: Android lo
-        // cierra durante exec(). dup() crea un nuevo FD sin esa flag,
-        // permitiendo que flashrom lo use a través de ANDROID_USB_FD.
         int inheritableFd = -1;
+        int childPid = -1;
+        int readFd = -1;
 
         try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.directory(context.getFilesDir());
-            pb.redirectErrorStream(true);
-
-            Map<String, String> env = pb.environment();
-            if (needsPty) {
-                env.remove("ANDROID_USB_FD");
-            } else if (currentFd >= 0) {
-                inheritableFd = dupFdForChild(currentFd);
-                if (inheritableFd >= 0) {
-                    env.put("ANDROID_USB_FD", String.valueOf(inheritableFd));
-                    Log.i(TAG, "USB FD duplicado: " + currentFd + " -> " + inheritableFd + " (heredable)");
-                } else {
-                    // Fallback: pasar el FD original (puede no funcionar en todos los devices)
-                    env.put("ANDROID_USB_FD", String.valueOf(currentFd));
-                    Log.w(TAG, "dup() falló, usando FD original: " + currentFd);
-                }
-            } else {
-                env.remove("ANDROID_USB_FD");
-            }
-
             String jniLibs = context.getApplicationInfo().nativeLibraryDir;
-            String fallbackPath = System.getenv("PATH");
-            env.put("LD_LIBRARY_PATH", jniLibs + ":" + new File(context.getFilesDir(), "usr/lib").getAbsolutePath());
-            env.put("PATH", jniLibs + (fallbackPath != null ? ":" + fallbackPath : ""));
+            String ldPath = jniLibs + ":" + new File(context.getFilesDir(), "usr/lib").getAbsolutePath();
 
-            synchronized (this) {
-                currentProcess = pb.start();
+            if (!needsPty && currentFd >= 0) {
+                inheritableFd = dupFdForChild(currentFd);
             }
+
+            int fdToPass = inheritableFd >= 0 ? inheritableFd : (needsPty ? -1 : currentFd);
+
             callback.onProcessStarted();
+
+            // Start process natively to prevent ProcessBuilder from closing the file descriptor
+            int[] processInfo = startNativeProcess(flashromBin.getAbsolutePath(), commandArgs, fdToPass, ldPath, "");
+            if (processInfo == null || processInfo[0] <= 0) {
+                callback.log("[ERROR] Error al iniciar el proceso nativo.");
+                callback.onProcessFinished(-1, args);
+                return;
+            }
+
+            childPid = processInfo[0];
+            readFd = processInfo[1];
+            synchronized (this) {
+                currentPid = childPid;
+            }
 
             boolean multipleChipsFound = false;
             List<String> suggestedChips = new ArrayList<>();
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(currentProcess.getInputStream()))) {
+            try (android.os.ParcelFileDescriptor pfd = android.os.ParcelFileDescriptor.adoptFd(readFd);
+                 java.io.FileInputStream fis = new java.io.FileInputStream(pfd.getFileDescriptor());
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     callback.log(line);
@@ -129,9 +134,9 @@ public class FlashromExecutor {
                 }
             }
 
-            int exitCode = currentProcess.waitFor();
+            int exitCode = waitForNativeProcess(childPid);
             synchronized (this) {
-                currentProcess = null;
+                currentPid = -1;
             }
 
             if (exitCode != 0 && multipleChipsFound && !suggestedChips.isEmpty()) {
@@ -143,14 +148,13 @@ public class FlashromExecutor {
 
         } catch (Exception e) {
             Log.e(TAG, "Error fatal ejecutando flashrom", e);
-            callback.log("[CRITICAL] ProcessBuilder falló: " + e.getMessage());
+            callback.log("[CRITICAL] Proceso nativo falló: " + e.getMessage());
             callback.log(stackTrace(e));
             synchronized (this) {
-                currentProcess = null;
+                currentPid = -1;
             }
             callback.onProcessFinished(-1, args);
         } finally {
-            // ── Cerrar el FD duplicado DESPUÉS de que flashrom terminó ──
             if (inheritableFd >= 0) {
                 closeDupedFd(inheritableFd);
                 Log.i(TAG, "FD duplicado " + inheritableFd + " cerrado");

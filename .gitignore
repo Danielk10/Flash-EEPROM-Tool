@@ -16,3 +16,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore files
+*.jks
+*.keystore
+keystore.properties
+
+*.json
+
+*.apk
+*.aab
+GUIA_PUBLICACION_PLAY_STORE.md
