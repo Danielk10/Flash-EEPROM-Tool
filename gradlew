@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Force Gradle User Home to be in /tmp to save home disk space
+export GRADLE_USER_HOME="/tmp/.gradle"
+
 #
 # Copyright © 2015 the original authors.
 #
@@ -248,4 +251,4 @@ eval "set -- $(
         tr '\n' ' '
     )" '"$@"'
 
-exec "$JAVACMD" "$@"
+exec "$JAVACMD" "$@" --project-cache-dir "/tmp/gradle-cache-$(basename "$APP_HOME")"
