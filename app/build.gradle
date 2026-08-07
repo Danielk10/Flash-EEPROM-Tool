@@ -2,6 +2,14 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { instr ->
+        keystoreProperties.load(instr)
+    }
+}
+
 android {
 
       // Redirigir la carpeta build a /tmp
@@ -16,7 +24,7 @@ android {
         minSdk 23
         targetSdk 37
         versionCode 62
-        versionName "1.7.1"
+        versionName "1.7.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -27,10 +35,18 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("TU_RUTA_AL_KEYSTORE")
-            storePassword "TU_CONTRASEÑA_DE_ALMACEN"
-            keyAlias "TU_ALIAS_DE_LLAVE"
-            keyPassword "TU_CONTRASEÑA_DE_LLAVE"
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties['storeFile'])
+                storePassword = keystoreProperties['storePassword']
+                keyAlias = keystoreProperties['keyAlias']
+                keyPassword = keystoreProperties['keyPassword']
+            } else {
+                def envStoreFile = System.getenv("SIGNING_STORE_FILE")
+                storeFile = envStoreFile ? file(envStoreFile) : null
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
         }
     }
 
