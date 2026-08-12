@@ -6,6 +6,54 @@ El emulador permite simular dispositivos programadores reales contra una memoria
 
 ---
 
+## 🧩 ¿Qué es y qué hace este emulador?
+
+El emulador es un **simulador de hardware en software** que cumple dos funciones principales para probar la aplicación Android localmente sin necesidad de conectar ningún programador o chip físico:
+
+### Función 1: Simulación del Chip de Memoria SPI (GD25Q80 / GD25080PCP)
+
+El chip físico GigaDevice `GD25Q80` (también conocido como GD25080PCP, 1 Megabyte, interfaz SPI) se simula dentro de la clase `SpiFlashGD25Q80` usando una máquina de estados C++:
+
+*   **Memoria Virtual**: Mantiene un buffer en RAM de 1,048,576 bytes (1MB), inicializado a `0xFF` (estado erased).
+*   **Instrucciones SPI soportadas**: Interpreta y ejecuta los comandos estándar de memorias Flash NOR:
+
+| Código | Comando | Descripción |
+|--------|---------|-------------|
+| `0x9F` | Read JEDEC ID (RDID) | Devuelve los identificadores del fabricante (`C8 40 14`) para que `flashrom` reconozca el chip exacto como GD25Q80(B). |
+| `0x90` | Read Electronic Manufacturer/Device ID (REMS) | Devuelve el par Manufacturer ID (`C8`) y Device ID (`13`). |
+| `0xAB` | Release Power-down / Device ID (RES) | Devuelve Device ID (`13`). |
+| `0x03` | Read Data | Lee datos secuenciales de la memoria virtual a partir de la dirección de 24 bits indicada. |
+| `0x0B` | Fast Read | Igual que Read Data pero con un byte dummy adicional antes de los datos de salida. |
+| `0x06` | Write Enable (WREN) | Habilita el flag interno `write_enable`, requerido antes de cualquier operación de borrado o escritura. |
+| `0x04` | Write Disable (WRDI) | Desactiva el flag `write_enable`. |
+| `0x05` | Read Status Register (RDSR) | Devuelve el registro de estado con el bit WEL (Write Enable Latch). |
+| `0x01` | Write Status Register (WRSR) | Escribe al registro de estado interno. |
+| `0x20` | Sector Erase (SE, 4KB) | Borra un sector de 4096 bytes rellenándolo con `0xFF`. |
+| `0x52` | Block Erase 32KB (BE32) | Borra un bloque de 32768 bytes. |
+| `0xD8` | Block Erase 64KB (BE64) | Borra un bloque de 65536 bytes. |
+| `0xC7` / `0x60` | Chip Erase (CE) | Borra toda la memoria completa (1MB → `0xFF`). |
+| `0x02` | Page Program (PP) | Programa hasta 256 bytes en una página. Respeta la semántica real del hardware: solo puede limpiar bits (AND con datos existentes). |
+
+### Función 2: Simulación de los Programadores (El Puente de Comunicación)
+
+Para que `flashrom` (o el código nativo de la app Android) pueda comunicarse con este chip virtual, el emulador simula el comportamiento de tres programadores físicos:
+
+*   **Modo CH341A (USB Directo)**: A través del script `patch_libusb_local.py`, se interceptan las llamadas a la biblioteca `libusb`. Todas las transferencias de lectura/escritura USB se desvían a través de un Socket UNIX (variable de entorno `ANDROID_USB_FD`). El emulador escucha en ese socket, descodifica los paquetes de comandos USB de CH341A (como levantar/bajar la señal CS en los pines `0xAB` o enviar datos SPI `0xA8`), ejecuta la operación en el chip virtual, y devuelve los bytes simulados empaquetados como si vinieran de un chip USB real.
+
+*   **Modo Serprog (PTY Serie)**: El emulador crea un pseudo-terminal (PTY) y expone un enlace simbólico (`./serprog_pty`). `flashrom` lo abre creyendo que es un puerto serie físico. El emulador recibe los comandos binarios del protocolo Serprog y los traduce a señales SPI para el chip virtual.
+
+*   **Modo Bus Pirate (PTY Serie)**: Similar a Serprog pero utilizando el protocolo binario de Bus Pirate v3. El emulador gestiona la secuencia de inicialización de texto → modo BBIO → modo SPI, incluyendo el banner de versión y el comando de reset `0x0f`.
+
+### ⚙️ ¿Para qué sirve todo esto?
+
+Te permite **validar todo el flujo de software en tu máquina local**:
+
+1. Compilar tu código nativo C++ y la lógica de Java/Android.
+2. Comprobar que el parche de `libusb` y la herencia de descriptores USB (`O_CLOEXEC` → `dup()`) funcionan correctamente.
+3. Ejecutar comandos reales de `flashrom` de **lectura**, **borrado**, **escritura** y **verificación** sobre la memoria virtual, detectando errores de protocolo o desalineaciones de bytes al instante.
+
+---
+
 ## 📋 Arquitectura del Sistema de Emulación
 
 El entorno consta de tres partes principales que trabajan en conjunto:
