@@ -21,6 +21,7 @@ uint8_t debugCmdIndex = 0;
 void handle_spi_op();
 uint32_t read_fixed_size(int n);
 void flush_serial_input();
+void write_serial_with_delay(const uint8_t* buf, size_t len);
 
 void setup() {
   Serial.begin(115200);
@@ -69,10 +70,10 @@ void loop() {
       break;
 
     case 0x01: // Query Interface Version v1.0
-      Serial.write(S_ACK);
-      Serial.write(0x01);
-      Serial.write(0x00);
-      Serial.flush();
+      {
+        uint8_t resp[3] = {S_ACK, 0x01, 0x00};
+        write_serial_with_delay(resp, 3);
+      }
       break;
 
     case 0x02: { // Query Command Map (32 bytes)
@@ -81,39 +82,43 @@ void loop() {
       map[2] = 0x0D; // 0x10, 0x12 y 0x13
 
       Serial.write(S_ACK);
-      Serial.write(map, 32);
       Serial.flush();
+      delayMicroseconds(30);
+      write_serial_with_delay(map, 32);
       break;
     }
 
     case 0x03: { // Query Programmer Name (16 bytes)
       static const char name[16] = "arduino";
       Serial.write(S_ACK);
-      Serial.write((const uint8_t*)name, 16);
       Serial.flush();
+      delayMicroseconds(30);
+      write_serial_with_delay((const uint8_t*)name, 16);
       break;
     }
 
     case 0x04: // Query Serial Buffer Size
-      Serial.write(S_ACK);
-      Serial.write(0x40); // LE -> 0x0040 (64 bytes)
-      Serial.write(0x00);
-      Serial.flush();
+      {
+        uint8_t resp[3] = {S_ACK, 0x40, 0x00};
+        write_serial_with_delay(resp, 3);
+      }
       break;
 
     case 0x05: // Query Supported Bustypes
-      Serial.write(S_ACK);
-      Serial.write(0x08); // SPI
-      Serial.flush();
+      {
+        uint8_t resp[2] = {S_ACK, 0x08};
+        write_serial_with_delay(resp, 2);
+      }
       break;
 
     case 0x10: // SYNCNOP: NAK + ACK
       // No vaciar el UART aquí: flashrom puede haber enviado el siguiente
       // comando en el mismo paquete USB-serial. Descartarlo desincroniza el
       // flujo y hace que la respuesta siguiente parezca corrupta.
-      Serial.write(S_NAK);
-      Serial.write(S_ACK);
-      Serial.flush();
+      {
+        uint8_t resp[2] = {S_NAK, S_ACK};
+        write_serial_with_delay(resp, 2);
+      }
       break;
 
     case 0x12: { // Set bus type
@@ -188,8 +193,7 @@ void handle_spi_op() {
       for (uint32_t i = 0; i < chunk; i++) {
         buffer[i] = SPI.transfer(0x00);
       }
-      Serial.write(buffer, chunk);
-      Serial.flush();
+      write_serial_with_delay(buffer, chunk);
       rlen -= chunk;
     }
   }
@@ -215,5 +219,13 @@ void flush_serial_input() {
   delay(10);
   while (Serial.available() > 0) {
     (void)Serial.read();
+  }
+}
+
+void write_serial_with_delay(const uint8_t* buf, size_t len) {
+  for (size_t i = 0; i < len; i++) {
+    Serial.write(buf[i]);
+    Serial.flush();
+    delayMicroseconds(30);
   }
 }
