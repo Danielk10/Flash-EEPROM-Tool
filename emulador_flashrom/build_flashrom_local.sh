@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-LOCAL_PREFIX="/home/danielpdiamon/emulador_flashrom/local_root"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_PREFIX="${SCRIPT_DIR}/local_root"
+
 echo "=== 1. Clonando flashrom ==="
 cd /tmp
 rm -rf flashrom_native
@@ -25,4 +27,4 @@ meson compile -C builddir
 meson install -C builddir
 
 echo "=== FLASHROM INSTALADO CON ÉXITO ==="
-ls -lh "$LOCAL_PREFIX/bin/flashrom"
+ls -lh "$LOCAL_PREFIX/sbin/flashrom"
