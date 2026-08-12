@@ -22,7 +22,7 @@ public class FlashromExecutor {
     private static native void closeDupedFd(int fd);
 
     // Native process control to bypass ProcessBuilder FD closure
-    private static native int[] startNativeProcess(String executable, String[] args, int usbFd, String ldLibraryPath, String miniproData);
+    private static native int[] startNativeProcess(String executable, String[] args, int usbFd, String ldLibraryPath, String miniproData, String workingDir);
     private static native int waitForNativeProcess(int pid);
     private static native void terminateNativeProcess(int pid);
 
@@ -98,7 +98,7 @@ public class FlashromExecutor {
             callback.onProcessStarted();
 
             // Start process natively to prevent ProcessBuilder from closing the file descriptor
-            int[] processInfo = startNativeProcess(flashromBin.getAbsolutePath(), commandArgs, fdToPass, ldPath, "");
+            int[] processInfo = startNativeProcess(flashromBin.getAbsolutePath(), commandArgs, fdToPass, ldPath, "", context.getFilesDir().getAbsolutePath());
             if (processInfo == null || processInfo[0] <= 0) {
                 callback.log("[ERROR] Error al iniciar el proceso nativo.");
                 callback.onProcessFinished(-1, args);

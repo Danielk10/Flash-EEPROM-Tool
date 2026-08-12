@@ -280,11 +280,13 @@ Java_com_diamon_curso_core_FlashromExecutor_startNativeProcess(
         jobjectArray jArgs,
         jint usbFd,
         jstring jLdLibraryPath,
-        jstring jMiniproData) {
+        jstring jMiniproData,
+        jstring jWorkingDir) {
 
     const char *execPath = env->GetStringUTFChars(jExecutable, nullptr);
     const char *ldLibPath = env->GetStringUTFChars(jLdLibraryPath, nullptr);
     const char *miniproData = env->GetStringUTFChars(jMiniproData, nullptr);
+    const char *workingDir = env->GetStringUTFChars(jWorkingDir, nullptr);
 
     // Preparar argumentos (argv)
     int argc = env->GetArrayLength(jArgs);
@@ -306,6 +308,7 @@ Java_com_diamon_curso_core_FlashromExecutor_startNativeProcess(
         env->ReleaseStringUTFChars(jExecutable, execPath);
         env->ReleaseStringUTFChars(jLdLibraryPath, ldLibPath);
         env->ReleaseStringUTFChars(jMiniproData, miniproData);
+        env->ReleaseStringUTFChars(jWorkingDir, workingDir);
         for (int i = 0; i < argc; i++) {
             jstring argStr = (jstring) env->GetObjectArrayElement(jArgs, i);
             env->ReleaseStringUTFChars(argStr, stringsToRelease[i]);
@@ -321,6 +324,10 @@ Java_com_diamon_curso_core_FlashromExecutor_startNativeProcess(
         dup2(pipefds[1], STDERR_FILENO);
         close(pipefds[0]);
         close(pipefds[1]);
+
+        if (workingDir && strlen(workingDir) > 0) {
+            chdir(workingDir);
+        }
 
         // Configurar variables de entorno
         char fdStr[16];
@@ -354,6 +361,7 @@ Java_com_diamon_curso_core_FlashromExecutor_startNativeProcess(
     env->ReleaseStringUTFChars(jExecutable, execPath);
     env->ReleaseStringUTFChars(jLdLibraryPath, ldLibPath);
     env->ReleaseStringUTFChars(jMiniproData, miniproData);
+    env->ReleaseStringUTFChars(jWorkingDir, workingDir);
     for (int i = 0; i < argc; i++) {
         jstring argStr = (jstring) env->GetObjectArrayElement(jArgs, i);
         env->ReleaseStringUTFChars(argStr, stringsToRelease[i]);

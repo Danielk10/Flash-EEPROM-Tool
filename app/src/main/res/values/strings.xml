@@ -112,7 +112,7 @@
     <string name="str_log_programmer_selected">Selected programmer: %1$s</string>
     <string name="str_log_connect_help">To begin, connect your USB programmer and press \'Detect and Connect Automatically\'.</string>
     <string name="str_yes_erase">Yes, Erase</string>
-    <string name="str_log_write_command_help">Write a command to execute. E.g.: --version or -p ch341a_spi -r bios.bin</string>
+    <string name="str_log_write_command_help">Write a command to execute. E.g.: flashrom --version or flashrom -p ch341a_spi -r bios.bin</string>
     <string name="str_log_warn_no_usb">[WARNING] The command uses \'-p\' but no USB is connected.</string>
     <string name="str_log_dummy_ok">If you are using \'dummy\', that is fine. For real hardware, connect the programmer first.</string>
     <string name="str_log_terminal_reset">Terminal reset.</string>
@@ -120,7 +120,7 @@
     <string name="str_unknown_manufacturer">Unknown manufacturer</string>
     <string name="str_close">Close</string>
     <string name="str_dummy_test_mode">Dummy Programmer Test Mode</string>
-    <string name="str_dummy_info_msg">The \'dummy\' flashrom programmer is a virtual simulator.\n\nIt does NOT use real USB hardware.\n\nValid chips to emulate (v1.7.0):\n\n• VARIABLE_SIZE — Custom size (uses size=N)\n• W25Q128.V — 16 MB\n• MX25L6405D — 8 MB\n• SST25VF032B — 4 MB\n• SST25VF040 — 512 KB\n• M25P10.RES — 128 KB\n• S25FL128L — 16 MB\n\nExample of correct command:\n-p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r read_test.bin\n\n⚠ DO NOT use real chip names (e.g., W25Q128) in emulate if they differ. Only the ones listed above are valid.\n\nFor real hardware, use the appropriate programmer:\n• CH341A → ch341a_spi\n• FT2232H → ft2232_spi\n• ST-Link → stlinkv3_spi</string>
+    <string name="str_dummy_info_msg">The \'dummy\' flashrom programmer is a virtual simulator.\n\nIt does NOT use real USB hardware.\n\nValid chips to emulate (v1.7.0):\n\n• VARIABLE_SIZE — Custom size (uses size=N)\n• W25Q128.V — 16 MB\n• MX25L6405D — 8 MB\n• SST25VF032B — 4 MB\n• SST25VF040 — 512 KB\n• M25P10.RES — 128 KB\n• S25FL128L — 16 MB\n\nExample of correct command:\nflashrom -p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r read_test.bin\n\n⚠ DO NOT use real chip names (e.g., W25Q128) in emulate if they differ. Only the ones listed above are valid.\n\nFor real hardware, use the appropriate programmer:\n• CH341A → ch341a_spi\n• FT2232H → ft2232_spi\n• ST-Link → stlinkv3_spi</string>
     <string name="str_log_test_file_created">Test file created: bios_test.bin (%1$d KB)</string>
     <string name="str_pinout_ch341a_header">CH341A Mini Programmer — SPI Header</string>
     <string name="str_pinout_soic8_header">SOIC8 / DIP8 Flash Chip — Connection to CH341A</string>
@@ -143,5 +143,5 @@
     <string name="str_pinout_lpc_desc_frame">LFRAME# = LPC cycle start active low</string>
     <string name="str_pinout_lpc_desc_clk">LCLK    = Clock typically 33 MHz</string>
     <string name="str_pinout_spi_conn_header">SPI Connector</string>
-    <string name="str_hint_comando">E.g. --version | -p ch341a_spi -L</string>
+    <string name="str_hint_comando">E.g. flashrom --version | flashrom -p ch341a_spi -L</string>
 </resources>

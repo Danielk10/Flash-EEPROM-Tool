@@ -365,7 +365,7 @@ void serprog_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
                     break;
                 }
                 case 0x04: { // Query Serial Buffer Size
-                    uint8_t resp[3] = {0x06, 0x00, 0x01}; // 256 bytes (0x0100)
+                    uint8_t resp[3] = {0x06, 0x40, 0x00}; // 64 bytes (0x0040)
                     write(master_fd, resp, 3);
                     break;
                 }

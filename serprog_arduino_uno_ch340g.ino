@@ -23,7 +23,7 @@ uint32_t read_fixed_size(int n);
 void flush_serial_input();
 
 void setup() {
-  Serial.begin(57600);
+  Serial.begin(115200);
   Serial.setTimeout(100);
 
   for (int i = 0; i < DEBUG_BUF_SIZE; i++) {
@@ -96,8 +96,8 @@ void loop() {
 
     case 0x04: // Query Serial Buffer Size
       Serial.write(S_ACK);
-      Serial.write(0x00); // LE -> 0x0100
-      Serial.write(0x01);
+      Serial.write(0x40); // LE -> 0x0040 (64 bytes)
+      Serial.write(0x00);
       Serial.flush();
       break;
 
@@ -179,7 +179,7 @@ void handle_spi_op() {
   // responder antes solaparía otra operación con el payload actual.
   Serial.write(S_ACK);
   Serial.flush();
-  delay(1); // Pequeña espera para estabilizar el buffer del host
+  delayMicroseconds(200); // Pequeña espera para estabilizar el buffer del host y evitar solapamiento UART
 
   if (rlen > 0) {
     byte buffer[64];

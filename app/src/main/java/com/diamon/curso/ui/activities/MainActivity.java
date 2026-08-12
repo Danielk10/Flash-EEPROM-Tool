@@ -992,6 +992,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String[] args = rawCommand.split("\\s+");
+        if (args.length > 0 && ("flashrom".equals(args[0]) || "./flashrom".equals(args[0]))) {
+            args = Arrays.copyOfRange(args, 1, args.length);
+        }
         for (int i = 0; i < args.length; i++) {
             if ("-r".equals(args[i])) {
                 clearTransientRomState(false);
@@ -1025,7 +1028,7 @@ public class MainActivity extends AppCompatActivity {
             final String bareProgName = detectedSerialProg;
             List<String> argList = new ArrayList<>();
             for (int i = 0; i < args.length; i++) {
-                if ("-p".equals(args[i]) && i + 1 < args.length && bareProgName.equals(args[i + 1])) {
+                if ("-p".equals(args[i]) && i + 1 < args.length && (bareProgName.equals(args[i + 1]) || args[i + 1].startsWith(bareProgName + ":"))) {
                     argList.add("-p");
                     argList.add(usbController.buildPtyProgrammerParam(bareProgName));
                     i++;
@@ -1078,7 +1081,10 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < args.length; i++) {
                 if ("-p".equals(args[i]) && i + 1 < args.length && UsbController.needsPtyBridge(args[i + 1])) {
                     argList.add("-p");
-                    argList.add(usbController.buildPtyProgrammerParam(args[i + 1]));
+                    String progName = args[i + 1];
+                    int colon = progName.indexOf(':');
+                    String bareProg = (colon > 0) ? progName.substring(0, colon) : progName;
+                    argList.add(usbController.buildPtyProgrammerParam(bareProg));
                     i++;
                 } else {
                     argList.add(args[i]);

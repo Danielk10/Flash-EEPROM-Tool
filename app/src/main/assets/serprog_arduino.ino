@@ -96,8 +96,8 @@ void loop() {
 
     case 0x04: // Query Serial Buffer Size
       Serial.write(S_ACK);
-      Serial.write(0x00); // LE -> 0x0100
-      Serial.write(0x01);
+      Serial.write(0x40); // LE -> 0x0040 (64 bytes)
+      Serial.write(0x00);
       Serial.flush();
       break;
 
@@ -179,6 +179,7 @@ void handle_spi_op() {
   // responder antes solaparía otra operación con el payload actual.
   Serial.write(S_ACK);
   Serial.flush();
+  delayMicroseconds(200); // Pequeña espera para estabilizar el buffer del host y evitar solapamiento UART
 
   if (rlen > 0) {
     byte buffer[64];

@@ -319,9 +319,10 @@ Incluye `serprog_arduino_uno_ch340g.ino` — firmware para Arduino UNO que imple
 - Compatible con chips CH340G y FTDI a 115200 bps.
 
 ### Consola de Comandos Avanzada
-- Ejecuta cualquier comando flashrom desde la interfaz.
-- Auto-completa `-p serprog/buspirate_spi/spidriver` con la ruta PTY correcta.
-- Funciona sin USB para comandos informativos (`--version`, `-L`, `--help`).
+- Ejecuta comandos completos de `flashrom` tal como se haría en una terminal de PC (por ejemplo, `flashrom -p serprog -r backup.bin` o simplemente `-p serprog -r backup.bin`).
+- Limpia y procesa el prefijo del ejecutable (`flashrom` o `./flashrom`) de forma automática.
+- Resuelve dinámicamente y auto-completa el parámetro `-p` para programadores basados en puerto serie (ej. `serprog`, `buspirate_spi`, `spidriver`), inyectando el descriptor del pseudo-terminal (PTY) y sincronizando los hilos de comunicación por USB.
+- Funciona sin conexión USB para comandos informativos (`flashrom --version`, `flashrom -L`, `flashrom --help`).
 
 ### Detección Automática de Programadores USB
 18 VID:PIDs cubriendo 7 familias de programadores. Auto-selecciona parámetro `-p` y ruteo (PTY vs libusb).
