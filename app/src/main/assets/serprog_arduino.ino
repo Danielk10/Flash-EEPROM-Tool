@@ -21,7 +21,6 @@ uint8_t debugCmdIndex = 0;
 void handle_spi_op();
 uint32_t read_fixed_size(int n);
 void flush_serial_input();
-void write_serial_with_delay(const uint8_t* buf, size_t len);
 
 void setup() {
   Serial.begin(115200);
@@ -69,47 +68,46 @@ void loop() {
       Serial.flush();
       break;
 
-    case 0x01: // Query Interface Version v1.0
-      {
-        uint8_t resp[3] = {S_ACK, 0x01, 0x00};
-        write_serial_with_delay(resp, 3);
-      }
+    case 0x01: { // Query Interface Version v1.0
+      uint8_t resp[3] = {S_ACK, 0x01, 0x00};
+      Serial.write(resp, 3);
+      Serial.flush();
       break;
+    }
 
     case 0x02: { // Query Command Map (32 bytes)
       byte map[32] = {0};
       map[0] = 0x3F; // 0x00..0x05
       map[2] = 0x0D; // 0x10, 0x12 y 0x13
 
+      // ACK + 32 bytes del mapa como bloque atómico
       Serial.write(S_ACK);
+      Serial.write(map, 32);
       Serial.flush();
-      delayMicroseconds(30);
-      write_serial_with_delay(map, 32);
       break;
     }
 
     case 0x03: { // Query Programmer Name (16 bytes)
       static const char name[16] = "arduino";
       Serial.write(S_ACK);
+      Serial.write((const uint8_t*)name, 16);
       Serial.flush();
-      delayMicroseconds(30);
-      write_serial_with_delay((const uint8_t*)name, 16);
       break;
     }
 
-    case 0x04: // Query Serial Buffer Size
-      {
-        uint8_t resp[3] = {S_ACK, 0x40, 0x00};
-        write_serial_with_delay(resp, 3);
-      }
+    case 0x04: { // Query Serial Buffer Size
+      uint8_t resp[3] = {S_ACK, 0x40, 0x00}; // LE -> 0x0040 (64 bytes)
+      Serial.write(resp, 3);
+      Serial.flush();
       break;
+    }
 
-    case 0x05: // Query Supported Bustypes
-      {
-        uint8_t resp[2] = {S_ACK, 0x08};
-        write_serial_with_delay(resp, 2);
-      }
+    case 0x05: { // Query Supported Bustypes
+      uint8_t resp[2] = {S_ACK, 0x08}; // SPI
+      Serial.write(resp, 2);
+      Serial.flush();
       break;
+    }
 
     case 0x10: // SYNCNOP: NAK + ACK
       // No vaciar el UART aquí: flashrom puede haber enviado el siguiente
@@ -117,7 +115,8 @@ void loop() {
       // flujo y hace que la respuesta siguiente parezca corrupta.
       {
         uint8_t resp[2] = {S_NAK, S_ACK};
-        write_serial_with_delay(resp, 2);
+        Serial.write(resp, 2);
+        Serial.flush();
       }
       break;
 
@@ -180,20 +179,44 @@ void handle_spi_op() {
     SPI.transfer((uint8_t)Serial.read());
   }
 
-  // Serprog exige ACK sólo después de recibir por completo los slen bytes;
-  // responder antes solaparía otra operación con el payload actual.
-  Serial.write(S_ACK);
-  Serial.flush();
-  delayMicroseconds(200); // Pequeña espera para estabilizar el buffer del host y evitar solapamiento UART
+  // El protocolo serprog exige:
+  //   -> ACK (1 byte)
+  //   -> rlen bytes de datos SPI leídos
+  // Deben enviarse como flujo continuo. El ACK DEBE ir en el MISMO
+  // bloque USB que los primeros bytes de datos para que flashrom no
+  // lea un paquete USB vacío/parcial y pierda la sincronización.
 
-  if (rlen > 0) {
-    byte buffer[64];
+  if (rlen == 0) {
+    // Sin datos de lectura: sólo ACK
+    Serial.write(S_ACK);
+    Serial.flush();
+  } else {
+    // Leer del SPI y enviar ACK + datos en bloques de 32 bytes.
+    // Usar bloques de 32 (no 64) para dejar margen en el buffer
+    // hardware del ATmega328P (doble buffer de 1 byte) y evitar
+    // que los retardos de vaciado del TX compitan con recepción.
+    byte buffer[32];
+    bool ackSent = false;
     while (rlen > 0) {
-      uint32_t chunk = (rlen > sizeof(buffer)) ? sizeof(buffer) : rlen;
-      for (uint32_t i = 0; i < chunk; i++) {
-        buffer[i] = SPI.transfer(0x00);
+      uint32_t chunk;
+      if (!ackSent) {
+        // Primer bloque: ACK va como primer byte del buffer
+        chunk = (rlen > 31) ? 31 : rlen;
+        buffer[0] = S_ACK;
+        for (uint32_t i = 0; i < chunk; i++) {
+          buffer[i + 1] = SPI.transfer(0x00);
+        }
+        Serial.write(buffer, chunk + 1);
+        Serial.flush();
+        ackSent = true;
+      } else {
+        chunk = (rlen > 32) ? 32 : rlen;
+        for (uint32_t i = 0; i < chunk; i++) {
+          buffer[i] = SPI.transfer(0x00);
+        }
+        Serial.write(buffer, chunk);
+        Serial.flush();
       }
-      write_serial_with_delay(buffer, chunk);
       rlen -= chunk;
     }
   }
@@ -219,13 +242,5 @@ void flush_serial_input() {
   delay(10);
   while (Serial.available() > 0) {
     (void)Serial.read();
-  }
-}
-
-void write_serial_with_delay(const uint8_t* buf, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    Serial.write(buf[i]);
-    Serial.flush();
-    delayMicroseconds(30);
   }
 }
