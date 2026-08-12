@@ -73,7 +73,7 @@ public class PtyBridge {
     private Thread threadUsbToMaster = null;
     private volatile boolean masterToUsbReady = false;
     private volatile boolean usbToMasterReady = false;
-    private int baudRate = 115200;
+    private int baudRate = 57600;
     private LogCallback logCallback = null;
 
     // Contadores de diagnóstico para Thread B
