@@ -261,7 +261,7 @@
                 android:id="@+id/cbVerifyWrite"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Verificar escritura"
+                android:text="@string/str_verificar_escritura"
                 android:textColor="#E0E0E0"
                 android:checked="false"
                 android:layout_marginBottom="2dp"/>

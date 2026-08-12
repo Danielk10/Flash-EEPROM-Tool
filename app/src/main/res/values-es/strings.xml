@@ -151,4 +151,5 @@
     <string name="str_err_logical_usb_lost">Error lógico: El FD de USB se perdió.</string>
     <string name="str_log_verify_disabled">Verificación deshabilitada: Saltando paso de verificación (-n)</string>
     <string name="str_log_writing_flash_op">Escribiendo flash</string>
+    <string name="str_verificar_escritura">Verificar escritura</string>
 </resources>
