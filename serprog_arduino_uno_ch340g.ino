@@ -78,7 +78,8 @@ void loop() {
     case 0x02: { // Query Command Map (32 bytes)
       byte map[32] = {0};
       map[0] = 0x3F; // 0x00..0x05
-      map[2] = 0x0D; // 0x10, 0x12 y 0x13
+      map[1] = 0x01; // 0x08 (0x01 << 0)
+      map[2] = 0x0F; // 0x10, 0x11, 0x12, 0x13
 
       // ACK + 32 bytes del mapa como bloque atómico
       Serial.write(S_ACK);
@@ -105,6 +106,20 @@ void loop() {
     case 0x05: { // Query Supported Bustypes
       uint8_t resp[2] = {S_ACK, 0x08}; // SPI
       Serial.write(resp, 2);
+      Serial.flush();
+      break;
+    }
+
+    case 0x08: { // Query Maximum Write Length
+      uint8_t resp[4] = {S_ACK, 32, 0x00, 0x00}; // 32 bytes
+      Serial.write(resp, 4);
+      Serial.flush();
+      break;
+    }
+
+    case 0x11: { // Query Maximum Read Length
+      uint8_t resp[4] = {S_ACK, 64, 0x00, 0x00}; // 64 bytes
+      Serial.write(resp, 4);
       Serial.flush();
       break;
     }
