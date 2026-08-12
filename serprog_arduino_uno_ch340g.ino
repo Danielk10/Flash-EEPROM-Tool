@@ -39,9 +39,6 @@ void setup() {
   Serial.write(BEACON_BYTE2);
   Serial.flush();
 
-  delay(100);
-  flush_serial_input();
-
   SPI.begin();
   SPI.setClockDivider(SPI_CLOCK_DIV4); // ~4MHz en UNO
   SPI.setDataMode(SPI_MODE0);
@@ -99,8 +96,8 @@ void loop() {
 
     case 0x04: // Query Serial Buffer Size
       Serial.write(S_ACK);
-      Serial.write(0x00); // LSB
-      Serial.write(0x01); // MSB -> 0x0100 (256 bytes)
+      Serial.write(0x00); // LE -> 0x0100
+      Serial.write(0x01);
       Serial.flush();
       break;
 
@@ -111,8 +108,9 @@ void loop() {
       break;
 
     case 0x10: // SYNCNOP: NAK + ACK
-      // Limpia basura vieja antes de responder SYNC
-      flush_serial_input();
+      // No vaciar el UART aquí: flashrom puede haber enviado el siguiente
+      // comando en el mismo paquete USB-serial. Descartarlo desincroniza el
+      // flujo y hace que la respuesta siguiente parezca corrupta.
       Serial.write(S_NAK);
       Serial.write(S_ACK);
       Serial.flush();
@@ -145,8 +143,6 @@ void loop() {
     default:
       Serial.write(S_NAK);
       Serial.flush();
-      // Evitar que bytes residuales queden desfasando el parser
-      flush_serial_input();
       break;
   }
 
@@ -166,7 +162,6 @@ void handle_spi_op() {
 
   digitalWrite(SPI_CS_PIN, LOW);
 
-  // 1. Procesamos los datos de escritura (slen)
   while (slen--) {
     unsigned long start = millis();
     while (Serial.available() == 0) {
@@ -180,11 +175,11 @@ void handle_spi_op() {
     SPI.transfer((uint8_t)Serial.read());
   }
 
-  // 2. ENVIAMOS ACK: Solo cuando slen está completo y el Arduino está listo
+  // Serprog exige ACK sólo después de recibir por completo los slen bytes;
+  // responder antes solaparía otra operación con el payload actual.
   Serial.write(S_ACK);
   Serial.flush();
 
-  // 3. Procesamos los datos de lectura (rlen)
   if (rlen > 0) {
     byte buffer[64];
     while (rlen > 0) {
@@ -198,7 +193,6 @@ void handle_spi_op() {
     }
   }
 
-  // Finalizamos transferencia
   digitalWrite(SPI_CS_PIN, HIGH);
 }
 
