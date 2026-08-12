@@ -146,11 +146,14 @@ public:
                     state = SPI_DATA_IN;
                 } else if (cmd == CMD_WREN) {
                     write_enable = true;
+                    std::cout << "[FLASH-DEBUG] CMD_WREN, write_enable = true" << std::endl;
                     state = SPI_IDLE;
                 } else if (cmd == CMD_WRDI) {
                     write_enable = false;
+                    std::cout << "[FLASH-DEBUG] CMD_WRDI, write_enable = false" << std::endl;
                     state = SPI_IDLE;
                 } else if (cmd == CMD_CE || cmd == CMD_CE_ALT) {
+                    std::cout << "[FLASH-DEBUG] CMD_CE, write_enable = " << (write_enable ? "true" : "false") << std::endl;
                     if (write_enable) {
                         std::fill(memory.begin(), memory.end(), 0xFF);
                     }
@@ -177,8 +180,10 @@ public:
                 } else if (cmd == CMD_FAST_READ) {
                     state = SPI_DUMMY;
                 } else if (cmd == CMD_PP) {
+                    std::cout << "[FLASH-DEBUG] CMD_PP (Page Program) at addr = 0x" << std::hex << addr << ", write_enable = " << (write_enable ? "true" : "false") << std::dec << std::endl;
                     state = SPI_DATA_IN;
                 } else if (cmd == CMD_SE) {
+                    std::cout << "[FLASH-DEBUG] CMD_SE (Sector Erase) at addr = 0x" << std::hex << addr << ", write_enable = " << (write_enable ? "true" : "false") << std::dec << std::endl;
                     if (write_enable) {
                         uint32_t start = addr & ~0xFFF;
                         for (uint32_t i = 0; i < 4096 && (start + i) < memory.size(); i++) {
@@ -187,6 +192,7 @@ public:
                     }
                     state = SPI_IDLE;
                 } else if (cmd == CMD_BE32) {
+                    std::cout << "[FLASH-DEBUG] CMD_BE32 at addr = 0x" << std::hex << addr << ", write_enable = " << (write_enable ? "true" : "false") << std::dec << std::endl;
                     if (write_enable) {
                         uint32_t start = addr & ~0x7FFF;
                         for (uint32_t i = 0; i < 32768 && (start + i) < memory.size(); i++) {
@@ -195,6 +201,7 @@ public:
                     }
                     state = SPI_IDLE;
                 } else if (cmd == CMD_BE64) {
+                    std::cout << "[FLASH-DEBUG] CMD_BE64 at addr = 0x" << std::hex << addr << ", write_enable = " << (write_enable ? "true" : "false") << std::dec << std::endl;
                     if (write_enable) {
                         uint32_t start = addr & ~0xFFFF;
                         for (uint32_t i = 0; i < 65536 && (start + i) < memory.size(); i++) {
@@ -590,7 +597,8 @@ void handle_ch341a_client(SpiFlashGD25Q80* flash, int fd) {
                     }
                 }
             } else if (cmd == 0xA8) { // CH341A_CMD_SPI_STREAM
-                uint32_t spi_len = packet_len - idx;
+                uint32_t rem_in_packet = (32 - (idx % 32)) % 32;
+                uint32_t spi_len = std::min(rem_in_packet, packet_len - idx);
                 std::cout << "[CH341A-DEBUG] SPI_STREAM, longitud = " << spi_len << std::endl;
                 std::vector<uint8_t> resp_buf(spi_len);
                 for (uint32_t i = 0; i < spi_len; i++) {

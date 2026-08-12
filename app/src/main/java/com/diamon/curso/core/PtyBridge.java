@@ -39,11 +39,6 @@ public class PtyBridge {
     private static final int BEACON_BYTE_2 = 0x55;
     /** Cuántos bytes iniciales loggear en hex para diagnóstico */
     private static final int DEBUG_HEX_LIMIT = 32;
-    /**
-     * Serializa los primeros bytes PTY→USB para evitar solapamiento de comandos en
-     * CH340.
-     */
-    private static final int SERPROG_PREAMBLE_GUARD_BYTES = 48;
 
     /** Callback para enviar logs al UI de la app (no sólo logcat) */
     public interface LogCallback {
@@ -528,28 +523,11 @@ public class PtyBridge {
                         }
                         totalSent += n;
                         try {
-                            int preGuardRemaining = Math.max(0, SERPROG_PREAMBLE_GUARD_BYTES - (totalSent - n));
-                            if (preGuardRemaining > 0) {
-                                int guarded = Math.min(preGuardRemaining, n);
-                                for (int i = 0; i < guarded; i++) {
-                                    byte[] one = new byte[] { buf[i] };
-                                    usbPort.write(one, 1, USB_TIMEOUT_MS);
-                                    diagUsbBytesWritten += 1;
-                                    // CH340 + firmware serprog con limpieza agresiva en SYNCNOP:
-                                    // separar bytes iniciales reduce riesgo de que un comando siguiente
-                                    // llegue en el mismo burst y sea descartado por el firmware.
-                                    sleepQuietly(2);
-                                }
-                                if (n > guarded) {
-                                    byte[] tail = new byte[n - guarded];
-                                    System.arraycopy(buf, guarded, tail, 0, n - guarded);
-                                    usbPort.write(tail, tail.length, USB_TIMEOUT_MS);
-                                    diagUsbBytesWritten += tail.length;
-                                }
-                            } else {
-                                usbPort.write(buf, n, USB_TIMEOUT_MS);
-                                diagUsbBytesWritten += n;
-                            }
+                            // El UART se maneja como un flujo binario. Mantener cada
+                            // lectura del PTY intacta evita separar cabeceras/payloads
+                            // de O_SPIOP y evita depender de temporizaciones del CH340.
+                            usbPort.write(buf, n, USB_TIMEOUT_MS);
+                            diagUsbBytesWritten += n;
                         } catch (IOException e) {
                             diagUsbWriteErrors++;
                             if (running) {
