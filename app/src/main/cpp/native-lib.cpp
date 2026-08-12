@@ -117,18 +117,18 @@ Java_com_diamon_curso_core_PtyBridge_createPty(JNIEnv *env, jclass clazz) {
         if (tcgetattr(slaveFd, &tio) == 0) {
             cfmakeraw(&tio);
             tcsetattr(slaveFd, TCSANOW, &tio);
-            LOGI("PTY slave configurado en modo RAW");
+            LOGI("PTY slave configurado en modo RAW (FD guardado para mantener estado)");
         }
-        close(slaveFd);
     }
 
-    LOGI("PTY creado: master_fd=%d slave=%s", masterFd, slavePath);
+    LOGI("PTY creado: master_fd=%d slave=%s slave_fd=%d", masterFd, slavePath, slaveFd);
 
-    // Construir array de retorno: [masterFdAsString, slavePath]
+    // Construir array de retorno: [masterFdAsString, slavePath, slaveFdAsString]
     jclass stringClass = env->FindClass("java/lang/String");
-    jobjectArray result = env->NewObjectArray(2, stringClass, nullptr);
+    jobjectArray result = env->NewObjectArray(3, stringClass, nullptr);
     env->SetObjectArrayElement(result, 0, env->NewStringUTF(std::to_string(masterFd).c_str()));
     env->SetObjectArrayElement(result, 1, env->NewStringUTF(slavePath));
+    env->SetObjectArrayElement(result, 2, env->NewStringUTF(std::to_string(slaveFd).c_str()));
     return result;
 }
 

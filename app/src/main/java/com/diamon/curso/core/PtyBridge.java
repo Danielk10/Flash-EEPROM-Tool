@@ -64,6 +64,7 @@ public class PtyBridge {
 
     // -------- Estado --------
     private int masterFd = -1;
+    private int dummySlaveFd = -1;
     private String slavePath = null;
     private UsbSerialPort usbPort = null;
     private UsbDeviceConnection usbConnection = null;
@@ -123,11 +124,14 @@ public class PtyBridge {
         try {
             masterFd = Integer.parseInt(ptyResult[0]);
             slavePath = ptyResult[1];
+            if (ptyResult.length >= 3 && ptyResult[2] != null) {
+                dummySlaveFd = Integer.parseInt(ptyResult[2]);
+            }
         } catch (NumberFormatException e) {
             Log.e(TAG, "FD inválido retornado por createPty(): " + ptyResult[0]);
             return false;
         }
-        Log.i(TAG, "PTY creado: masterFd=" + masterFd + " slavePath=" + slavePath);
+        Log.i(TAG, "PTY creado: masterFd=" + masterFd + " slavePath=" + slavePath + " dummySlaveFd=" + dummySlaveFd);
 
         // 2. Abrir puerto USB-Serial con usb-serial-for-android
         List<UsbSerialDriver> drivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
@@ -695,8 +699,12 @@ public class PtyBridge {
     private void cleanupPty() {
         // El FD real es cerrado por masterPfd.close() en cleanupPfd()
         // (adoptFd transfirió la propiedad al PFD).
-        // Aquí solo limpiamos el estado Java.
+        // Aquí solo limpiamos el estado Java y el dummySlaveFd.
         masterFd = -1;
         slavePath = null;
+        if (dummySlaveFd >= 0) {
+            closeFd(dummySlaveFd);
+            dummySlaveFd = -1;
+        }
     }
 }
