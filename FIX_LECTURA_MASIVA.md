@@ -93,12 +93,6 @@ Durante la preparación de la versión definitiva `v1.7.1`, se integraron y docu
 Se comprobó que las versiones modernas de `flashrom` aceptan el flag oculto `--progress`, el cual imprime en *stdout* el avance porcentual (ej. `[READ:  45%]...`). 
 En la aplicación Android, tanto los botones de la interfaz gráfica (Leer, Escribir, Borrar, Verificar) como el cuadro de comandos manuales, ahora **inyectan automáticamente** este flag. Como la tubería de ejecución de la app ya captura *stdout/stderr* del binario y los redirige al visor negro de la UI, los usuarios ahora pueden monitorear visualmente el progreso sin modificaciones complejas en JNI.
 
-### B. Evaluación del Programador Bus Pirate (`buspirate_spi`)
-Se realizó una validación sobre el programador Bus Pirate:
-- **Overrun (Buffer UART):** A diferencia de Arduino/CH340, los Bus Pirate (que utilizan internamente micros dedicados con chips FTDI o hardware nativo USB-Serial) gestionan correctamente el control de flujo y los límites de su protocolo propio. Por consiguiente, no sufren la desincronización por "overrun" de latencia.
-- **Corrupción PTY:** Sí se veían afectados previamente por el problema del Line Discipline del kernel de Linux (los bytes binarios que coincidían con `0x11` o `0x13` eran capturados por el sistema operativo).
-- **Conclusión:** Gracias a la solución universal del **Dummy Slave FD** implementada para el `serprog`, el programador `buspirate_spi` (y `spidriver`) automáticamente hereda la estabilidad absoluta y su terminal se conserva estrictamente en modo `RAW`.
-
-### C. Localización Total y Preparación para Producción
+### B. Localización Total y Preparación para Producción
 1. **Localización de Cadenas de Texto:** Se extrajeron todas las cadenas de log (ej. `"Hilos de forwarding activos"`, `"Escribiendo flash"`) a los archivos de recursos `strings.xml`. Se implementó el correcto escapado XML de comillas simples (`"Fallo crítico: Binario \'flashrom\' no existe"`) que el compilador de Android requiere. Ambas versiones, Inglés y Español, se encuentran 100% sincronizadas.
 2. **Compilación de Release:** La versión final se empaquetó exitosamente a través de `assembleRelease`. Para ello se debió generar un *Keystore* local y configurar `keystore.properties` temporalmente. El resultado es un APK `app-release.apk` totalmente ofuscado y sin símbolos de depuración, el cual reemplazó a todos los pre-lanzamientos y binarios debug en el repositorio oficial.
