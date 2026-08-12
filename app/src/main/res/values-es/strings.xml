@@ -147,7 +147,7 @@
     <string name="str_err_flashrom_running">Hay una operación de flashrom en ejecución. Por favor, aborta o espera a que finalice.</string>
     <string name="str_log_starting_pty">Iniciando puente PTY↔USB para %1$s...</string>
     <string name="str_log_forwarding_active">Hilos de forwarding activos.</string>
-    <string name="str_err_critical_flashrom_missing">Fallo crítico: Binario \'flashrom\' no existe. (%1$s)</string>
+    <string name="str_err_critical_flashrom_missing">"Fallo crítico: Binario \'flashrom\' no existe. (%1$s)"</string>
     <string name="str_err_logical_usb_lost">Error lógico: El FD de USB se perdió.</string>
     <string name="str_log_verify_disabled">Verificación deshabilitada: Saltando paso de verificación (-n)</string>
     <string name="str_log_writing_flash_op">Escribiendo flash</string>
