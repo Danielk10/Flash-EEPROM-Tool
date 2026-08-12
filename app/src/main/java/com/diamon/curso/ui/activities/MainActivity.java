@@ -987,7 +987,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void executeCustomFlashromCommand(String rawCommand) {
         if (flashromExecutor.isRunning()) {
-            log("Hay una operación de flashrom en ejecución. Por favor, aborta o espera a que finalice.");
+            log(getString(R.string.str_err_flashrom_running));
             return;
         }
 
@@ -1019,10 +1019,10 @@ public class MainActivity extends AppCompatActivity {
         if (detectedSerialProg != null && usbController.getPtyBridge() != null && usbController.getPtyBridge().isOpen()) {
             PtyBridge ptyBridge = usbController.getPtyBridge();
             if (!ptyBridge.isForwardingActive()) {
-                log("Iniciando puente PTY↔USB para " + detectedSerialProg + "...");
+                log(getString(R.string.str_log_starting_pty, detectedSerialProg));
                 ptyBridge.purge();
                 ptyBridge.startForwarding();
-                log("Hilos de forwarding activos.");
+                log(getString(R.string.str_log_forwarding_active));
             }
 
             final String bareProgName = detectedSerialProg;
@@ -1061,7 +1061,7 @@ public class MainActivity extends AppCompatActivity {
             preferredFlashromBin = new File(getApplicationInfo().nativeLibraryDir, "libflashrom_bin.so");
         }
         if (!preferredFlashromBin.exists()) {
-            log("Fallo crítico: Binario 'flashrom' no existe. (" + preferredFlashromBin.getAbsolutePath() + ")");
+            log(getString(R.string.str_err_critical_flashrom_missing, preferredFlashromBin.getAbsolutePath()));
             return;
         }
         log("$ flashrom " + String.join(" ", args));
@@ -1073,13 +1073,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void executeFlashromTask(String... args) {
         if (flashromExecutor.isRunning()) {
-            log("Hay una operación de flashrom en ejecución. Por favor, aborta o espera a que finalice.");
+            log(getString(R.string.str_err_flashrom_running));
             return;
         }
 
         // Dummy no necesita FD de USB
         if (!usbController.isConnected() && !isDummyProgrammer()) {
-            log("Error lógico: El FD de USB se perdió.");
+            log(getString(R.string.str_err_logical_usb_lost));
             return;
         }
 
@@ -1115,7 +1115,7 @@ public class MainActivity extends AppCompatActivity {
             preferredFlashromBin = new File(getApplicationInfo().nativeLibraryDir, "libflashrom_bin.so");
         }
         if (!preferredFlashromBin.exists()) {
-            log("Fallo crítico: Binario 'flashrom' no existe. (" + preferredFlashromBin.getAbsolutePath() + ")");
+            log(getString(R.string.str_err_critical_flashrom_missing, preferredFlashromBin.getAbsolutePath()));
             return;
         }
 
@@ -1126,7 +1126,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isLongOp = false;
         for (String arg : resolvedArgs) {
             if ("-w".equals(arg)) {
-                opLabel = "Escribiendo flash";
+                opLabel = getString(R.string.str_log_writing_flash_op);
             }
             if ("-r".equals(arg) || "-w".equals(arg) || "-v".equals(arg) || "-E".equals(arg) || "--erase".equals(arg)) {
                 isLongOp = true;
@@ -1135,9 +1135,9 @@ public class MainActivity extends AppCompatActivity {
         
         List<String> finalArgsList = new ArrayList<>(Arrays.asList(resolvedArgs));
         
-        if (cbVerifyWrite != null && !cbVerifyWrite.isChecked() && "Escribiendo flash".equals(opLabel)) {
+        if (cbVerifyWrite != null && !cbVerifyWrite.isChecked() && getString(R.string.str_log_writing_flash_op).equals(opLabel)) {
             finalArgsList.add("-n");
-            log("Verificación deshabilitada: Saltando paso de verificación (-n)");
+            log(getString(R.string.str_log_verify_disabled));
         }
         
         if (isLongOp && !finalArgsList.contains("--progress")) {

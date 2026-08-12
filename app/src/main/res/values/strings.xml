@@ -144,4 +144,11 @@
     <string name="str_pinout_lpc_desc_clk">LCLK    = Clock typically 33 MHz</string>
     <string name="str_pinout_spi_conn_header">SPI Connector</string>
     <string name="str_hint_comando">E.g. flashrom --version | flashrom -p ch341a_spi -L</string>
+    <string name="str_err_flashrom_running">A flashrom operation is already running. Please abort or wait for it to finish.</string>
+    <string name="str_log_starting_pty">Starting PTY↔USB bridge for %1$s...</string>
+    <string name="str_log_forwarding_active">Forwarding threads active.</string>
+    <string name="str_err_critical_flashrom_missing">Critical failure: 'flashrom' binary not found. (%1$s)</string>
+    <string name="str_err_logical_usb_lost">Logical error: USB FD lost.</string>
+    <string name="str_log_verify_disabled">Verification disabled: Skipping verification step (-n)</string>
+    <string name="str_log_writing_flash_op">Writing flash</string>
 </resources>
