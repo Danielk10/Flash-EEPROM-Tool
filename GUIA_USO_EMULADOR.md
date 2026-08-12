@@ -152,3 +152,21 @@ Bus Pirate/Serprog/CH341A shutdown completed.
 ```
 
 ¡El entorno local de emulación y validación está listo y comprobado al 100%!
+
+---
+
+## 🔬 Detalles de Arquitectura Avanzada e Integración (Lecciones de Lector-De-Memorias y K150)
+
+Para asegurar la máxima compatibilidad de las herramientas y evitar los errores comunes detectados en los proyectos emuladores previos (como `Lector-De-Memorias` y el emulador de `K150`), se documentan las siguientes soluciones arquitectónicas aplicadas en este proyecto:
+
+### 1. Herencia de Descriptores USB en Procesos Hijos (`O_CLOEXEC`)
+*   **Problema**: En Android, el descriptor de archivo de conexión USB obtenido mediante `UsbDeviceConnection.getFileDescriptor()` posee activado el flag `O_CLOEXEC` por defecto. Si se intenta lanzar `flashrom` directamente a través de `ProcessBuilder` (que ejecuta `exec`), el kernel de Android cierra el descriptor USB inmediatamente, provocando que `flashrom` reciba un descriptor inválido.
+*   **Solución**: Se utiliza una llamada JNI nativa `dup()` en `native-lib.cpp` para duplicar el descriptor. Dado que `dup()` por definición no propaga el flag `O_CLOEXEC`, y removiendo dicho flag explícitamente a través de `fcntl(newFd, F_SETFD, flags & ~FD_CLOEXEC)`, el descriptor de socket duplicado sobrevive al proceso de herencia de `execv()` y puede ser consumido exitosamente en el subproceso a través de la variable de entorno `ANDROID_USB_FD`.
+
+### 2. Aislamiento de Señales de Control de Módem (DTR/RTS) en PTYs
+*   **Problema**: Los pseudo-terminales virtuales (PTYs) de Linux que actúan como puente COM para programadores basados en serie (como Serprog y Bus Pirate) no exponen físicamente líneas de control de módem. Intentar modificar el estado de DTR/RTS directamente sobre el esclavo del PTY (por ejemplo, con llamadas a `ioctl` o a través de bibliotecas como `pyserial` o serial-drivers de C) arroja excepciones del sistema operativo (`OSError` o error de tipo `ENOTTY` - Inappropriate ioctl for device).
+*   **Solución**: Se implementó una arquitectura de puente aislado. Las llamadas para resetear o conmutar DTR/RTS son gestionadas **exclusivamente** desde el hilo principal Java en Android sobre el puerto USB físico real (`UsbSerialPort`). Por su parte, la comunicación por PTY se mantiene puramente en modo `RAW` binario. De esta forma, el subproceso CLI ve al PTY como una línea de comunicación transparente de datos puros y no genera fallos ni excepciones al interactuar con el puerto virtual.
+
+### 3. Evitar el Solapamiento de Mensajes mediante Framing de Longitud
+*   **Problema**: El bus USB real preserva los límites de los paquetes de datos definidos en cada transferencia asíncrona. Sin embargo, un canal de socket UNIX concatena los datos de forma continua (flujo de bytes continuo). En emuladores basados únicamente en buffers fijos, esto solía causar desalineación de bytes e interbloqueos (deadlocks) al cambiar el tamaño de los paquetes.
+*   **Solución**: Se implementó un protocolo de encuadre en el canal socket de CH341A. Cada transacción es precedida por un entero LSB de 4 bytes que define el tamaño del paquete. Esto permite al emulador de C++ conocer con total precisión cuántos bytes del flujo SPI debe leer y procesar antes de emitir la respuesta correspondiente de vuelta al host.
