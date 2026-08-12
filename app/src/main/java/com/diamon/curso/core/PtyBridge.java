@@ -124,6 +124,10 @@ public class PtyBridge {
         try {
             masterFd = Integer.parseInt(ptyResult[0]);
             slavePath = ptyResult[1];
+            // FIX: Guardamos el File Descriptor esclavo como "dummy" para evitar
+            // que el kernel de Linux cierre la última referencia al PTY y reinicie
+            // su configuración de RAW mode (binaria) a Cooked mode (texto),
+            // lo cual corrompería los bytes como 0x11 y 0x13.
             if (ptyResult.length >= 3 && ptyResult[2] != null) {
                 dummySlaveFd = Integer.parseInt(ptyResult[2]);
             }
@@ -578,7 +582,12 @@ public class PtyBridge {
                 while (running && !Thread.currentThread().isInterrupted()) {
                     try {
                         if (usbPort != null) {
-                            // Timeout 200ms para CH340G
+                            // Timeout 200ms para CH340G.
+                            // IMPORTANTE (CH340 Overrun): Si el Arduino enviara demasiados bytes de golpe
+                            // (ej. 1MB continuo) sin que este hilo los lea lo suficientemente rápido,
+                            // el buffer físico del CH340 se llenaría y se perderían bytes. Para evitarlo,
+                            // el firmware del Arduino ahora implementa el comando S_CMD_Q_RDNMAXLEN (0x11)
+                            // limitando los bloques a 64 bytes. Así, flashrom pide y espera de 64 en 64 bytes.
                             int n = usbPort.read(buf, 200);
                             diagUsbReads++;
                             if (n > 0) {

@@ -111,13 +111,22 @@ Java_com_diamon_curso_core_PtyBridge_createPty(JNIEnv *env, jclass clazz) {
     } else {
         LOGE("tcgetattr falló en master: errno=%d (continuando)", errno);
     }
-    // También configurar el slave para que flashrom lo vea en raw
+    // ── FIX CRÍTICO: Dummy Slave FD ───────────────────────────────
+    // Configuramos el lado esclavo (slave) del PTY también en modo RAW.
+    // Si cerráramos este File Descriptor temporal, el kernel de Linux
+    // detectaría que hay 0 conexiones al esclavo y reiniciaría los ajustes
+    // del terminal a su estado por defecto (cooked mode). Si eso pasa, cuando
+    // flashrom abra el PTY, los datos binarios volverán a ser corrompidos por
+    // la "Line Discipline" del OS (borrando 0x11, 0x13, etc).
+    // Por ello, mantenemos el slaveFd ABIERTO y se lo regresamos a Java para
+    // que actúe como un "Dummy FD" que mantiene vivo el estado RAW hasta que
+    // finalice la ejecución.
     int slaveFd = open(slavePath, O_RDWR | O_NOCTTY);
     if (slaveFd >= 0) {
         if (tcgetattr(slaveFd, &tio) == 0) {
             cfmakeraw(&tio);
             tcsetattr(slaveFd, TCSANOW, &tio);
-            LOGI("PTY slave configurado en modo RAW (FD guardado para mantener estado)");
+            LOGI("PTY slave configurado en modo RAW (FD %d guardado como Dummy para mantener estado)", slaveFd);
         }
     }
 

@@ -110,15 +110,20 @@ void loop() {
       break;
     }
 
+    // FIX UART OVERRUN: El CH340 tiene un buffer interno muy pequeño (~128 bytes).
+    // Al limitar la lectura a 64 bytes (S_CMD_Q_RDNMAXLEN) obligamos a flashrom
+    // a pedir los datos en trozos pequeños. De lo contrario, pediría 1MB de golpe,
+    // el Arduino lo enviaría continuo, y si el host (Android) tarda unos ms en leer
+    // el USB, el CH340 se desbordaría y tiraría los bytes, corrompiendo la comunicación.
     case 0x08: { // Query Maximum Write Length
-      uint8_t resp[4] = {S_ACK, 32, 0x00, 0x00}; // 32 bytes
+      uint8_t resp[4] = {S_ACK, 32, 0x00, 0x00}; // Límite de 32 bytes
       Serial.write(resp, 4);
       Serial.flush();
       break;
     }
 
     case 0x11: { // Query Maximum Read Length
-      uint8_t resp[4] = {S_ACK, 64, 0x00, 0x00}; // 64 bytes
+      uint8_t resp[4] = {S_ACK, 64, 0x00, 0x00}; // Límite de 64 bytes
       Serial.write(resp, 4);
       Serial.flush();
       break;
