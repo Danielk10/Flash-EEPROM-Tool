@@ -148,22 +148,28 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.CheckBox cbVerifyWrite;
     private EditText etCustomCommand;
 
-    private final StringBuilder logBuffer = new StringBuilder();
+    private final List<StringBuilder> consoleLines = new ArrayList<>();
+    private int currentLineIndex = -1;
+    private boolean cursorAtStartOfLine = false;
     private final android.os.Handler logHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean isLogUpdatePending = false;
     private final Runnable logUpdater = new Runnable() {
         @Override
         public void run() {
-            String newLogs;
-            synchronized (logBuffer) {
-                newLogs = logBuffer.toString();
-                logBuffer.setLength(0);
+            String fullLogs;
+            synchronized (consoleLines) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < consoleLines.size(); i++) {
+                    if (i > 0) {
+                        sb.append("\n");
+                    }
+                    sb.append(consoleLines.get(i).toString());
+                }
+                fullLogs = sb.toString();
                 isLogUpdatePending = false;
             }
-            if (!newLogs.isEmpty()) {
-                tvLog.append(newLogs);
-                scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
-            }
+            tvLog.setText(fullLogs);
+            scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
         }
     };
 
@@ -240,12 +246,12 @@ public class MainActivity extends AppCompatActivity {
                                     Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                             getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                     .putString(KEY_EXPORT_URI, treeUri.toString()).apply();
-                            log("Directorio de exportación configurado y guardado.");
+                            log(getString(R.string.str_export_dir_saved));
                         } catch (Exception e) {
                             getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                     .putString(KEY_EXPORT_URI, treeUri.toString())
                                     .apply();
-                            log("Directorio configurado (sin persistencia extendida).");
+                            log(getString(R.string.str_export_dir_limited));
                         }
                     }
                 }
@@ -357,6 +363,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void log(String message) {
                 MainActivity.this.log(message);
+            }
+
+            @Override
+            public void onProcessOutput(String chunk) {
+                MainActivity.this.logRaw(chunk);
             }
 
             @Override
@@ -629,8 +640,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnClearLogs.setOnClickListener(v -> {
-            synchronized (logBuffer) {
-                logBuffer.setLength(0);
+            synchronized (consoleLines) {
+                consoleLines.clear();
+                currentLineIndex = -1;
+                cursorAtStartOfLine = false;
             }
             tvLog.setText("");
             log(getString(R.string.str_log_terminal_reset));
@@ -1176,16 +1189,56 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void logRaw(String chunk) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            appendRawLogOnUi(chunk);
+        } else {
+            runOnUiThread(() -> appendRawLogOnUi(chunk));
+        }
+    }
+
     private void appendLogOnUi(String message) {
-        synchronized (logBuffer) {
-            if (logBuffer.length() > 0 || tvLog.length() > 0) {
-                logBuffer.append("\n");
+        appendRawLogOnUi(message + "\n");
+    }
+
+    private void appendRawLogOnUi(String text) {
+        synchronized (consoleLines) {
+            if (consoleLines.isEmpty()) {
+                consoleLines.add(new StringBuilder());
+                currentLineIndex = 0;
             }
-            logBuffer.append(message);
-            if (!isLogUpdatePending) {
-                isLogUpdatePending = true;
-                logHandler.postDelayed(logUpdater, 150);
+
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (c == '\n') {
+                    consoleLines.add(new StringBuilder());
+                    currentLineIndex = consoleLines.size() - 1;
+                    cursorAtStartOfLine = false;
+                } else if (c == '\r') {
+                    cursorAtStartOfLine = true;
+                } else {
+                    StringBuilder currentLine = consoleLines.get(currentLineIndex);
+                    if (cursorAtStartOfLine) {
+                        currentLine.setLength(0); // Overwrite the line from the start
+                        cursorAtStartOfLine = false;
+                    }
+                    currentLine.append(c);
+                }
             }
+
+            // Limit console buffer size to 1000 lines to prevent memory issues
+            while (consoleLines.size() > 1000) {
+                consoleLines.remove(0);
+                currentLineIndex--;
+            }
+            if (currentLineIndex < 0) {
+                currentLineIndex = 0;
+            }
+        }
+
+        if (!isLogUpdatePending) {
+            isLogUpdatePending = true;
+            logHandler.postDelayed(logUpdater, 80); // Fast 80ms refresh for responsive feel
         }
     }
 
@@ -1203,14 +1256,14 @@ public class MainActivity extends AppCompatActivity {
             String logs = tvLog.getText() == null ? "" : tvLog.getText().toString();
             if (logs.trim().isEmpty()) {
                 android.widget.Toast
-                        .makeText(this, "No hay texto en el log para copiar.", android.widget.Toast.LENGTH_SHORT)
+                        .makeText(this, R.string.str_no_log_to_copy, android.widget.Toast.LENGTH_SHORT)
                         .show();
                 return true;
             }
             ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             if (clipboard == null) {
                 android.widget.Toast
-                        .makeText(this, "No se pudo acceder al portapapeles.", android.widget.Toast.LENGTH_SHORT)
+                        .makeText(this, R.string.str_clipboard_error, android.widget.Toast.LENGTH_SHORT)
                         .show();
                 return true;
             }
@@ -1305,10 +1358,10 @@ public class MainActivity extends AppCompatActivity {
             boolean successHex = exportAssetToDir("serprog_arduino.hex", downloadsDir);
             
             if (successIno && successHex) {
-                log("Archivos serprog_arduino.ino y serprog_arduino.hex exportados a la carpeta Descargas con éxito.");
-                android.widget.Toast.makeText(this, "Archivos exportados a Descargas", android.widget.Toast.LENGTH_LONG).show();
+                log(getString(R.string.str_export_success_log));
+                android.widget.Toast.makeText(this, R.string.str_export_success_toast, android.widget.Toast.LENGTH_LONG).show();
             } else {
-                log("Error al exportar los archivos. Puede que falten permisos de almacenamiento.");
+                log(getString(R.string.str_export_error_log));
             }
         }
     }
@@ -1326,7 +1379,7 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         } catch (Exception e) {
-            log("Error copiando " + assetName + ": " + e.getMessage());
+            log(getString(R.string.str_error_copying_asset, assetName, e.getMessage()));
             return false;
         }
     }
@@ -1337,19 +1390,7 @@ public class MainActivity extends AppCompatActivity {
         aboutText.setPadding(padding, padding, padding, padding / 2);
         // Permitir que el texto tome el color por defecto (adapta al Dark theme)
         aboutText.setMovementMethod(LinkMovementMethod.getInstance());
-        String aboutHtml = "<h2>Flash EEPROM Tool</h2>"
-                + "<p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI) con <b>flashrom</b> nativo.</p>"
-                + "<hr>"
-                + "<b>Licencia del proyecto:</b> GPLv3.<br/><br/>"
-                + "<b>Dependencias y Librerías:</b><br/>"
-                + "• <a href='https://github.com/mik3y/usb-serial-for-android'>usb-serial-for-android</a> (MIT)<br/>"
-                + "• <a href='https://github.com/libusb/libusb'>libusb</a> (LGPL-2.1+)<br/>"
-                + "• <a href='https://github.com/pciutils/pciutils'>pciutils</a> (GPL-2.0+)<br/>"
-                + "• <a href='https://developer.intra2net.com/git/libftdi'>libftdi</a> (LGPL-2.1+)<br/>"
-                + "• <a href='https://gitlab.zapb.de/libjaylink/libjaylink'>libjaylink</a> (GPL-2.0+)<br/>"
-                + "• <a href='https://github.com/flashrom/flashrom'>flashrom</a> (GPL-2.0)<br/><br/>"
-                + "<b>Proyectos Relacionados del Desarrollador:</b><br/>"
-                + "• <a href='https://github.com/Danielk10/PIC-k150-Programing'>PIC k150 Programming</a> — Programador de PIC vía Android con protocolo P018A<br/>";
+        String aboutHtml = getString(R.string.str_about_html);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             aboutText.setText(Html.fromHtml(aboutHtml, Html.FROM_HTML_MODE_COMPACT));
@@ -1463,12 +1504,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void showDummyTestDialog() {
         String[] testOptions = {
-                "Leer chip emulado",
-                "Escribir y verificar",
-                "Borrar chip emulado",
-                "Identificar chip emulado",
-                "Seleccionar chip predefinido",
-                "Chips válidos para emulación"
+                getString(R.string.str_dummy_opt_read),
+                getString(R.string.str_dummy_opt_write),
+                getString(R.string.str_dummy_opt_erase),
+                getString(R.string.str_dummy_opt_probe),
+                getString(R.string.str_dummy_opt_select),
+                getString(R.string.str_dummy_opt_info)
         };
 
         new android.app.AlertDialog.Builder(this)

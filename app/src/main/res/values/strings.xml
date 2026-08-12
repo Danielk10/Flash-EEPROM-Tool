@@ -152,4 +152,19 @@
     <string name="str_log_verify_disabled">Verification disabled: Skipping verification step (-n)</string>
     <string name="str_log_writing_flash_op">Writing flash</string>
     <string name="str_verificar_escritura">Verify Write</string>
+    <string name="str_export_dir_saved">Export directory configured and saved.</string>
+    <string name="str_export_dir_limited">Directory configured (no extended persistence).</string>
+    <string name="str_no_log_to_copy">No text in the log to copy.</string>
+    <string name="str_clipboard_error">Could not access clipboard.</string>
+    <string name="str_export_success_log">Files serprog_arduino.ino and serprog_arduino.hex successfully exported to Downloads folder.</string>
+    <string name="str_export_success_toast">Files exported to Downloads</string>
+    <string name="str_export_error_log">Error exporting files. Storage permissions might be missing.</string>
+    <string name="str_error_copying_asset">Error copying %1$s: %2$s</string>
+    <string name="str_dummy_opt_read">Read emulated chip</string>
+    <string name="str_dummy_opt_write">Write and verify</string>
+    <string name="str_dummy_opt_erase">Erase emulated chip</string>
+    <string name="str_dummy_opt_probe">Identify emulated chip</string>
+    <string name="str_dummy_opt_select">Select predefined chip</string>
+    <string name="str_dummy_opt_info">Valid emulation chips</string>
+    <string name="str_about_html"><![CDATA[<h2>Flash EEPROM Tool</h2><p>Advanced Android application for reading, verifying, and writing Firmware (SPI Flash Memories) with native <b>flashrom</b>.</p><hr/><b>Project License:</b> GPLv3.<br/><br/><b>Dependencies and Libraries:</b><br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/><br/><b>Developer Related Projects:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — PIC programmer via Android with P018A protocol<br/>]]></string>
 </resources>

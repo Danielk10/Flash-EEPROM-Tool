@@ -246,15 +246,20 @@
                 android:id="@+id/etCustomCommand"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:gravity="center_vertical"
                 android:hint="@string/str_hint_comando"
                 android:inputType="text"
-                android:maxLines="1"
-                android:ellipsize="end"
+                android:maxLines="2"
+                android:ellipsize="none"
                 android:background="#1B1E2B"
-                android:padding="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
                 android:textColorHint="#757575"
                 android:textColor="#4DB6AC"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:layout_marginBottom="3dp" />
 
             <CheckBox
@@ -348,7 +353,7 @@
                 android:lineSpacingExtra="3dp"
                 android:longClickable="true"
                 android:textColor="#00FF00"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:text="@string/str__log_" />
 
         </ScrollView>
