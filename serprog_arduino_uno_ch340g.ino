@@ -99,8 +99,8 @@ void loop() {
 
     case 0x04: // Query Serial Buffer Size
       Serial.write(S_ACK);
-      Serial.write(0x00); // LE -> 0x0100
-      Serial.write(0x01);
+      Serial.write(0x00); // LSB
+      Serial.write(0x01); // MSB -> 0x0100 (256 bytes)
       Serial.flush();
       break;
 
@@ -164,11 +164,9 @@ void handle_spi_op() {
     return;
   }
 
-  Serial.write(S_ACK);
-  Serial.flush();
-
   digitalWrite(SPI_CS_PIN, LOW);
 
+  // 1. Procesamos los datos de escritura (slen)
   while (slen--) {
     unsigned long start = millis();
     while (Serial.available() == 0) {
@@ -182,6 +180,11 @@ void handle_spi_op() {
     SPI.transfer((uint8_t)Serial.read());
   }
 
+  // 2. ENVIAMOS ACK: Solo cuando slen está completo y el Arduino está listo
+  Serial.write(S_ACK);
+  Serial.flush();
+
+  // 3. Procesamos los datos de lectura (rlen)
   if (rlen > 0) {
     byte buffer[64];
     while (rlen > 0) {
@@ -195,6 +198,7 @@ void handle_spi_op() {
     }
   }
 
+  // Finalizamos transferencia
   digitalWrite(SPI_CS_PIN, HIGH);
 }
 
