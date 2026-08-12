@@ -54,6 +54,17 @@ Te permite **validar todo el flujo de software en tu máquina local**:
 
 ---
 
+## 🔄 Gestión de Cambios y Desarrollo
+
+Para mantener un entorno de trabajo organizado y bajo control de versiones, se utiliza un flujo de dos directorios:
+
+*   **Versión del Repositorio (`~/Flash-EEPROM-Tool/emulador_flashrom`)**: Es la fuente de verdad. **Cualquier actualización, corrección o mejora en el código fuente del emulador debe aplicarse y confirmarse (commit) en esta ubicación.**
+*   **Versión de Desarrollo/Ejecución (`~/emulador_flashrom`)**: Es el entorno de trabajo activo. Se utiliza para compilar el binario, ejecutar las pruebas y generar archivos de datos temporales.
+
+*Recomendación*: Si realizas cambios en el código en la carpeta de home para probarlos, asegúrate de copiarlos de vuelta a la carpeta del repositorio una vez validados para no perderlos.
+
+---
+
 ## 📋 Arquitectura del Sistema de Emulación
 
 El entorno consta de tres partes principales que trabajan en conjunto:

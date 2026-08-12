@@ -14,3 +14,7 @@ Ejecutar `./emulador_flashrom --help` para ver opciones.
 ```bash
 ./emulador_flashrom --all --fill random
 ```
+
+## Desarrollo y Mantenimiento:
+- **Actualizaciones de Código**: Deben realizarse en la carpeta del repositorio (`~/Flash-EEPROM-Tool/emulador_flashrom`) para mantener el control de versiones.
+- **Entorno de Ejecución**: La carpeta en el home (`~/emulador_flashrom`) es para desarrollo activo, compilación y pruebas.
