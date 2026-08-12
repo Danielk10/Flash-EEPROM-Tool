@@ -1039,6 +1039,22 @@ public class MainActivity extends AppCompatActivity {
             args = argList.toArray(new String[0]);
         }
 
+        // ── Inyectar --progress si es operación larga ──
+        boolean isLongOp = false;
+        for (String arg : args) {
+            if ("-r".equals(arg) || "-w".equals(arg) || "-v".equals(arg) || "-E".equals(arg) || "--erase".equals(arg)) {
+                isLongOp = true;
+                break;
+            }
+        }
+        if (isLongOp) {
+            List<String> newArgs = new ArrayList<>(Arrays.asList(args));
+            if (!newArgs.contains("--progress")) {
+                newArgs.add("--progress");
+            }
+            args = newArgs.toArray(new String[0]);
+        }
+
         File preferredFlashromBin = new File(getFilesDir(), "usr/sbin/flashrom");
         if (!preferredFlashromBin.exists()) {
             log("[WARN] flashrom en files/usr/sbin no encontrado; usando fallback jniLibs.");
@@ -1107,18 +1123,28 @@ public class MainActivity extends AppCompatActivity {
 
         // Configurar si saltar verificación en escritura
         String opLabel = "";
+        boolean isLongOp = false;
         for (String arg : resolvedArgs) {
             if ("-w".equals(arg)) {
                 opLabel = "Escribiendo flash";
-                break;
+            }
+            if ("-r".equals(arg) || "-w".equals(arg) || "-v".equals(arg) || "-E".equals(arg) || "--erase".equals(arg)) {
+                isLongOp = true;
             }
         }
+        
+        List<String> finalArgsList = new ArrayList<>(Arrays.asList(resolvedArgs));
+        
         if (cbVerifyWrite != null && !cbVerifyWrite.isChecked() && "Escribiendo flash".equals(opLabel)) {
-            List<String> newArgs = new ArrayList<>(Arrays.asList(resolvedArgs));
-            newArgs.add("-n");
-            resolvedArgs = newArgs.toArray(new String[0]);
+            finalArgsList.add("-n");
             log("Verificación deshabilitada: Saltando paso de verificación (-n)");
         }
+        
+        if (isLongOp && !finalArgsList.contains("--progress")) {
+            finalArgsList.add("--progress");
+        }
+        
+        resolvedArgs = finalArgsList.toArray(new String[0]);
 
         flashromExecutor.execute(preferredFlashromBin, resolvedArgs, usbController.getCurrentFd(),
                 UsbController.needsPtyBridge(selectedProgrammer), selectedProgrammer);
