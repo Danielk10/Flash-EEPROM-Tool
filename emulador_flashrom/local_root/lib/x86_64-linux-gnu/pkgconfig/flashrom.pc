@@ -1,0 +1,10 @@
+prefix=/home/danielpdiamon/emulador_flashrom/local_root
+includedir=${prefix}/include
+libdir=${prefix}/lib/x86_64-linux-gnu
+
+Name: flashrom
+Description: library to interact with flashrom
+Version: v1.8.0-rc1
+Requires.private: libcrypto >= 3.0.0, libpci >= 2.2.0, libusb-1.0
+Libs: -L${libdir} -lflashrom
+Cflags: -I${includedir}

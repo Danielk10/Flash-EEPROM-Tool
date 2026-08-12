@@ -254,6 +254,7 @@
                 android:padding="6dp"
                 android:textColorHint="#757575"
                 android:textColor="#4DB6AC"
+                android:textSize="12sp"
                 android:layout_marginBottom="3dp" />
 
             <CheckBox
@@ -262,7 +263,7 @@
                 android:layout_height="wrap_content"
                 android:text="Verificar escritura"
                 android:textColor="#E0E0E0"
-                android:checked="true"
+                android:checked="false"
                 android:layout_marginBottom="2dp"/>
 
             <Button

@@ -757,7 +757,20 @@ public class MainActivity extends AppCompatActivity {
             if (isIntelHex) {
                 log("Conversión Intel HEX → binario aplicada correctamente.");
             }
+            
+            String safeFileName = fileName.replaceAll("[^a-zA-Z0-9_\\-\\.]", "_");
+            if (!safeFileName.isEmpty() && !safeFileName.equals("bios.bin")) {
+                try {
+                    java.nio.file.Files.copy(outFile.toPath(), new File(getFilesDir(), safeFileName).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e) {
+                    log("Aviso: No se pudo crear la copia con el nombre original para comandos manuales.");
+                }
+            }
+
             log("Archivo guardado como 'bios.bin' — listo para Flashear o Verificar.");
+            if (!safeFileName.isEmpty() && !safeFileName.equals("bios.bin")) {
+                log("También disponible como '" + safeFileName + "' para comandos manuales.");
+            }
 
             SharedPreferences.Editor editor = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
             editor.putString(KEY_BIOS_SOURCE, "Importado: " + fileName + " (" + sizeStr + ")");
