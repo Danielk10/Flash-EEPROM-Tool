@@ -270,7 +270,7 @@ Una vez que tengas los binarios precompilados en `jniLibs` y los datos de runtim
 - `REPORTE_ANALISIS_DEPENDENCIAS.md`: Muestra las dependencias dinámicas (`DT_NEEDED`) de cada binario compilado.
 - `REPORTE_AUDITORIA_RUTAS_PORTABILIDAD.md`: Auditoría de rutas del sistema y portabilidad en el runtime.
 - `REPORTE_PARCHE_LIBUSB_ANDROID.md`: Detalles del parche aplicado a `libusb` para inyección de file descriptors.
-- `REPORTE_SOLUCION_PTY_SERPROG_BUSPIRATE.md`: Informe sobre la solución de comunicación serie mediante PTY en emuladores.
+- `REPORTE_SOLUCION_PTY_SERPROG_BUSPIRATE_SPIDRIVER.md`: Informe sobre la solución de comunicación serie mediante PTY en emuladores (Serprog, Bus Pirate, SPIDriver).
 
 ---
 
