@@ -1041,9 +1041,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String[] args = rawCommand.split("\\s+");
-        if (args.length > 0 && ("flashrom".equals(args[0]) || "./flashrom".equals(args[0]))) {
-            args = Arrays.copyOfRange(args, 1, args.length);
+        if (args.length == 0 || !("flashrom".equals(args[0]) || "./flashrom".equals(args[0]))) {
+            log("Error: El comando debe iniciar con 'flashrom'. Ej: flashrom -p ch341a_spi -r bios.bin");
+            return;
         }
+        args = Arrays.copyOfRange(args, 1, args.length);
         for (int i = 0; i < args.length; i++) {
             if ("-r".equals(args[i])) {
                 clearTransientRomState(false);

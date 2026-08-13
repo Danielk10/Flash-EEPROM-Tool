@@ -450,8 +450,8 @@ Este firmware implementa el protocolo serprog para convertir tu Arduino UNO en u
 - Compatible con chips CH340G y FTDI a 115200 bps.
 
 ### Consola de Comandos Avanzada
-- Ejecuta comandos completos de `flashrom` tal como se haría en una terminal de PC (por ejemplo, `flashrom -p serprog -r backup.bin` o simplemente `-p serprog -r backup.bin`).
-- Limpia y procesa el prefijo del ejecutable (`flashrom` o `./flashrom`) de forma automática.
+- Ejecuta comandos completos de `flashrom` tal como se haría en una terminal de PC (por ejemplo, `flashrom -p serprog -r backup.bin`). El comando obligatoriamente debe iniciar con `flashrom` o `./flashrom`.
+- Valida, limpia y procesa el prefijo del ejecutable (`flashrom` o `./flashrom`) de forma automática.
 - Resuelve dinámicamente y auto-completa el parámetro `-p` para programadores basados en puerto serie (ej. `serprog`, `buspirate_spi`, `spidriver`), inyectando el descriptor del pseudo-terminal (PTY) y sincronizando los hilos de comunicación por USB.
 - Funciona sin conexión USB para comandos informativos (`flashrom --version`, `flashrom -L`, `flashrom --help`).
 
