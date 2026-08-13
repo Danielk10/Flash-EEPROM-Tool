@@ -153,10 +153,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean cursorAtStartOfLine = false;
     private final android.os.Handler logHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean isLogUpdatePending = false;
+    private int lastLoggedLineCount = 0;
     private final Runnable logUpdater = new Runnable() {
         @Override
         public void run() {
             String fullLogs;
+            int currentLineCount;
             synchronized (consoleLines) {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < consoleLines.size(); i++) {
@@ -166,10 +168,16 @@ public class MainActivity extends AppCompatActivity {
                     sb.append(consoleLines.get(i).toString());
                 }
                 fullLogs = sb.toString();
+                currentLineCount = consoleLines.size();
                 isLogUpdatePending = false;
             }
             tvLog.setText(fullLogs);
-            scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
+            if (currentLineCount > lastLoggedLineCount) {
+                lastLoggedLineCount = currentLineCount;
+                scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
+            } else if (currentLineCount < lastLoggedLineCount) {
+                lastLoggedLineCount = currentLineCount;
+            }
         }
     };
 
