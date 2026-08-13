@@ -1216,6 +1216,11 @@ public class MainActivity extends AppCompatActivity {
                     cursorAtStartOfLine = false;
                 } else if (c == '\r') {
                     cursorAtStartOfLine = true;
+                } else if (c == '\b') {
+                    StringBuilder currentLine = consoleLines.get(currentLineIndex);
+                    if (currentLine.length() > 0) {
+                        currentLine.setLength(currentLine.length() - 1);
+                    }
                 } else {
                     StringBuilder currentLine = consoleLines.get(currentLineIndex);
                     if (cursorAtStartOfLine) {
