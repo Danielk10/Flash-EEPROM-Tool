@@ -154,7 +154,17 @@ public class MainActivity extends AppCompatActivity {
     private boolean cursorAtStartOfLine = false;
     private final android.os.Handler logHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean isLogUpdatePending = false;
-    private int lastLoggedLineCount = 0;
+
+    private boolean isScrollAtBottom() {
+        if (scrollLog == null || tvLog == null) return true;
+        int scrollY = scrollLog.getScrollY();
+        int scrollHeight = scrollLog.getHeight();
+        int contentHeight = tvLog.getHeight();
+        if (contentHeight == 0) return true; // Por defecto abajo si aún no se ha dibujado
+        // Tolerancia de 100 píxeles para cubrir márgenes y padding
+        return (scrollY + scrollHeight) >= (contentHeight - 100);
+    }
+
     private final Runnable logUpdater = new Runnable() {
         @Override
         public void run() {
@@ -163,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             String fullLogs;
-            int currentLineCount;
             synchronized (consoleLines) {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < consoleLines.size(); i++) {
@@ -173,22 +182,18 @@ public class MainActivity extends AppCompatActivity {
                     sb.append(consoleLines.get(i).toString());
                 }
                 fullLogs = sb.toString();
-                currentLineCount = consoleLines.size();
                 isLogUpdatePending = false;
             }
 
-            // Guardar posición de scroll antes del setText para evitar saltos
+            // Detectar si el usuario está al final del scroll antes de actualizar
+            final boolean wasAtBottom = isScrollAtBottom();
             final int scrollY = scrollLog.getScrollY();
 
             tvLog.setText(fullLogs);
 
-            if (currentLineCount > lastLoggedLineCount) {
-                lastLoggedLineCount = currentLineCount;
+            if (wasAtBottom) {
                 scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
             } else {
-                if (currentLineCount < lastLoggedLineCount) {
-                    lastLoggedLineCount = currentLineCount;
-                }
                 scrollLog.post(() -> scrollLog.setScrollY(scrollY));
             }
         }
