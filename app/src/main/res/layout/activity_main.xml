@@ -342,7 +342,8 @@
             android:layout_height="0dp"
             android:layout_weight="1.0"
             android:background="#0A0E17"
-            android:padding="8dp">
+            android:padding="8dp"
+            android:descendantFocusability="blocksDescendants">
 
             <TextView
                 android:id="@+id/tvLog"

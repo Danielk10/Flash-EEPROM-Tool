@@ -191,7 +191,14 @@ public class MainActivity extends AppCompatActivity {
 
             tvLog.setText(fullLogs);
 
-            if (wasAtBottom) {
+            // Si el proceso de flashrom está activo, forzamos el scroll al fondo para seguir el progreso en tiempo real.
+            // Si no está corriendo, respetamos la decisión del usuario (solo scroll al fondo si ya estaba abajo).
+            boolean shouldScrollToBottom = wasAtBottom;
+            if (flashromExecutor != null && flashromExecutor.isRunning()) {
+                shouldScrollToBottom = true;
+            }
+
+            if (shouldScrollToBottom) {
                 scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
             } else {
                 scrollLog.post(() -> scrollLog.setScrollY(scrollY));
