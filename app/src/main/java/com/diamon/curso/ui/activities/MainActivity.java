@@ -85,55 +85,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_DUMMY_CHIP_INDEX = "dummy_chip_index";
 
 
-    private static final Map<String, String> USB_AUTO_MAP = new java.util.HashMap<String, String>() {
-        {
-            // CH341A SPI
-            put("1a86:5512", "ch341a_spi");
-            put("1a86:5523", "ch341a_spi");
-            // CH347 SPI
-            put("1a86:55db", "ch347_spi");
-            // FT2232 / FT232H / FT4232H
-            put("0403:6010", "ft2232_spi");
-            put("0403:6011", "ft2232_spi");
-            put("0403:6014", "ft2232_spi");
-            put("0403:6015", "ft2232_spi"); // Algunos
-                                            // usan
-                                            // ft232r_spi
-                                            // emulado
-            // Bus Pirate
-            put("0403:6001", "buspirate_spi");
-            // ST-LINK
-            put("0483:3748", "stlinkv3_spi"); // V2
-            put("0483:374b", "stlinkv3_spi"); // V2.1
-            put("0483:374d", "stlinkv3_spi"); // V3
-            put("0483:374e", "stlinkv3_spi");
-            put("0483:374f", "stlinkv3_spi");
-            put("0483:3752", "stlinkv3_spi");
-            put("0483:3753", "stlinkv3_spi");
-            put("0483:3754", "stlinkv3_spi");
-            // J-Link
-            put("1366:0101", "jlink_spi");
-            put("1366:0105", "jlink_spi");
-            put("1fc9:000c", "jlink_spi");
-            // Pickit2
-            put("04d8:0033", "pickit2_spi");
-            // USB-Blaster
-            put("09fb:6001", "usbblaster_spi");
-            // Dediprog
-            put("0483:dada", "dediprog");
-            put("0483:dae0", "dediprog");
-            // Digilent
-            put("1443:0007", "digilent_spi");
-            // DirtyJTAG
-            put("1209:c0ca", "dirtyjtag_spi");
-            // Serprog (Arduinos y adaptadores comunes)
-            put("2341:0043", "serprog"); // Uno
-            put("2341:0001", "serprog"); // Uno R3
-            put("1a86:7523", "serprog"); // CH340 clones
-            put("10c4:ea60", "serprog"); // CP2102
-            put("067b:2303", "serprog"); // Prolific PL2303
-        }
-    };
+
 
     private UsbController usbController;
     private FlashromExecutor flashromExecutor;
