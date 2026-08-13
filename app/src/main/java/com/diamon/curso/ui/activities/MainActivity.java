@@ -1090,21 +1090,7 @@ public class MainActivity extends AppCompatActivity {
             args = argList.toArray(new String[0]);
         }
 
-        // ── Inyectar --progress si es operación larga ──
-        boolean isLongOp = false;
-        for (String arg : args) {
-            if ("-r".equals(arg) || "-w".equals(arg) || "-v".equals(arg) || "-E".equals(arg) || "--erase".equals(arg)) {
-                isLongOp = true;
-                break;
-            }
-        }
-        if (isLongOp) {
-            List<String> newArgs = new ArrayList<>(Arrays.asList(args));
-            if (!newArgs.contains("--progress")) {
-                newArgs.add("--progress");
-            }
-            args = newArgs.toArray(new String[0]);
-        }
+
 
         File preferredFlashromBin = new File(getFilesDir(), "usr/sbin/flashrom");
         if (!preferredFlashromBin.exists()) {
