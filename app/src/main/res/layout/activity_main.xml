@@ -336,7 +336,7 @@
         </LinearLayout>
 
         <!-- Terminal de Logs -->
-        <ScrollView
+        <com.diamon.curso.ui.views.LogScrollView
             android:id="@+id/scrollLog"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -357,7 +357,7 @@
                 android:textSize="13sp"
                 android:text="@string/str__log_" />
 
-        </ScrollView>
+        </com.diamon.curso.ui.views.LogScrollView>
 
     </LinearLayout>
 

@@ -35,6 +35,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import com.diamon.curso.ui.views.LogScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -139,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout layoutLoading;
     private LinearLayout layoutMainUI;
-    private ScrollView scrollLog;
+    private LogScrollView scrollLog;
     private TextView tvStatus, tvLog, tvLoadingText;
     private android.widget.FrameLayout adContainer;
 
@@ -682,20 +683,22 @@ public class MainActivity extends AppCompatActivity {
 
         btnQuickClear.setOnClickListener(v -> clearTransientRomState(true));
 
-        btnEraseChip.setOnClickListener(v -> ensureProgrammerThenRun(() -> {
+        btnEraseChip.setOnClickListener(v -> {
             new android.app.AlertDialog.Builder(this)
                     .setTitle(R.string.str_confirm_erase_title)
                     .setMessage(R.string.str_confirm_erase_msg)
                     .setPositiveButton(R.string.str_yes_erase, (dialog, which) -> {
-                        if (isDummyProgrammer()) {
-                            executeMainDummyCommand("--erase");
-                        } else {
-                            executeFlashromTask("-p", selectedProgrammer, "--erase");
-                        }
+                        ensureProgrammerThenRun(() -> {
+                            if (isDummyProgrammer()) {
+                                executeMainDummyCommand("--erase");
+                            } else {
+                                executeFlashromTask("-p", selectedProgrammer, "--erase");
+                            }
+                        });
                     })
                     .setNegativeButton(R.string.str_cancelar, null)
                     .show();
-        }));
+        });
 
         btnRunCustomCommand.setOnClickListener(v -> {
             String rawCommand = etCustomCommand.getText() == null ? "" : etCustomCommand.getText().toString().trim();
