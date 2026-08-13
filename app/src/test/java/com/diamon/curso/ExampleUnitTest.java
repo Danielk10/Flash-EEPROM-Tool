@@ -32,6 +32,7 @@ public class ExampleUnitTest {
         assertEquals("ch341a_spi", UsbController.USB_AUTO_MAP.get("1a86:5512"));
         // CH347 SPI/I2C/UART
         assertEquals("ch347_spi", UsbController.USB_AUTO_MAP.get("1a86:5523"));
+        assertEquals("ch347_spi", UsbController.USB_AUTO_MAP.get("1a86:55db"));
         // Bus Pirate
         assertEquals("buspirate_spi", UsbController.USB_AUTO_MAP.get("0403:6001"));
         // Arduino Uno Serprog (VID:PID comunes de clones CH340 y oficiales)

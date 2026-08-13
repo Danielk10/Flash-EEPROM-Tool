@@ -42,6 +42,7 @@ public class UsbController {
         // CH341A SPI
         put("1a86:5512", "ch341a_spi");
         put("1a86:5523", "ch347_spi"); // ch347 SPI/I2C/UART
+        put("1a86:55db", "ch347_spi"); // ch347 SPI (Mode 3)
         // FT2232H / FT4232H / FT232H (VID 0403)
         put("0403:6010", "ft2232_spi");
         put("0403:6011", "ft2232_spi");

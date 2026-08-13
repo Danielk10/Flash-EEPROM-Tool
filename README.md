@@ -333,7 +333,57 @@ El panel de log muestra salida nativa real con prefijo `[native]`, diagnósticos
 
 ---
 
-## 12) Características de Usuario
+## 12) Entorno de emulación y diagnóstico (local)
+
+Para propósitos de desarrollo, pruebas y depuración rápida sin necesidad de hardware real, el proyecto cuenta con un **Emulador de memorias Flash/EEPROM** multiprotocolo programado en C++ (ubicado en la carpeta [`emulador_flashrom/`](./emulador_flashrom/) de la raíz y replicado en tu carpeta `home`).
+
+El emulador es un simulador de hardware en software que recrea tanto el chip de memoria SPI como el puente de comunicación de los programadores.
+
+### A) Simulación del Chip de Memoria SPI (GD25Q80)
+El emulador simula una memoria flash NOR **GigaDevice GD25Q80** (de 1 Megabyte / 1024 KB), manteniendo un buffer en RAM de 1,048,576 bytes inicializado a `0xFF`. Interpreta las siguientes instrucciones estándar SPI:
+* **Read JEDEC ID (`0x9F`)**: Devuelve `C8 40 14` para que `flashrom` reconozca el chip.
+* **Read REMS ID (`0x90`)**: Devuelve `C8 13` (Manufacturer / Device ID).
+* **Release Power-down / RES (`0xAB`)**: Devuelve el Device ID `13`.
+* **Read Data (`0x03` y `0x0B` - Fast Read)**: Lee bytes secuenciales desde una dirección de 24 bits.
+* **Write Enable (`0x06`) / Disable (`0x04`)**: Controla el flag interno `write_enable` para permitir la escritura/borrado.
+* **Read (`0x05`) / Write Status Register (`0x01`)**: Manipula el registro de estado y flags de protección.
+* **Borrado**: Soporta Sector Erase de 4KB (`0x20`), Block Erase de 32KB (`0x52`), Block Erase de 64KB (`0xD8`) y Chip Erase completo (`0xC7`/`0x60`).
+* **Page Program (`0x02`)**: Escribe hasta 256 bytes por página. Respeta la semántica del hardware (solo puede cambiar bits de `1` a `0`, a menos que se haya borrado previamente a `0xFF`).
+
+### B) Simulación de los Programadores (Puentes de Comunicación)
+El emulador puede arrancar en tres modos para simular el hardware físico de los programadores:
+
+1. **Modo CH341A (USB Directo)**:
+   * **Mecanismo**: Utiliza un Socket UNIX (`ANDROID_USB_FD`). El emulador intercepta los flujos `UIO_STREAM` (pines SPI `CS`) y `SPI_STREAM` de CH341A. Utiliza un encuadre (*framing*) con un entero LSB de 4 bytes antes de cada paquete para evitar desalineación de bytes en el flujo.
+   * **Ejecución autónoma**:
+     ```bash
+     ./emulador_flashrom --ch341a ./flashrom_local.sh -p ch341a_spi -VVV
+     ```
+
+2. **Modo Serprog (Puerto Serie Virtual PTY)**:
+   * **Mecanismo**: Crea un pseudo-terminal (PTY) maestro y genera un enlace simbólico `./serprog_pty` que apunta al puerto esclavo. `flashrom` lo abre como un puerto serie tty. Implementa los comandos binarios del protocolo serprog y espera la señal de sincronización inicial (*beacon*) `0xAA 0x55`.
+   * **Ejecución**:
+     ```bash
+     ./emulador_flashrom --serprog &
+     ./flashrom_local.sh -p serprog:dev=./serprog_pty:115200 -r backup.bin
+     ```
+
+3. **Modo Bus Pirate v3 (Puerto Serie Virtual PTY)**:
+   * **Mecanismo**: Crea un PTY virtual en `./buspirate_pty`. Simula el cambio de modo texto a modo binario `BBIO` (recibiendo 20 caracteres nulos), la transición a modo SPI (comando `0x01`), y responde con la firma de versión de hardware/firmware (`Bus Pirate v3a...`).
+   * **Ejecución**:
+     ```bash
+     ./emulador_flashrom --buspirate &
+     ./flashrom_local.sh -p buspirate_spi:dev=./buspirate_pty -r backup.bin
+     ```
+
+### C) Soluciones de Integración Críticas Implementadas
+El emulador de este proyecto resuelve problemas recurrentes detectados en proyectos previos (como `Lector-De-Memorias` o emuladores de `K150`):
+1. **Herencia de Descriptores USB (`O_CLOEXEC`)**: En Android, los sockets de comunicación USB tienen este flag activado y el kernel los cierra al hacer `exec()`. La app duplica el FD con `dup()` y remueve el flag explícitamente mediante `fcntl` en el código JNI antes del inicio de flashrom.
+2. **Aislamiento DTR/RTS en PTY**: Los pseudo-terminales virtuales no soportan llamadas a `ioctl` para conmutar DTR/RTS (arrojando excepciones `ENOTTY`). En el Camino A, la gestión de DTR/RTS y purgas se realiza exclusivamente del lado de Java/Android físico, mientras que el flujo del PTY se mantiene puramente para datos binarios (`RAW`).
+
+---
+
+## 13) Características de Usuario
 
 ### Barra de Progreso en Tiempo Real
 - Barra delgada (4dp) integrada en el header del terminal — no consume espacio extra.
