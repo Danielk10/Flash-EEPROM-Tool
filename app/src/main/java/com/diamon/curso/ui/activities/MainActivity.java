@@ -176,12 +176,20 @@ public class MainActivity extends AppCompatActivity {
                 currentLineCount = consoleLines.size();
                 isLogUpdatePending = false;
             }
+
+            // Guardar posición de scroll antes del setText para evitar saltos
+            final int scrollY = scrollLog.getScrollY();
+
             tvLog.setText(fullLogs);
+
             if (currentLineCount > lastLoggedLineCount) {
                 lastLoggedLineCount = currentLineCount;
                 scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
-            } else if (currentLineCount < lastLoggedLineCount) {
-                lastLoggedLineCount = currentLineCount;
+            } else {
+                if (currentLineCount < lastLoggedLineCount) {
+                    lastLoggedLineCount = currentLineCount;
+                }
+                scrollLog.post(() -> scrollLog.setScrollY(scrollY));
             }
         }
     };
