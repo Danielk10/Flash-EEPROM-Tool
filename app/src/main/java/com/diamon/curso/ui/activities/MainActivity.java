@@ -1042,7 +1042,7 @@ public class MainActivity extends AppCompatActivity {
 
         String[] args = rawCommand.split("\\s+");
         if (args.length == 0 || !("flashrom".equals(args[0]) || "./flashrom".equals(args[0]))) {
-            log("Error: El comando debe iniciar con 'flashrom'. Ej: flashrom -p ch341a_spi -r bios.bin");
+            log(getString(R.string.str_err_missing_flashrom_prefix));
             return;
         }
         args = Arrays.copyOfRange(args, 1, args.length);

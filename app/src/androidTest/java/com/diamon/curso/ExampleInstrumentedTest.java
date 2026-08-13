@@ -123,6 +123,20 @@ public class ExampleInstrumentedTest {
                 String logText = tvLog.getText().toString();
                 assertTrue("El log debe mostrar la versión de flashrom", logText.contains("flashrom v"));
             });
+
+            // 6. Ejecutar Comando Personalizado SIN prefijo 'flashrom' para verificar el error
+            scenario.onActivity(activity -> {
+                EditText etCustom = activity.findViewById(R.id.etCustomCommand);
+                etCustom.setText("-p dummy -r read_test.bin");
+                activity.findViewById(R.id.btnRunCustomCommand).performClick();
+            });
+
+            scenario.onActivity(activity -> {
+                TextView tvLog = activity.findViewById(R.id.tvLog);
+                String logText = tvLog.getText().toString();
+                String expectedError = activity.getString(R.string.str_err_missing_flashrom_prefix);
+                assertTrue("El log debe mostrar el error de prefijo faltante", logText.contains(expectedError));
+            });
         }
     }
 }

@@ -145,6 +145,7 @@
     <string name="str_pinout_spi_conn_header">SPI Connector</string>
     <string name="str_hint_comando">E.g. flashrom --version | flashrom -p ch341a_spi -L</string>
     <string name="str_err_flashrom_running">A flashrom operation is already running. Please abort or wait for it to finish.</string>
+    <string name="str_err_missing_flashrom_prefix">Error: The command must start with \'flashrom\'. E.g.: flashrom -p ch341a_spi -r bios.bin</string>
     <string name="str_log_starting_pty">Starting PTY↔USB bridge for %1$s...</string>
     <string name="str_log_forwarding_active">Forwarding threads active.</string>
     <string name="str_err_critical_flashrom_missing">"Critical failure: \'flashrom\' binary not found. (%1$s)"</string>
