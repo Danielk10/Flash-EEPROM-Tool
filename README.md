@@ -32,23 +32,24 @@ Este proyecto empaqueta una cadena nativa completa (flashrom + dependencias) den
 La app tiene **dos caminos** de comunicación USB según el tipo de programador:
 
 ```
-                  ┌─────────────────┐
-                  │  USB_AUTO_MAP   │
-                  │  (18 VID:PID)   │
-                  └───────┬─────────┘
-                          │
-              ┌───────────┴───────────┐
-              │                       │
-     Serial (PTY)              USB directo (libusb)
-              │                       │
-    ┌─────────┴─────────┐   ┌────────┴────────┐
-    │  PtyBridge.java   │   │  ANDROID_USB_FD  │
-    │  DTR/RTS + Beacon │   │  → patch_libusb  │
-    │  USB↔PTY threads  │   │  → flashrom      │
-    └─────────┬─────────┘   └────────┬────────┘
-         /dev/pts/N              libusb nativo
-              │                       │
-          flashrom               flashrom
+                                ┌─────────────────┐
+                                │  USB_AUTO_MAP   │
+                                │  (18 VID:PID)   │
+                                └───────┬─────────┘
+                                        │
+                            ┌───────────┴───────────┐
+                            │                       │
+                Camino A: Serial (PTY)      Camino B: USB directo (libusb)
+             [serprog, buspirate, spidriver]   [ch341a_spi, ft2232_spi, etc.]
+                            │                       │
+                  ┌─────────┴─────────┐   ┌────────┴────────┐
+                  │  PtyBridge.java   │   │  ANDROID_USB_FD  │
+                  │  DTR/RTS + Beacon │   │  → patch_libusb  │
+                  │  USB↔PTY threads  │   │  → flashrom      │
+                  └─────────┬─────────┘   └────────┬────────┘
+                       /dev/pts/N              libusb nativo
+                            │                       │
+                        flashrom                flashrom
 ```
 
 ### Camino A — Programadores Seriales (serprog, buspirate_spi, spidriver)
@@ -128,7 +129,9 @@ El repositorio está organizado de la siguiente manera:
 ├── build_pciutils_custom.sh          # Script de compilación de pciutils en Termux
 ├── build_libftdi_custom.sh           # Script de compilación de libftdi en Termux
 ├── build_libjaylink_custom.sh        # Script de compilación de libjaylink en Termux
-└── analizar_dependencias.py          # Script utilitario para analizar dependencias ELF (DT_NEEDED)
+├── analizar_dependencias.py          # Script utilitario para analizar dependencias ELF (DT_NEEDED)
+├── serprog_arduino_uno_ch340g.ino    # Código fuente del firmware serprog para Arduino UNO (en la raíz)
+└── serprog_arduino_uno_ch340g.hex    # Firmware compilado e idéntico listo para Arduino UNO (en la raíz)
 ```
 
 ---
@@ -379,8 +382,12 @@ Guía de referencia rápida accesible desde el menú con diagramas renderizados:
 - Diagnóstico integrado: contadores de bytes y errores visibles en el log.
 
 ### Firmware Arduino Serprog
-Incluye `serprog_arduino.ino` (disponible en `app/src/main/assets/`) — firmware para Arduino UNO que implementa el protocolo serprog:
-- 10 comandos serprog (NOP, SYNCNOP, Version, CmdMap, Name, BufSize, BusType, SetBus, SPI Op, Debug).
+El repositorio incluye el código fuente del firmware y el archivo precompilado listos para instalar en tu placa Arduino:
+- **Código fuente**: [`serprog_arduino_uno_ch340g.ino`](./serprog_arduino_uno_ch340g.ino) (en la raíz).
+- **Firmware compilado**: [`serprog_arduino_uno_ch340g.hex`](./serprog_arduino_uno_ch340g.hex) (en la raíz, listo para ser subido directamente usando herramientas como `avrdude`).
+
+Este firmware implementa el protocolo serprog para convertir tu Arduino UNO en un programador SPI compatible:
+- Implementa 10 comandos serprog (NOP, SYNCNOP, Version, CmdMap, Name, BufSize, BusType, SetBus, SPI Op, Debug).
 - Beacon de sincronización `0xAA 0x55` para comunicación confiable vía PTY.
 - Compatible con chips CH340G y FTDI a 115200 bps.
 
