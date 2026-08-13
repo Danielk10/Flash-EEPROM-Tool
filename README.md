@@ -1,8 +1,9 @@
 # Flash EEPROM Tool
 
-[![Android](https://img.shields.io/badge/Android-6.0%20(API%2023)%20a%20Android%2016%20(API%2036)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
+[![Android](https://img.shields.io/badge/Android-6.0%20(API%2023)%20a%20Android%2016%20(API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
-[![NDK](https://img.shields.io/badge/NDK-r29-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
+[![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
+[![AGP](https://img.shields.io/badge/AGP-9.2.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
 [![Flashrom](https://img.shields.io/badge/flashrom-integrado-orange)](https://github.com/flashrom/flashrom)
 [![Licencia](https://img.shields.io/badge/Licencia-GPLv3-blue)](./LICENSE.txt)
 
@@ -10,8 +11,8 @@ Aplicación Android para lectura/escritura/verificación de memorias **SPI, LPC/
 Soporta programadores **USB directos** (CH341A, FT2232, Dediprog, etc.) vía libusb parcheada y programadores **seriales** (serprog/Arduino, Bus Pirate, SPIDriver) vía puente PTY↔USB.
 
 > Nombre visible de la app: **Flash EEPROM Tool**.
-
-> Rango de soporte Android: **API 23 a API 36** (Android 6.0 a Android 16).
+> Versión actual: **1.7.1** (Código de versión: **64**).
+> Rango de soporte Android: **API 23 a API 37** (Android 6.0 a Android 16+).
 
 ---
 
@@ -64,7 +65,7 @@ La app tiene **dos caminos** de comunicación USB según el tipo de programador:
 
 - Java obtiene `fd = connection.getFileDescriptor()` del USB.
 - Inyecta `ANDROID_USB_FD=fd` al proceso nativo (`ProcessBuilder`).
-- `libusb` parcheada (`patch_libusb.py`) intercepta y usa ese FD.
+- `libusb` parcheada (`patch_libusb.py` / `build_libusb_custom.sh`) intercepta y usa ese FD.
 - flashrom opera normalmente con `-p ch341a_spi`, `-p ft2232_spi`, etc.
 
 ### Capa nativa / runtime
@@ -99,7 +100,40 @@ El código copia assets de datos (share/include/pkgconfig, etc.) al runtime y cr
 
 ---
 
-## 4) Binarios y dependencias nativas
+## 4) Estructura real del proyecto
+
+El repositorio está organizado de la siguiente manera:
+
+```text
+├── app/                              # Módulo principal de la aplicación Android
+│   ├── build.gradle                  # Configuración de compilación de la app (SDK 37, NDK r30)
+│   └── src/
+│       ├── main/
+│       │   ├── AndroidManifest.xml   # Manifiesto con permisos USB y definición de actividades
+│       │   ├── assets/               # Assets empaquetados en la APK (firmwares, datos de entorno)
+│       │   ├── cpp/                  # Código C/C++ JNI (puente JNI para PtyBridge y terminal)
+│       │   └── jniLibs/arm64-v8a/    # Binarios y librerías dinámicas precompiladas (.so) para ARM64
+├── emulador_flashrom/                 # Emulador de flashrom y utilidades de depuración local
+│   ├── emulador_flashrom.cpp         # Código C++ del emulador (emula CH341A, Bus Pirate, serprog)
+│   ├── build_flashrom_local.sh       # Script para compilar el emulador localmente
+│   ├── build_libusb_local.sh         # Script para compilar libusb localmente
+│   └── patch_libusb_local.py         # Script para aplicar el parche de libusb localmente
+├── gradle/                           # Gradle Wrapper y catálogo de dependencias
+│   └── libs.versions.toml            # Definición centralizada de versiones (AGP, dependencias)
+├── libs/                             # Copias de librerías nativas compartidas de referencia
+├── fake_root/                        # Directorio de instalación temporal ("fake root") para compilaciones
+├── setup-sdk.sh                      # Configura automáticamente el Android SDK/NDK necesario
+├── build_libusb_custom.sh            # Script de compilación y parcheo de libusb en Termux
+├── build_flashrom_custom.sh          # Script de compilación de flashrom en Termux
+├── build_pciutils_custom.sh          # Script de compilación de pciutils en Termux
+├── build_libftdi_custom.sh           # Script de compilación de libftdi en Termux
+├── build_libjaylink_custom.sh        # Script de compilación de libjaylink en Termux
+└── analizar_dependencias.py          # Script utilitario para analizar dependencias ELF (DT_NEEDED)
+```
+
+---
+
+## 5) Binarios y dependencias nativas
 
 ### Binarios principales (en jniLibs, formato Android)
 
@@ -120,6 +154,7 @@ El código copia assets de datos (share/include/pkgconfig, etc.) al runtime y cr
 - `libjaylink.so`
 - `libcrypto.so.3`
 - `libssl.so.3`
+- `libz.so.1`
 
 ### Resolución de nombres para Android (copia garantizada)
 
@@ -133,7 +168,7 @@ Las variantes con versión original (`*.so.N`) se pueden conservar como respaldo
 
 ---
 
-## 5) Parche de `libusb` para Android (fuente)
+## 6) Parche de `libusb` para Android (fuente)
 
 Archivo: `patch_libusb.py` (Python 3).
 
@@ -150,7 +185,7 @@ Con esto, flashrom/libusb usan el descriptor otorgado por Android en Java, evita
 
 ---
 
-## 6) Detección de dispositivos y auto-detección
+## 7) Detección de dispositivos y auto-detección
 
 La app detecta automáticamente el programador USB conectado usando un mapa de **18 VID:PID** y los rutea al camino correcto (PTY o libusb):
 
@@ -187,25 +222,56 @@ La app detecta automáticamente el programador USB conectado usando un mapa de *
 
 ---
 
-## 7) Compilación y empaquetado (referencia)
+## 8) Compilación y empaquetado
 
-### Scripts/archivos clave
+El proyecto tiene dos capas bien diferenciadas: la capa de aplicación Android (compilada mediante el SDK de Android) y la capa nativa (compilada directamente en Android usando Termux).
 
-- `setup-sdk.sh`: prepara SDK/NDK y `local.properties`.
-- `linesCorrectos.txt`: comandos de compilación de dependencias nativas y empaquetado.
-- `REPORTE_DEPENDENCIAS_BINARIOS.md`: DT_NEEDED por binario/librería.
-- `AUDITORIA_ANDROID_RUNTIME.md`: checklist de runtime/rutas/dependencias.
+### A) Compilación nativa usando Termux
 
-### Build de app
+Para compilar la capa nativa directamente en tu teléfono Android se utiliza **Termux** como entorno de compilación Linux local:
 
-```bash
-bash ./setup-sdk.sh
-./gradlew assembleDebug
-```
+1. **Instalar Termux** en el dispositivo Android.
+2. Clona el repositorio dentro de Termux y accede a él.
+3. Ejecuta los scripts de compilación custom en orden para compilar cada componente con `clang` e instalar las dependencias en el directorio temporal `fake_root` (`$HOME/fake_root/data/data/com.diamon.curso/files/usr`):
+   
+   - **`build_libusb_custom.sh`**: Parchea y compila `libusb`.
+   - **`build_pciutils_custom.sh`**: Compila `pciutils` (necesario para acceso a buses).
+   - **`build_libftdi_custom.sh`**: Compila `libftdi` (soporte para chips FTDI).
+   - **`build_libjaylink_custom.sh`**: Compila `libjaylink` (soporte para programadores Segger J-Link).
+   - **`build_flashrom_custom.sh`**: Compila `flashrom` integrando todas las librerías anteriores.
+
+#### Notas críticas de Termux y alineación a 16KB:
+- **Termux Toolchain**: Los scripts instalan automáticamente las dependencias de compilación mediante `pkg install` (`clang`, `make`, `pkg-config`, `git`, `python`, etc.) y `pip` (`meson`, `ninja`).
+- **Soporte Android 15+ (16KB page-alignment)**: Para asegurar que los ejecutables y librerías `.so` funcionen en dispositivos con Android 15 y superiores que utilicen tamaños de página de 16KB, las banderas de compilación nativa en los scripts incluyen `-Wl,-z,max-page-size=16384` y `-flto`.
+- **Rutas de compilación fija**: Las librerías y binarios se compilan con el prefijo `/data/data/com.diamon.curso/files/usr` para evitar fallos de reubicación en runtime.
+
+### B) Compilación de la aplicación Android (Gradle)
+
+Una vez que tengas los binarios precompilados en `jniLibs` y los datos de runtime en `assets`, puedes compilar la aplicación utilizando el SDK de Android:
+
+1. **Instalación automática del SDK**:
+   Ejecuta el script proporcionado en tu ordenador (Linux) para descargar e instalar el SDK, NDK (r30-rc1) y configurar `local.properties`:
+   ```bash
+   bash setup-sdk.sh
+   ```
+   *Nota: El SDK se descarga en `/tmp/android-sdk` de forma temporal.*
+
+2. **Compilar la APK**:
+   ```bash
+   ./gradlew assembleDebug
+   ```
+   El APK generado se ubicará en `/tmp/calculo/outputs/apk/debug/app-debug.apk` debido a la redirección de compilación para limpieza del workspace.
+
+### Archivos y Reportes de Referencia
+- `setup-sdk.sh`: Prepara el SDK/NDK y el archivo `local.properties`.
+- `REPORTE_ANALISIS_DEPENDENCIAS.md`: Muestra las dependencias dinámicas (`DT_NEEDED`) de cada binario compilado.
+- `REPORTE_AUDITORIA_RUTAS_PORTABILIDAD.md`: Auditoría de rutas del sistema y portabilidad en el runtime.
+- `REPORTE_PARCHE_LIBUSB_ANDROID.md`: Detalles del parche aplicado a `libusb` para inyección de file descriptors.
+- `REPORTE_SOLUCION_PTY_SERPROG_BUSPIRATE.md`: Informe sobre la solución de comunicación serie mediante PTY en emuladores.
 
 ---
 
-## 8) Uso básico de la app
+## 9) Uso básico de la app
 
 1. Conecta el programador USB OTG.
 2. Pulsa **Detectar y Conectar Automáticamente** — la app reconoce automáticamente el programador por VID:PID y establece el camino correcto (PTY para serprog/buspirate, libusb para CH341A/FT2232/etc.).
@@ -226,15 +292,15 @@ El panel de log muestra salida nativa real con prefijo `[native]`, diagnósticos
 
 ---
 
-## 9) Dependencias y licencias
+## 10) Dependencias y licencias
 
-## Proyecto
+### Proyecto
 
 - **Flash EEPROM Tool**
 - Licencia: **GNU GPL v3.0**
 - Archivo: [`LICENSE.txt`](./LICENSE.txt)
 
-## Dependencias principales
+### Dependencias principales
 
 - **flashrom** — GPL-2.0+  
   https://github.com/flashrom/flashrom
@@ -255,7 +321,7 @@ El panel de log muestra salida nativa real con prefijo `[native]`, diagnósticos
 
 ---
 
-## 10) Notas operativas importantes
+## 11) Notas operativas importantes
 
 - La app y los binarios están preparados para **ARM64 (`arm64-v8a`)**.
 - Java usa `UsbManager` nativo para enumeración/selección/permisos/FD, y la operación del bus USB la realiza la capa nativa (flashrom/libusb parcheada).
@@ -264,7 +330,7 @@ El panel de log muestra salida nativa real con prefijo `[native]`, diagnósticos
 
 ---
 
-## 11) Características de Usuario
+## 12) Características de Usuario
 
 ### Barra de Progreso en Tiempo Real
 - Barra delgada (4dp) integrada en el header del terminal — no consume espacio extra.
@@ -307,13 +373,13 @@ Guía de referencia rápida accesible desde el menú con diagramas renderizados:
 - **Interfaz LPC/FWH** — diagrama de bus LPC para chips de bios de motherboard.
 
 ### Puente PTY↔USB para Programadores Seriales
-- `PtyBridge.java` maneja la comunicación serial entre flashrom y dispositivos USB-serial.
+- `PtyBridge.java` maneja la comunicación serial entre flashrom and dispositivos USB-serial.
 - Soporta: **serprog** (Arduino), **buspirate_spi** (Bus Pirate), **spidriver** (SPIDriver).
 - Sincronización: serprog espera beacon `0xAA 0x55`; buspirate/spidriver usan DTR/RTS + purge.
 - Diagnóstico integrado: contadores de bytes y errores visibles en el log.
 
 ### Firmware Arduino Serprog
-Incluye `serprog_arduino_uno_ch340g.ino` — firmware para Arduino UNO que implementa el protocolo serprog:
+Incluye `serprog_arduino.ino` (disponible en `app/src/main/assets/`) — firmware para Arduino UNO que implementa el protocolo serprog:
 - 10 comandos serprog (NOP, SYNCNOP, Version, CmdMap, Name, BufSize, BusType, SetBus, SPI Op, Debug).
 - Beacon de sincronización `0xAA 0x55` para comunicación confiable vía PTY.
 - Compatible con chips CH340G y FTDI a 115200 bps.
