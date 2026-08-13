@@ -22,8 +22,6 @@
     </queries>
     <uses-permission android:name="android.permission.Ad_ID" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -86,7 +84,6 @@
 
         <service
             android:name="com.diamon.curso.core.FlashromService"
-            android:foregroundServiceType="dataSync"
             android:exported="false" />
     </application>
 

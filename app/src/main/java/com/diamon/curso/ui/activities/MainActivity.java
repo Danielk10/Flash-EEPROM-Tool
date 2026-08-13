@@ -420,11 +420,7 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     Intent serviceIntent = new Intent(MainActivity.this, FlashromService.class);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(serviceIntent);
-                    } else {
-                        startService(serviceIntent);
-                    }
+                    startService(serviceIntent);
                 } catch (Exception e) {
                     Log.e("MainActivity", "Error al iniciar FlashromService", e);
                 }
