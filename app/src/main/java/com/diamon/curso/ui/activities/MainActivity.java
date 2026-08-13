@@ -5,6 +5,7 @@ import com.diamon.curso.ads.MostrarPublicidad;
 import com.diamon.curso.core.PtyBridge;
 import com.diamon.curso.core.UsbController;
 import com.diamon.curso.core.FlashromExecutor;
+import com.diamon.curso.core.FlashromService;
 import com.diamon.curso.ui.views.PinoutView;
 import com.diamon.curso.utils.AssetHelper;
 
@@ -157,6 +158,10 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable logUpdater = new Runnable() {
         @Override
         public void run() {
+            if (isFinishing() || isDestroyed()) {
+                isLogUpdatePending = false;
+                return;
+            }
             String fullLogs;
             int currentLineCount;
             synchronized (consoleLines) {
@@ -272,6 +277,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+
         AppCenter.start(
                 getApplication(),
                 "cf7ac082-49cd-4cef-bd2d-3f1a3377efa9",
@@ -381,15 +392,45 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProcessStarted() {
                 MainActivity.this.runOnUiThread(() -> {
-                    if (btnAbort != null) btnAbort.setVisibility(View.VISIBLE);
+                    if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
+                        if (btnAbort != null) btnAbort.setVisibility(View.VISIBLE);
+                    }
                 });
+
+                try {
+                    Intent serviceIntent = new Intent(MainActivity.this, FlashromService.class);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(serviceIntent);
+                    } else {
+                        startService(serviceIntent);
+                    }
+                } catch (Exception e) {
+                    Log.e("MainActivity", "Error al iniciar FlashromService", e);
+                }
             }
 
             @Override
             public void onProcessFinished(int exitCode, String[] args) {
                 MainActivity.this.runOnUiThread(() -> {
-                    if (btnAbort != null) btnAbort.setVisibility(View.GONE);
+                    if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
+                        if (btnAbort != null) btnAbort.setVisibility(View.GONE);
+                    }
                 });
+
+                try {
+                    Intent serviceIntent = new Intent(MainActivity.this, FlashromService.class);
+                    stopService(serviceIntent);
+                } catch (Exception e) {
+                    Log.e("MainActivity", "Error al detener FlashromService", e);
+                }
+
+                if (MainActivity.this.isDestroyed() || MainActivity.this.isFinishing()) {
+                    if (usbController != null) {
+                        usbController.disconnectDevice();
+                        usbController.unregisterReceiver();
+                    }
+                    executor.shutdownNow();
+                }
 
                 if (exitCode == 0) {
                     for (int i = 0; i < args.length; i++) {
@@ -414,6 +455,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAmbiguityDetected(String[] args, List<String> suggestedChips) {
                 MainActivity.this.runOnUiThread(() -> {
+                    if (MainActivity.this.isFinishing() || MainActivity.this.isDestroyed()) {
+                        return;
+                    }
                     if (btnAbort != null) btnAbort.setVisibility(View.GONE);
                     String[] items = suggestedChips.toArray(new String[0]);
                     new android.app.AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
@@ -1632,13 +1676,15 @@ public class MainActivity extends AppCompatActivity {
         if (mostrarPublicidad != null) {
             mostrarPublicidad.disposeBanner();
         }
-        if (usbController != null) {
-            usbController.disconnectDevice();
-            usbController.unregisterReceiver();
+        if (flashromExecutor == null || !flashromExecutor.isRunning()) {
+            if (usbController != null) {
+                usbController.disconnectDevice();
+                usbController.unregisterReceiver();
+            }
+            executor.shutdownNow(); // Finalizar todos los hilos
         }
         super.onDestroy();
         clearTransientRomState(false);
-        executor.shutdownNow(); // Finalizar todos los hilos
     }
 
     @SuppressWarnings("deprecation")
