@@ -27,3 +27,9 @@ keystore.properties
 *.apk
 *.aab
 GUIA_PUBLICACION_PLAY_STORE.md
+
+# Emulador Flashrom temporary files
+emulador_flashrom/serprog_pty
+emulador_flashrom/buspirate_pty
+emulador_flashrom/ch341a_socket
+
