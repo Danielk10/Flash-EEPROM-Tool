@@ -37,10 +37,17 @@ Se modificó la creación del PTY para no cerrar el FD esclavo tras aplicar el m
 
 ### Fix 2: El Backend de Java (`PtyBridge.java`)
 La capa Java captura el descriptor Dummy del Esclavo y lo mantiene vivo artificialmente (`dummySlaveFd`) durante toda la vida útil de la conexión USB y la sesión flashrom, cerrándolo solo al finalizar de manera segura.
-*Al implementar esto a nivel global en el puente, tanto `buspirate_spi` como `serprog` heredan automáticamente la inmunidad total al procesamiento del Kernel, transitando datos binarios de forma 100% fiable.*
+*Al implementar esto a nivel global en el puente, tanto `buspirate_spi`, `serprog` como `spidriver` heredan automáticamente la inmunidad total al procesamiento del Kernel, transitando datos binarios de forma 100% fiable.*
 
 ### Fix 3: En el Firmware Arduino (`serprog_arduino_uno_ch340g.ino`)
 Para arreglar el overrun del CH340, se implementaron los comandos `S_CMD_Q_WRNMAXLEN` (0x08) y `S_CMD_Q_RDNMAXLEN` (0x11) limitando las ráfagas a 64 bytes. Esto obliga a flashrom a particionar los bloques, garantizando que el hardware no colapse bajo buffers masivos.
 
 ---
-Con estas tres correcciones, las lecturas y escrituras hacia Serprog y Bus Pirate son ahora completamente robustas, seguras y libres de corrupción.
+
+## 4. Validación Adicional: Soporte de Emulación de SPIDriver
+
+Se ha integrado en la suite de pruebas locales la emulación del programador **SPIDriver** (`spidriver`), el cual opera nativamente a **460800 bps**. 
+
+Al hacer uso del canal virtual PTY y beneficiarse del mecanismo **Dummy Slave FD** en `PtyBridge`, se ha verificado que la negociación inicial (handshake ASCII `?` y eco `e`) junto con el envío masivo de bloques SPI (`0x80` y `0xC0`) no sufre ningún tipo de corrupción ni desalineación de bytes. Las operaciones de lectura y escritura sobre el chip de memoria virtual GD25Q80 completaron con éxito rotundo (`VERIFIED` y comparación binaria 100% coincidente).
+
+Con estas soluciones aplicadas globalmente en la infraestructura PTY, la comunicación con **Serprog**, **Bus Pirate** y **SPIDriver** es ahora completamente robusta, segura y libre de corrupción.

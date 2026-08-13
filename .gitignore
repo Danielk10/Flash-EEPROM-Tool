@@ -32,4 +32,5 @@ GUIA_PUBLICACION_PLAY_STORE.md
 emulador_flashrom/serprog_pty
 emulador_flashrom/buspirate_pty
 emulador_flashrom/ch341a_socket
+emulador_flashrom/spidriver_pty
 

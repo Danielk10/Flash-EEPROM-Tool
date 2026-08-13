@@ -546,6 +546,81 @@ void buspirate_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
     }
 }
 
+// Hilo del emulador SPIDriver
+void spidriver_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
+    std::cout << "[SPIDRIVER] Iniciando emulación en " << symlink << std::endl;
+
+    while (true) {
+        int master_fd = setup_pty(symlink);
+        if (master_fd < 0) {
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            continue;
+        }
+
+        std::cout << "[SPIDRIVER] Puerto listo. Esperando comandos..." << std::endl;
+
+        while (true) {
+            uint8_t cmd;
+            ssize_t r = read(master_fd, &cmd, 1);
+            if (r <= 0) {
+                std::cout << "[SPIDRIVER] Cliente desconectado." << std::endl;
+                break;
+            }
+
+            if (cmd == '?') {
+                // Enviar status de 80 bytes
+                char status[82];
+                snprintf(status, sizeof(status), "[spidriver2 AAAAAAAA 00000002 5.190 000 21.9 1 1 1 ffff 0                      ]");
+                write(master_fd, status, 80);
+            } else if (cmd == 'e') {
+                // Echo: leer un byte y devolverlo
+                uint8_t val;
+                if (read_exactly(master_fd, &val, 1)) {
+                    write(master_fd, &val, 1);
+                }
+            } else if (cmd == 's') {
+                // CS assert (low)
+                flash->csAssert();
+            } else if (cmd == 'u') {
+                // CS deassert (high)
+                flash->csDeassert();
+            } else if (cmd == 'a' || cmd == 'b') {
+                // Set signals: leer 1 byte
+                uint8_t val;
+                read_exactly(master_fd, &val, 1);
+            } else if (cmd == 'x') {
+                // Disconnect: deassert CS
+                flash->csDeassert();
+            } else if (cmd == 'm') {
+                // Set SPI mode: leer 1 byte
+                uint8_t val;
+                read_exactly(master_fd, &val, 1);
+            } else if (cmd >= 0x80 && cmd <= 0xBF) {
+                // Transfer combined (read and write)
+                uint32_t len = (cmd - 0x80) + 1;
+                std::vector<uint8_t> mosi(len);
+                std::vector<uint8_t> miso(len);
+                if (read_exactly(master_fd, mosi.data(), len)) {
+                    for (uint32_t i = 0; i < len; i++) {
+                        miso[i] = flash->transfer(mosi[i]);
+                    }
+                    write(master_fd, miso.data(), len);
+                }
+            } else if (cmd >= 0xC0 && cmd <= 0xFF) {
+                // Write only
+                uint32_t len = (cmd - 0xC0) + 1;
+                std::vector<uint8_t> mosi(len);
+                if (read_exactly(master_fd, mosi.data(), len)) {
+                    for (uint32_t i = 0; i < len; i++) {
+                        flash->transfer(mosi[i]);
+                    }
+                }
+            }
+        }
+        close(master_fd);
+    }
+}
+
 // Lógica de emulación CH341A para un socket/FD determinado
 void handle_ch341a_client(SpiFlashGD25Q80* flash, int fd) {
     std::cout << "[CH341A-DEBUG] Cliente conectado al descriptor de socket/archivo " << fd << std::endl;
@@ -663,6 +738,7 @@ int main(int argc, char* argv[]) {
     bool run_ch341a = false;
     bool run_serprog = false;
     bool run_buspirate = false;
+    bool run_spidriver = false;
     bool run_all = false;
     std::string flash_file = "";
     std::string save_file = "";
@@ -674,6 +750,7 @@ int main(int argc, char* argv[]) {
         if (arg == "--ch341a") run_ch341a = true;
         else if (arg == "--serprog") run_serprog = true;
         else if (arg == "--buspirate") run_buspirate = true;
+        else if (arg == "--spidriver") run_spidriver = true;
         else if (arg == "--all") run_all = true;
         else if (arg == "--flash" && i + 1 < argc) flash_file = argv[++i];
         else if (arg == "--save" && i + 1 < argc) save_file = argv[++i];
@@ -683,6 +760,7 @@ int main(int argc, char* argv[]) {
                       << "  --ch341a         Emula programador CH341A USB SPI\n"
                       << "  --serprog        Emula Serprog Arduino via PTY\n"
                       << "  --buspirate      Emula Bus Pirate v3 SPI via PTY\n"
+                      << "  --spidriver      Emula SPIDriver SPI via PTY\n"
                       << "  --all            Ejecuta todos los emuladores simultáneamente (por defecto)\n"
                       << "  --flash ARCHIVO  Carga contenido de flash desde ARCHIVO al inicio\n"
                       << "  --save ARCHIVO   Guarda contenido de flash en ARCHIVO al salir\n"
@@ -692,7 +770,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Por defecto si no se especifica modo, ejecutar todos
-    if (!run_ch341a && !run_serprog && !run_buspirate && !run_all) {
+    if (!run_ch341a && !run_serprog && !run_buspirate && !run_spidriver && !run_all) {
         run_all = true;
     }
 
@@ -778,6 +856,9 @@ int main(int argc, char* argv[]) {
     }
     if (run_all || run_buspirate) {
         threads.push_back(std::thread(buspirate_thread, &flash, "./buspirate_pty"));
+    }
+    if (run_all || run_spidriver) {
+        threads.push_back(std::thread(spidriver_thread, &flash, "./spidriver_pty"));
     }
     if (run_all || run_ch341a) {
         threads.push_back(std::thread(ch341a_socket_server, &flash, "./ch341a_socket"));

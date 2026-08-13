@@ -36,13 +36,15 @@ El chip físico GigaDevice `GD25Q80` (también conocido como GD25080PCP, 1 Megab
 
 ### Función 2: Simulación de los Programadores (El Puente de Comunicación)
 
-Para que `flashrom` (o el código nativo de la app Android) pueda comunicarse con este chip virtual, el emulador simula el comportamiento de tres programadores físicos:
+Para que `flashrom` (o el código nativo de la app Android) pueda comunicarse con este chip virtual, el emulador simula el comportamiento de los siguientes programadores físicos:
 
 *   **Modo CH341A (USB Directo)**: A través del script `patch_libusb_local.py`, se interceptan las llamadas a la biblioteca `libusb`. Todas las transferencias de lectura/escritura USB se desvían a través de un Socket UNIX (variable de entorno `ANDROID_USB_FD`). El emulador escucha en ese socket, descodifica los paquetes de comandos USB de CH341A (como levantar/bajar la señal CS en los pines `0xAB` o enviar datos SPI `0xA8`), ejecuta la operación en el chip virtual, y devuelve los bytes simulados empaquetados como si vinieran de un chip USB real.
 
 *   **Modo Serprog (PTY Serie)**: El emulador crea un pseudo-terminal (PTY) y expone un enlace simbólico (`./serprog_pty`). `flashrom` lo abre creyendo que es un puerto serie físico. El emulador recibe los comandos binarios del protocolo Serprog y los traduce a señales SPI para el chip virtual.
 
 *   **Modo Bus Pirate (PTY Serie)**: Similar a Serprog pero utilizando el protocolo binario de Bus Pirate v3. El emulador gestiona la secuencia de inicialización de texto → modo BBIO → modo SPI, incluyendo el banner de versión y el comando de reset `0x0f`.
+
+*   **Modo SPIDriver (PTY Serie)**: Crea un PTY virtual en `./spidriver_pty`. Simula el protocolo binario/ASCII del programador SPIDriver a 460800 bps. Soporta el comando de estado `?` (devolviendo una cadena de texto de 80 bytes entre corchetes), el eco `e <byte>`, Chip Select `s` y `u`, desconexión `x` y bloques de lectura/escritura de 1 a 64 bytes (`0x80-0xBF` y `0xC0-0xFF`).
 
 ### ⚙️ ¿Para qué sirve todo esto?
 
@@ -196,9 +198,32 @@ El Bus Pirate es una herramienta de diagnóstico multiprotocolo. Al igual que Se
 
 ---
 
+### D. Emulación de SPIDriver (Puente Serial PTY)
+El SPIDriver es un programador SPI compacto y rápido. El emulador crea un pseudo-terminal PTY virtual para simularlo.
+
+*   **¿Cómo funciona?**
+    El emulador genera un PTY maestro y crea el enlace simbólico `./spidriver_pty`. `flashrom` se conecta a 460800 bps y realiza un handshake enviando `?` para obtener la cadena de estado de 80 bytes. Utiliza comandos de eco (`e`) para asegurar la sincronización antes de iniciar las transferencias de lectura/escritura de 1 a 64 bytes.
+
+*   **Comandos de Ejecución**:
+    1. Iniciar el emulador SPIDriver en segundo plano:
+       ```bash
+       ./emulador_flashrom --spidriver &
+       ```
+    2. Ejecutar `flashrom` apuntando al dispositivo PTY virtual:
+       ```bash
+       ./flashrom_local.sh -p spidriver:dev=./spidriver_pty -VVV
+       ```
+    3. Finalizar la ejecución del emulador en segundo plano:
+       ```bash
+       kill %1
+       rm -f ./spidriver_pty
+       ```
+
+---
+
 ## 📊 Salida de Detección Exitosa de Memoria (GD25Q80)
 
-Cuando ejecutes cualquiera de los tres modos anteriores, la salida de `flashrom` reportará la correcta inicialización del programador, la interrogación de los IDs de fabricante y capacidad y la identificación final de la memoria virtualizada:
+Cuando ejecutes cualquiera de los modos anteriores, la salida de `flashrom` reportará la correcta inicialización del programador, la interrogación de los IDs de fabricante y capacidad y la identificación final de la memoria virtualizada:
 
 ```text
 Initializing programmer...
@@ -207,7 +232,7 @@ Probing for Generic unknown SPI chip (RDID), 0 kB: compare_id: id1 0xc8, id2 0x4
 Found GigaDevice flash chip "GD25Q80(B)" (1024 kB, SPI).
 This flash part has status UNTESTED for operations: WP
 No operations were specified.
-Bus Pirate/Serprog/CH341A shutdown completed.
+Bus Pirate/Serprog/CH341A/SPIDriver shutdown completed.
 ```
 
 ¡El entorno local de emulación y validación está listo y comprobado al 100%!

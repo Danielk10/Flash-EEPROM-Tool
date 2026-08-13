@@ -376,6 +376,14 @@ El emulador puede arrancar en tres modos para simular el hardware físico de los
      ./flashrom_local.sh -p buspirate_spi:dev=./buspirate_pty -r backup.bin
      ```
 
+4. **Modo SPIDriver (Puerto Serie Virtual PTY)**:
+   * **Mecanismo**: Crea un PTY virtual en `./spidriver_pty`. Simula el protocolo de comunicación de SPIDriver a 460800 bps. Soporta el handshake de estado (`?`), comando de eco (`e`), control de Chip Select (`s` y `u`), desconexión del bus (`x`) y bloques de escritura/lectura SPI de 1 a 64 bytes (`0x80-0xBF` y `0xC0-0xFF`).
+   * **Ejecución**:
+     ```bash
+     ./emulador_flashrom --spidriver &
+     ./flashrom_local.sh -p spidriver:dev=./spidriver_pty -r backup.bin
+     ```
+
 ### C) Soluciones de Integración Críticas Implementadas
 El emulador de este proyecto resuelve problemas recurrentes detectados en proyectos previos (como `Lector-De-Memorias` o emuladores de `K150`):
 1. **Herencia de Descriptores USB (`O_CLOEXEC`)**: En Android, los sockets de comunicación USB tienen este flag activado y el kernel los cierra al hacer `exec()`. La app duplica el FD con `dup()` y remueve el flag explícitamente mediante `fcntl` en el código JNI antes del inicio de flashrom.

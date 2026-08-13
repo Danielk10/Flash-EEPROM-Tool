@@ -10,4 +10,4 @@ $(TARGET): $(SRCS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRCS)
 
 clean:
-	rm -f $(TARGET) mock_usb.bin serprog_pty buspirate_pty
+	rm -f $(TARGET) mock_usb.bin serprog_pty buspirate_pty spidriver_pty

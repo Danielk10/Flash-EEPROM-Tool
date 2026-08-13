@@ -151,8 +151,14 @@ public class UsbController {
         // Auto-selección lógica
         for (UsbDevice device : candidates) {
             String key = String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId());
-            if (USB_AUTO_MAP.containsKey(key)) {
-                String autoProg = USB_AUTO_MAP.get(key);
+            String autoProg = null;
+            String prodName = device.getProductName();
+            if (prodName != null && prodName.toLowerCase(Locale.US).contains("spidriver")) {
+                autoProg = "spidriver";
+            } else if (USB_AUTO_MAP.containsKey(key)) {
+                autoProg = USB_AUTO_MAP.get(key);
+            }
+            if (autoProg != null) {
                 onProgrammerAutoSelected.accept(autoProg);
                 callback.log("Detección automática: Dispositivo " + key + " reconocido como " + autoProg);
                 requestUsbPermission(device);
@@ -238,6 +244,10 @@ public class UsbController {
 
         boolean isRecognized = USB_AUTO_MAP.containsKey(vidPid);
         String autoProg = isRecognized ? USB_AUTO_MAP.get(vidPid) : null;
+        if (deviceName != null && deviceName.toLowerCase(Locale.US).contains("spidriver")) {
+            autoProg = "spidriver";
+            isRecognized = true;
+        }
 
         callback.onDeviceConnected(deviceName, currentFd, vidPid, isRecognized, autoProg);
 
