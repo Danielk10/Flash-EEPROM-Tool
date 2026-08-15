@@ -613,14 +613,7 @@ public class PtyBridge {
                         if (request != null && buffer != null) {
                             // MODO ASÍNCRONO: UsbRequest.queue() + requestWait()
                             buffer.clear();
-                            boolean queued;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                queued = request.queue(buffer);
-                            } else {
-                                queued = request.queue(buffer, BUFFER_SIZE);
-                            }
-
-                            if (queued) {
+                            if (request.queue(buffer, BUFFER_SIZE)) {
                                 UsbRequest response = null;
                                 try {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
