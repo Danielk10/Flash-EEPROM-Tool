@@ -179,6 +179,8 @@ void handle_spi_op() {
 
   if (slen == 0xFFFFFFFF || rlen == 0xFFFFFFFF) {
     Serial.write(S_NAK);
+    Serial.write(BEACON_BYTE1);
+    Serial.write(BEACON_BYTE2);
     Serial.flush();
     flush_serial_input();
     return;
@@ -192,7 +194,10 @@ void handle_spi_op() {
       if (millis() - start > 1000) {
         digitalWrite(SPI_CS_PIN, HIGH);
         Serial.write(S_NAK);
+        Serial.write(BEACON_BYTE1);
+        Serial.write(BEACON_BYTE2);
         Serial.flush();
+        flush_serial_input();
         return;
       }
     }

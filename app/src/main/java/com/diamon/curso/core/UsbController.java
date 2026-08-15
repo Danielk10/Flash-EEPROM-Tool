@@ -253,7 +253,7 @@ public class UsbController {
             callback.log("Programador serial detectado — iniciando puente PTY...");
             PtyBridge bridge = new PtyBridge();
             bridge.setLogCallback(msg -> callback.log(msg));
-            if (bridge.open(device, usbManager, currentConnection, SERPROG_BAUD)) {
+            if (bridge.open(activity, device, usbManager, currentConnection, SERPROG_BAUD)) {
                 ptyBridge = bridge;
                 callback.log("PtyBridge activo: flashrom usará " + ptyBridge.getSlavePath()
                         + " a " + SERPROG_BAUD + " bps");

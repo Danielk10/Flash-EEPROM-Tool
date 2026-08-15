@@ -142,6 +142,38 @@ Java_com_diamon_curso_core_PtyBridge_createPty(JNIEnv *env, jclass clazz) {
 }
 
 /**
+ * Lee bytes directamente de un FD nativo con poll() para evitar bloqueos indefinidos.
+ * Retorna cantidad leída, 0 si no hay datos (timeout), o -1 en error.
+ */
+extern "C" JNIEXPORT jint JNICALL
+Java_com_diamon_curso_core_PtyBridge_readFd(JNIEnv *env, jclass clazz, jint fd, jbyteArray data, jint timeoutMs) {
+    if (fd < 0 || data == nullptr) {
+        return -1;
+    }
+
+    struct pollfd pfd;
+    pfd.fd = fd;
+    pfd.events = POLLIN;
+    int ready = poll(&pfd, 1, timeoutMs);
+
+    if (ready < 0) return -1;
+    if (ready == 0) return 0; // Timeout
+
+    jsize arrLen = env->GetArrayLength(data);
+    jbyte *buf = env->GetByteArrayElements(data, nullptr);
+    
+    ssize_t n = read(fd, buf, static_cast<size_t>(arrLen));
+    
+    env->ReleaseByteArrayElements(data, buf, 0);
+    
+    if (n < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) return 0;
+        return -1;
+    }
+    return static_cast<jint>(n);
+}
+
+/**
  * Cierra un file descriptor nativo. Usado para liberar el master del PTY
  * cuando la operación de flashrom termina.
  */
@@ -171,6 +203,12 @@ Java_com_diamon_curso_core_PtyBridge_writeFd(JNIEnv *env, jclass clazz, jint fd,
     std::string buf;
     buf.resize(static_cast<size_t>(len));
     env->GetByteArrayRegion(data, 0, len, reinterpret_cast<jbyte *>(&buf[0]));
+
+    struct pollfd pfd;
+    pfd.fd = fd;
+    pfd.events = POLLOUT;
+    int ready = poll(&pfd, 1, 100); // 100ms timeout para escritura
+    if (ready <= 0) return 0;
 
     ssize_t w = write(fd, buf.data(), static_cast<size_t>(len));
     if (w < 0) {
