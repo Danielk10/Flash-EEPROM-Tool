@@ -437,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
                             java.util.List<String> newArgs = new ArrayList<>(Arrays.asList(args));
                             newArgs.add("-c");
                             newArgs.add(chosenChip);
-                            executeCustomFlashromCommand(String.join(" ", newArgs));
+                            executeCustomFlashromCommand("flashrom " + String.join(" ", newArgs));
                         })
                         .setNegativeButton(R.string.str_cancelar, null)
                         .show();
@@ -1495,7 +1495,7 @@ public class MainActivity extends AppCompatActivity {
             if (actualSize != chipSize) {
                 log("Aviso: El archivo bios.bin (" + actualSize + " bytes) no coincide con el chip dummy seleccionado (" + chipSize + " bytes).");
                 log("Forzando emulación a VARIABLE_SIZE para evitar error de flashrom.");
-                String cmd = "-p dummy:emulate=VARIABLE_SIZE,size=" + actualSize + ",image=bios.bin " + action;
+                String cmd = "flashrom -p dummy:emulate=VARIABLE_SIZE,size=" + actualSize + ",image=bios.bin " + action;
                 if ("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) {
                     cmd += " bios.bin";
                 }
@@ -1567,11 +1567,11 @@ public class MainActivity extends AppCompatActivity {
     private String buildDummyCmd(String chipName, int size, String chipFlag, String action) {
         String cmd;
         if ("VARIABLE_SIZE".equals(chipName)) {
-            cmd = "-p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios_test.bin " + action;
+            cmd = "flashrom -p dummy:emulate=VARIABLE_SIZE,size=" + size + ",image=bios_test.bin " + action;
         } else if (chipFlag != null) {
-            cmd = "-p dummy:emulate=" + chipName + ",image=bios_test.bin -c " + chipFlag + " " + action;
+            cmd = "flashrom -p dummy:emulate=" + chipName + ",image=bios_test.bin -c " + chipFlag + " " + action;
         } else {
-            cmd = "-p dummy:emulate=" + chipName + ",image=bios_test.bin " + action;
+            cmd = "flashrom -p dummy:emulate=" + chipName + ",image=bios_test.bin " + action;
         }
         return cmd.trim();
     }
