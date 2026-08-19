@@ -1,4 +1,4 @@
-# Flash EEPROM Tool
+# Flash SPI Tool
 
 [![Android](https://img.shields.io/badge/Android-6.0%20(API%2023)%20a%20Android%2016%20(API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
@@ -10,8 +10,8 @@
 Aplicación Android para lectura/escritura/verificación de memorias **SPI, LPC/FWH y MTD** usando **flashrom** y librerías nativas compiladas para **ARM64**.
 Soporta programadores **USB directos** (CH341A, FT2232, Dediprog, etc.) vía libusb parcheada y programadores **seriales** (serprog/Arduino, Bus Pirate, SPIDriver) vía puente PTY↔USB.
 
-> Nombre visible de la app: **Flash EEPROM Tool**.
-> Versión actual: **1.7.3** (Código de versión: **65**).
+> Nombre visible de la app: **Flash SPI Tool**.
+> Versión actual: **1.7.7** (Código de versión: **69**).
 > Rango de soporte Android: **API 23 a API 37** (Android 6.0 a Android 16+).
 
 ---
@@ -299,7 +299,7 @@ El panel de log muestra salida nativa real con prefijo `[native]`, diagnósticos
 
 ### Proyecto
 
-- **Flash EEPROM Tool**
+- **Flash SPI Tool**
 - Licencia: **GNU GPL v3.0**
 - Archivo: [`LICENSE.txt`](./LICENSE.txt)
 
@@ -335,7 +335,7 @@ El panel de log muestra salida nativa real con prefijo `[native]`, diagnósticos
 
 ## 12) Entorno de emulación y diagnóstico (local)
 
-Para propósitos de desarrollo, pruebas y depuración rápida sin necesidad de hardware real, el proyecto cuenta con un **Emulador de memorias Flash/EEPROM** multiprotocolo programado en C++ (ubicado en la carpeta [`emulador_flashrom/`](./emulador_flashrom/) de la raíz y replicado en tu carpeta `home`).
+Para propósitos de desarrollo, pruebas y depuración rápida sin necesidad de hardware real, el proyecto cuenta con un **Emulador de memorias Flash SPI** multiprotocolo programado en C++ (ubicado en la carpeta [`emulador_flashrom/`](./emulador_flashrom/) de la raíz y replicado en tu carpeta `home`).
 
 El emulador es un simulador de hardware en software que recrea tanto el chip de memoria SPI como el puente de comunicación de los programadores.
 

@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.FlashEEPROMTool" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.FlashSPITool" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Main colors -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_variant</item>

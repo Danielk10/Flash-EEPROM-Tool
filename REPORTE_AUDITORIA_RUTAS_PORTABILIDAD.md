@@ -1,4 +1,4 @@
-# Reporte de Auditoría y Corrección: Rutas y Portabilidad de Flash-EEPROM-Tool
+# Reporte de Auditoría y Corrección: Rutas y Portabilidad de Flash-SPI-Tool
 ESTADO: CORREGIDO (Última actualización: Agosto 2026)
 
 Este documento detalla los hallazgos críticos y las acciones correctivas aplicadas para garantizar la portabilidad de las herramientas nativas (flashrom, libftdi, pciutils, etc.) en Android para el paquete `com.diamon.curso`.

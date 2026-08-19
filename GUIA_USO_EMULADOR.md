@@ -1,6 +1,6 @@
 # Guía de Uso del Emulador Flashrom (CH341A, Serprog y Bus Pirate)
 
-Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash/EEPROM** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo. 
+Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash SPI** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo. 
 
 El emulador permite simular dispositivos programadores reales contra una memoria SPI de prueba (**GigaDevice GD25Q80** de 1 MB) en un entorno local, ideal para desarrollo, validación y depuración rápida sin hardware real.
 
@@ -60,7 +60,7 @@ Te permite **validar todo el flujo de software en tu máquina local**:
 
 Para mantener un entorno de trabajo organizado y bajo control de versiones, se utiliza un flujo de dos directorios:
 
-*   **Versión del Repositorio (`~/Flash-EEPROM-Tool/emulador_flashrom`)**: Es la fuente de verdad. **Cualquier actualización, corrección o mejora en el código fuente del emulador debe aplicarse y confirmarse (commit) en esta ubicación.**
+*   **Versión del Repositorio (`~/Flash-SPI-Tool/emulador_flashrom`)**: Es la fuente de verdad. **Cualquier actualización, corrección o mejora en el código fuente del emulador debe aplicarse y confirmarse (commit) en esta ubicación.**
 *   **Versión de Desarrollo/Ejecución (`~/emulador_flashrom`)**: Es el entorno de trabajo activo. Se utiliza para compilar el binario, ejecutar las pruebas y generar archivos de datos temporales.
 
 *Recomendación*: Si realizas cambios en el código en la carpeta de home para probarlos, asegúrate de copiarlos de vuelta a la carpeta del repositorio una vez validados para no perderlos.

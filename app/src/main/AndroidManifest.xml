@@ -32,7 +32,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FlashEEPROMTool">
+        android:theme="@style/Theme.FlashSPITool">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

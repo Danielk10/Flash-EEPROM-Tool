@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flash EEPROM Tool</string>
+    <string name="app_name">Flash SPI Tool</string>
     <string name="str_selecciona_dos_">Selecciona dos archivos para comparar</string>
     <string name="str_archivo_a">Archivo A</string>
     <string name="str_archivo_b">Archivo B</string>
@@ -107,7 +107,7 @@
     <string name="str_log_warn_dependencies_failed">[WARN] No se pudieron preparar todas las dependencias locales.</string>
     <string name="str_log_assets_copied">Assets copiados correctamente al almacenamiento interno.</string>
     <string name="str_log_resources_verified">Recursos verificados y actualizados correctamente.</string>
-    <string name="str_log_started">Flash EEPROM Tool iniciada correctamente.</string>
+    <string name="str_log_started">Flash SPI Tool iniciada correctamente.</string>
     <string name="str_log_android_info">Android: %1$s (API %2$d)</string>
     <string name="str_log_programmer_selected">Programador seleccionado: %1$s</string>
     <string name="str_log_connect_help">Para comenzar, conecta tu programador USB y presiona \'Detectar y Conectar Automáticamente\'.</string>
@@ -180,5 +180,5 @@
     <string name="str_dummy_opt_probe">Identificar chip emulado</string>
     <string name="str_dummy_opt_select">Seleccionar chip predefinido</string>
     <string name="str_dummy_opt_info">Chips válidos para emulación</string>
-    <string name="str_about_html"><![CDATA[<h2>Flash EEPROM Tool</h2><p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI) con <b>flashrom</b> nativo.</p><hr/><b>Licencia del proyecto:</b> GPLv3.<br/><br/><b>Dependencias y Librerías:</b><br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/><br/><b>Proyectos Relacionados del Desarrollador:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — Programador de PIC vía Android con protocolo P018A<br/>]]></string>
+    <string name="str_about_html"><![CDATA[<h2>Flash SPI Tool</h2><p>Aplicación Android avanzada para lectura, verificación y escritura de Firmware (Memorias Flash SPI) con <b>flashrom</b> nativo.</p><hr/><b>Licencia del proyecto:</b> GPLv3.<br/><br/><b>Dependencias y Librerías:</b><br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/><br/><b>Proyectos Relacionados del Desarrollador:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — Programador de PIC vía Android con protocolo P018A<br/>]]></string>
 </resources>

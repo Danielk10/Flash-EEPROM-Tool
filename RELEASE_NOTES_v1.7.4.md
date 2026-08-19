@@ -1,4 +1,4 @@
-# Notas de Lanzamiento - Flash-EEPROM-Tool v1.7.4
+# Notas de Lanzamiento - Flash-SPI-Tool v1.7.4
 
 Esta versión de producción (`v1.7.4`, código de versión `66`) introduce soporte completo para el programador SPIDriver (tanto en la aplicación Android como en la suite de pruebas y emulación local), soluciona conflictos de auto-detección de hardware USB, unifica la consola de comandos de flashrom a un comportamiento estándar de PC, y robustece la suite de validación.
 

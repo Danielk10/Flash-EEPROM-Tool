@@ -1283,7 +1283,7 @@ public class MainActivity extends AppCompatActivity {
                         .show();
                 return true;
             }
-            clipboard.setPrimaryClip(ClipData.newPlainText("flash_eeprom_tool_logs", logs));
+            clipboard.setPrimaryClip(ClipData.newPlainText("flash_spi_tool_logs", logs));
             android.widget.Toast.makeText(this, R.string.str_logs_copied, android.widget.Toast.LENGTH_SHORT)
                     .show();
             return true;

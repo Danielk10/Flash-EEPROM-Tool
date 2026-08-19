@@ -34,3 +34,8 @@ emulador_flashrom/buspirate_pty
 emulador_flashrom/ch341a_socket
 emulador_flashrom/spidriver_pty
 
+# Local tools and build directories
+arduino-cli
+firmware_build/
+
+

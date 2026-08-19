@@ -1,6 +1,6 @@
 # Instrucciones de Compilación y SDK
 
-Este documento describe cómo instalar el SDK de Android y compilar el proyecto **Flash-EEPROM-Tool**.
+Este documento describe cómo instalar el SDK de Android y compilar el proyecto **Flash-SPI-Tool**.
 
 ## 1. Instalación del SDK
 

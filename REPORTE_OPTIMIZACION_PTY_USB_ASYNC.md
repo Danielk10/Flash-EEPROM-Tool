@@ -1,6 +1,6 @@
 # Reporte de Optimización: PTY Nativo No Bloqueante y USB Asíncrono
 
-Este reporte detalla las mejoras críticas implementadas en el proyecto **Flash-EEPROM-Tool** para resolver problemas de latencia, bloqueos de hilos y desincronización de protocolo cuando se utiliza con programadores basados en serprog (Arduino UNO/CH340G).
+Este reporte detalla las mejoras críticas implementadas en el proyecto **Flash-SPI-Tool** para resolver problemas de latencia, bloqueos de hilos y desincronización de protocolo cuando se utiliza con programadores basados en serprog (Arduino UNO/CH340G).
 
 ## 1. Problemas Identificados (Causa Raíz)
 
