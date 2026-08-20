@@ -1,6 +1,6 @@
 # Flash SPI Tool
 
-[![Android](https://img.shields.io/badge/Android-6.0%20(API%2023)%20a%20Android%2016%20(API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
+[![Android](https://img.shields.io/badge/Android-6.0%20(API%2023)%20a%20Android%2017%20(API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
 [![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
 [![AGP](https://img.shields.io/badge/AGP-9.2.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
@@ -12,7 +12,7 @@ Soporta programadores **USB directos** (CH341A, FT2232, Dediprog, etc.) vía lib
 
 > Nombre visible de la app: **Flash SPI Tool**.
 > Versión actual: **1.7.7** (Código de versión: **69**).
-> Rango de soporte Android: **API 23 a API 37** (Android 6.0 a Android 16+).
+> Rango de soporte Android: **API 23 a API 37** (Android 6.0 a Android 17+).
 
 ---
 
