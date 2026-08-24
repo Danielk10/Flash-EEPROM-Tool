@@ -59,10 +59,19 @@
         product-id="8964" />
 
 
-    <!-- 0x1a86 / 0x?523: Qinheng CH34x -->
+    <!-- 0x1a86: Qinheng CH341A / CH347 / CH340 / CH9102 -->
     <usb-device
         vendor-id="6790"
-        product-id="21795" /> <!-- 0x5523: CH341A -->
+        product-id="21778" /> <!-- 0x5512: CH341A (SPI/I2C Programmer) -->
+    <usb-device
+        vendor-id="6790"
+        product-id="21795" /> <!-- 0x5523: CH347 / CH341 UART -->
+    <usb-device
+        vendor-id="6790"
+        product-id="21979" /> <!-- 0x55db: CH347 SPI (Mode 3) -->
+    <usb-device
+        vendor-id="6790"
+        product-id="21972" /> <!-- 0x55d4: CH9102F -->
     <usb-device
         vendor-id="6790"
         product-id="29987" /> <!-- 0x7523: CH340 -->
@@ -90,7 +99,33 @@
     <usb-device
         vendor-id="11914"
         product-id="10" /> <!-- 0x2E8A / 0x000A: Raspberry Pi Pico SDK -->
-    <usb-device
-        vendor-id="6790"
-        product-id="21972" /> <!-- 0x1A86 / 0x55D4: Qinheng CH9102F -->
+
+    <!-- ST-LINK (0x0483) -->
+    <usb-device vendor-id="1155" product-id="14152" /> <!-- 0x3748: ST-LINK/V2 -->
+    <usb-device vendor-id="1155" product-id="14155" /> <!-- 0x374b: ST-LINK/V2-1 -->
+    <usb-device vendor-id="1155" product-id="14157" /> <!-- 0x374d: STLINK-V3 -->
+    <usb-device vendor-id="1155" product-id="14158" /> <!-- 0x374e: STLINK-V3 -->
+    <usb-device vendor-id="1155" product-id="14159" /> <!-- 0x374f: STLINK-V3 -->
+    <usb-device vendor-id="1155" product-id="14162" /> <!-- 0x3752: STLINK-V3 -->
+    <usb-device vendor-id="1155" product-id="14163" /> <!-- 0x3753: STLINK-V3 -->
+    <usb-device vendor-id="1155" product-id="14164" /> <!-- 0x3754: STLINK-V3 -->
+
+    <!-- Dediprog (0x0483) -->
+    <usb-device vendor-id="1155" product-id="56026" /> <!-- 0xdada: Dediprog SF100 -->
+    <usb-device vendor-id="1155" product-id="56032" /> <!-- 0xdae0: Dediprog SF600 -->
+
+    <!-- SEGGER J-Link -->
+    <usb-device vendor-id="4966" product-id="257" /> <!-- 0x1366 / 0x0101: J-Link -->
+    <usb-device vendor-id="4966" product-id="261" /> <!-- 0x1366 / 0x0105: J-Link Ultra -->
+    <usb-device vendor-id="8137" product-id="12" />  <!-- 0x1fc9 / 0x000c: J-Link OpenSDA -->
+
+    <!-- Microchip PICkit 2 -->
+    <usb-device vendor-id="1240" product-id="51" />  <!-- 0x04d8 / 0x0033: PICkit 2 -->
+
+    <!-- Altera USB-Blaster -->
+    <usb-device vendor-id="2555" product-id="24577" /> <!-- 0x09fb / 0x6001: USB-Blaster -->
+
+    <!-- Digilent & DirtyJTAG -->
+    <usb-device vendor-id="5187" product-id="7" />     <!-- 0x1443 / 0x0007: Digilent SPI -->
+    <usb-device vendor-id="4617" product-id="49354" /> <!-- 0x1209 / 0xc0ca: DirtyJTAG -->
 </resources>

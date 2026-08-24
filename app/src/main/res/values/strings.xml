@@ -117,6 +117,7 @@
     <string name="str_log_dummy_ok">If you are using \'dummy\', that is fine. For real hardware, connect the programmer first.</string>
     <string name="str_log_terminal_reset">Terminal reset.</string>
     <string name="str_usb_device">USB Device</string>
+    <string name="str_usb_device_attached">USB device attached</string>
     <string name="str_unknown_manufacturer">Unknown manufacturer</string>
     <string name="str_close">Close</string>
     <string name="str_dummy_test_mode">Dummy Programmer Test Mode</string>

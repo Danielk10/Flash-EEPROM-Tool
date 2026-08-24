@@ -98,6 +98,14 @@ public class UsbController {
                         callback.log(activity.getString(R.string.str_error) + ": USB permission denied.");
                     }
                 }
+            } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+                synchronized (this) {
+                    UsbDevice device = IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    if (device != null && currentConnection != null) {
+                        callback.log("Dispositivo USB desconectado físicamente.");
+                        disconnectDevice();
+                    }
+                }
             }
         }
     };
@@ -110,6 +118,7 @@ public class UsbController {
 
     public void registerReceiver() {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             activity.registerReceiver(usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {

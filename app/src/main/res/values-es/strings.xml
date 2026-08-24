@@ -117,6 +117,7 @@
     <string name="str_log_dummy_ok">Si usas \'dummy\', está bien. Para hardware real, conecta el programador primero.</string>
     <string name="str_log_terminal_reset">Terminal reiniciada.</string>
     <string name="str_usb_device">Dispositivo USB</string>
+    <string name="str_usb_device_attached">Dispositivo USB detectado</string>
     <string name="str_unknown_manufacturer">Fabricante desconocido</string>
     <string name="str_close">Cerrar</string>
     <string name="str_dummy_test_mode">Modo de prueba de programador virtual</string>

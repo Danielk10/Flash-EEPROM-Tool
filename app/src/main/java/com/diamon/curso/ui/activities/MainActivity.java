@@ -44,6 +44,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.IntentCompat;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -305,16 +306,12 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.log("Conectado a USB VID:PID " + vidPid);
 
                     if (isRecognized && autoProg != null && !autoProg.isEmpty()) {
-                        selectedProgrammer = autoProg;
-                        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_PROGRAMMER, selectedProgrammer).apply();
-                        MainActivity.this.log("[OK] Dispositivo reconocido: " + deviceName + " → programador '" + autoProg + "'");
-                        MainActivity.this.log("Auto-configuración: Programador cambiado automáticamente a '" + selectedProgrammer + "'");
+                        MainActivity.this.log("[INFO] Dispositivo compatible: " + deviceName + " (Reconocido como '" + autoProg + "')");
                     } else {
                         MainActivity.this.log("════════════════════════════════════════");
-                        MainActivity.this.log("[AVISO] Dispositivo NO reconocido como programador flashrom.");
-                        MainActivity.this.log("VID:PID " + vidPid + " (" + deviceName + ") no está en la lista de dispositivos compatibles.");
-                        MainActivity.this.log("Esto NO significa que no funcione — puedes intentar con los botones o la consola.");
-                        MainActivity.this.log("Si falla, cambia el programador en 'Ajustes de Programador' o reporta el VID:PID.");
+                        MainActivity.this.log("[AVISO] Dispositivo USB conectado.");
+                        MainActivity.this.log("VID:PID " + vidPid + " (" + deviceName + ")");
+                        MainActivity.this.log("Puedes seleccionar tu programador en 'Ajustes de Programador' o pulsar 'Detectar'.");
                         MainActivity.this.log("════════════════════════════════════════");
                     }
 
@@ -324,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
                     btnWrite.setEnabled(true);
                     btnEraseChip.setEnabled(true);
 
+                    selectedProgrammer = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_PROGRAMMER, "ch341a_spi");
                     if (selectedProgrammer == null || selectedProgrammer.trim().isEmpty()) {
                         selectedProgrammer = "ch341a_spi";
-                        MainActivity.this.log("Programador no configurado — usando 'ch341a_spi' por defecto. Cámbialo en 'Ajustes de Programador' si es necesario.");
                     }
                     MainActivity.this.log("Programador flashrom activo: " + selectedProgrammer);
                 });
@@ -554,7 +551,11 @@ public class MainActivity extends AppCompatActivity {
         usbController.registerReceiver();
 
         // Listener setup para todos los botones
-        btnConnect.setOnClickListener(v -> usbController.searchAndRequestProgrammer(selectedProgrammer, prog -> selectedProgrammer = prog));
+        btnConnect.setOnClickListener(v -> usbController.searchAndRequestProgrammer(selectedProgrammer, prog -> {
+            selectedProgrammer = prog;
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_PROGRAMMER, selectedProgrammer).apply();
+            log("Auto-configuración: Programador cambiado automáticamente a '" + selectedProgrammer + "'");
+        }));
 
         btnProbe.setOnClickListener(v -> ensureProgrammerThenRun(() -> {
             if (isDummyProgrammer()) {
@@ -671,6 +672,28 @@ public class MainActivity extends AppCompatActivity {
             tvLog.setText("");
             log(getString(R.string.str_log_terminal_reset));
         });
+
+        handleUsbIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleUsbIntent(intent);
+    }
+
+    private void handleUsbIntent(Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
+            UsbDevice device = IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_DEVICE, UsbDevice.class);
+            if (device != null && usbController != null) {
+                String devName = device.getProductName() != null ? device.getProductName() : getString(R.string.str_usb_device);
+                log(getString(R.string.str_usb_device_attached) + ": " + devName);
+                usbController.requestUsbPermission(device);
+            }
+        }
     }
 
     private void exportRomFileToUri(Uri uri) {
