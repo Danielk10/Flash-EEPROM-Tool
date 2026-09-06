@@ -10,6 +10,7 @@ usbSerialForAndroid = "3.11.0"
 documentfile = "1.1.0"
 appCenterSdkVersion = "5.0.6"
 playServicesAds = "25.3.0"
+playBilling = "7.1.1"
 
 
 
@@ -23,6 +24,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 usb-serial-for1-android = { module = "com.github.mik3y:usb-serial-for-android", version.ref = "usbSerialForAndroid" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
 appcenter-analytics = { module = "com.microsoft.appcenter:appcenter-analytics", version.ref = "appCenterSdkVersion" }
 appcenter-crashes = { module = "com.microsoft.appcenter:appcenter-crashes", version.ref = "appCenterSdkVersion" }
 

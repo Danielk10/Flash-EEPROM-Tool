@@ -2,6 +2,7 @@ package com.diamon.curso.ui.activities;
 
 import com.diamon.curso.R;
 import com.diamon.curso.ads.MostrarPublicidad;
+import com.diamon.curso.billing.BillingManager;
 import com.diamon.curso.core.PtyBridge;
 import com.diamon.curso.core.UsbController;
 import com.diamon.curso.core.FlashromExecutor;
@@ -38,6 +39,7 @@ import android.widget.ScrollView;
 import com.diamon.curso.ui.views.LogScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -165,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
     private volatile boolean hasReadData = false; // true cuando hay datos LEÍDOS del chip
     private volatile String lastReadFile = "bios.bin"; // archivo del último read exitoso
     private MostrarPublicidad mostrarPublicidad;
+    private BillingManager billingManager;
 
     // API para Visor Hexadecimal (Anuncio al regresar)
     private final ActivityResultLauncher<Intent> hexViewerLauncher = registerForActivityResult(
@@ -465,6 +468,25 @@ public class MainActivity extends AppCompatActivity {
             mostrarPublicidad.cargarBanner();
             mostrarPublicidad.cargarInterstial();
         }
+
+        billingManager = new BillingManager(this, new BillingManager.BillingListener() {
+            @Override
+            public void onProductReady(String productId, String formattedPrice) {
+                // Producto listo desde Google Play
+            }
+
+            @Override
+            public void onPurchaseSuccess(String productId) {
+                mostrarDialogoAgradecimiento();
+            }
+
+            @Override
+            public void onPurchaseError(String errorMessage) {
+                if (errorMessage != null && !errorMessage.isEmpty()) {
+                    Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         log("--- Aplicación Iniciada ---");
 
@@ -1385,6 +1407,9 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.action_export_serprog) {
             exportSerprogFirmware();
             return true;
+        } else if (id == R.id.action_donate_pizza) {
+            mostrarDialogoDonacionPizza();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -1421,6 +1446,34 @@ public class MainActivity extends AppCompatActivity {
             log(getString(R.string.str_error_copying_asset, assetName, e.getMessage()));
             return false;
         }
+    }
+
+    private void mostrarDialogoDonacionPizza() {
+        String precio = (billingManager != null)
+                ? billingManager.getFormattedPrice(BillingManager.PRODUCT_ID_PIZZA, "$5.00")
+                : "$5.00";
+        String btnTexto = getString(R.string.donate_dialog_btn, precio);
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setIcon(R.drawable.ic_pizza)
+                .setTitle(R.string.donate_dialog_title)
+                .setMessage(R.string.donate_dialog_message)
+                .setPositiveButton(btnTexto, (dialog, which) -> {
+                    if (billingManager != null) {
+                        billingManager.launchPurchaseFlow(this, BillingManager.PRODUCT_ID_PIZZA);
+                    }
+                })
+                .setNegativeButton(R.string.str_cancelar, null)
+                .show();
+    }
+
+    private void mostrarDialogoAgradecimiento() {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setIcon(R.drawable.ic_pizza)
+                .setTitle(R.string.donate_thank_you_title)
+                .setMessage(R.string.donate_thank_you_message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     private void showAboutDialog() {
@@ -1657,6 +1710,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (mostrarPublicidad != null) {
             mostrarPublicidad.disposeBanner();
+        }
+        if (billingManager != null) {
+            billingManager.destroy();
         }
         if (flashromExecutor == null || !flashromExecutor.isRunning()) {
             if (usbController != null) {

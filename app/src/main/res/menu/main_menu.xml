@@ -43,6 +43,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_donate_pizza"
+        android:icon="@drawable/ic_pizza"
+        android:title="@string/menu_donate_pizza"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_about"
         android:title="Acerca de"
         app:showAsAction="never" />

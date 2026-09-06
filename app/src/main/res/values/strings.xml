@@ -182,4 +182,10 @@
     <string name="str_dummy_opt_select">Select predefined chip</string>
     <string name="str_dummy_opt_info">Valid emulation chips</string>
     <string name="str_about_html"><![CDATA[<h2>Flash SPI Tool</h2><p>Advanced Android application for reading, verifying, and writing Firmware (SPI Flash Memories) with native <b>flashrom</b>.</p><hr/><b>Project License:</b> GPLv3.<br/><br/><b>Dependencies and Libraries:</b><br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/><br/><b>Developer Related Projects:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — PIC programmer via Android with P018A protocol<br/>]]></string>
+    <string name="menu_donate_pizza">Support with a Pizza 🍕 ($5)</string>
+    <string name="donate_dialog_title">Support the Project</string>
+    <string name="donate_dialog_message">Did you like my work or find Flash SPI Tool helpful? You can buy the developer a pizza to support continuous development and updates.</string>
+    <string name="donate_dialog_btn">Buy a Pizza 🍕 (%1$s)</string>
+    <string name="donate_thank_you_title">Thank You So Much! ❤️</string>
+    <string name="donate_thank_you_message">Your support means a lot! Thank you for backing Flash SPI Tool.</string>
 </resources>

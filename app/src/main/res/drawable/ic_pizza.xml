@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Base pizza crust -->
+    <path
+        android:fillColor="#E67E22"
+        android:pathData="M3.2,4.2 C6.8,2.7 17.2,2.7 20.8,4.2 C21.4,4.5 21.6,5.2 21.1,5.8 C20.5,6.5 19,7 12,7 C5,7 3.5,6.5 2.9,5.8 C2.4,5.2 2.6,4.5 3.2,4.2 Z" />
+    <!-- Pizza cheese body -->
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M4.2,6.5 C7.5,7 16.5,7 19.8,6.5 C19.2,7.8 12.8,21 12,22 C11.2,21 4.8,7.8 4.2,6.5 Z" />
+    <!-- Pepperoni 1 -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M12,9.2 C13,9.2 13.8,10 13.8,11 C13.8,12 13,12.8 12,12.8 C11,12.8 10.2,12 10.2,11 C10.2,10 11,9.2 12,9.2 Z" />
+    <!-- Pepperoni 2 -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M8.5,12 C9.3,12 10,12.7 10,13.5 C10,14.3 9.3,15 8.5,15 C7.7,15 7,14.3 7,13.5 C7,12.7 7.7,12 8.5,12 Z" />
+    <!-- Pepperoni 3 -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M14.5,13.5 C15.3,13.5 16,14.2 16,15 C16,15.8 15.3,16.5 14.5,16.5 C13.7,16.5 13,15.8 13,15 C13,14.2 13.7,13.5 14.5,13.5 Z" />
+    <!-- Herb flakes / basil -->
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M11.5,16 C12,16 12.5,16.5 12.5,17 C12.5,17.5 12,18 11.5,18 C11,18 10.5,17.5 10.5,17 C10.5,16.5 11,16 11.5,16 Z" />
+</vector>
