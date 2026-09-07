@@ -1,12 +1,12 @@
 # Notas de Lanzamiento - Flash-SPI-Tool v1.7.9
 
-Esta versión de producción (`v1.7.9`, código de versión `73`) introduce soporte oficial para **compras integradas y donaciones a través de Google Play Billing** ("Invítame una Pizza 🍕 $5") y cuenta con la firma de release oficial (`Juego Java 30 Pasos`), permitiendo a los usuarios apoyar de forma voluntaria el desarrollo, mantenimiento y soporte continuo de **Flash SPI Tool**.
+Esta versión de producción (`v1.7.9`, código de versión `74`) introduce soporte oficial para **compras integradas y donaciones a través de Google Play Billing** ("Invítame una Pizza 🍕 $5") y cuenta con la firma de release oficial (`Juego Java 30 Pasos`), permitiendo a los usuarios apoyar de forma voluntaria el desarrollo, mantenimiento y soporte continuo de **Flash SPI Tool**.
 
 ---
 
 ## 🚀 Nuevas Características y Mejoras
 
-*   **Integración de Google Play Billing Library (v7.1.1):**
+*   **Integración de Google Play Billing Library (v8.3.0):**
     *   Implementación de pasarela de pago nativa y segura bajo la normativa oficial de Google Play.
     *   Configuración de producto integrado de tipo consumible (`donacion_pizza`), lo que permite donar varias veces si el usuario así lo desea.
     *   Consumo automático e inmediato del token de compra (`consumeAsync`) para garantizar la confirmación de la transacción y prevenir reembolsos por timeout.

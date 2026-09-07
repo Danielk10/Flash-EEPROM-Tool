@@ -6,7 +6,7 @@ Esta guía describe cómo está implementada la donación de $5 en el código de
 
 ## 📌 1. Resumen de lo implementado en la aplicación
 
-1. **Librería de Facturación:** Se integró Google Play Billing Library (`com.android.billingclient:billing:7.1.1`).
+1. **Librería de Facturación:** Se integró Google Play Billing Library (`com.android.billingclient:billing:8.3.0`).
 2. **Permiso en Manifest:** `<uses-permission android:name="com.android.vending.BILLING" />`.
 3. **Manejador de Compras (`BillingManager.java`):**
    - Conexión asíncrona con los servicios de Google Play.

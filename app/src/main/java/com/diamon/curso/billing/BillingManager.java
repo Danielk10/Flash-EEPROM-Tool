@@ -95,21 +95,24 @@ public class BillingManager implements PurchasesUpdatedListener {
                 .setProductList(productList)
                 .build();
 
-        billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
-            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                for (ProductDetails pd : productDetailsList) {
-                    availableProducts.put(pd.getProductId(), pd);
-                    String price = "$5.00";
-                    if (pd.getOneTimePurchaseOfferDetails() != null) {
-                        price = pd.getOneTimePurchaseOfferDetails().getFormattedPrice();
-                    }
-                    final String finalPrice = price;
-                    final String finalId = pd.getProductId();
-                    mainHandler.post(() -> {
-                        if (listener != null) {
-                            listener.onProductReady(finalId, finalPrice);
+        billingClient.queryProductDetailsAsync(params, (billingResult, queryProductDetailsResult) -> {
+            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && queryProductDetailsResult != null) {
+                List<ProductDetails> productDetailsList = queryProductDetailsResult.getProductDetailsList();
+                if (productDetailsList != null) {
+                    for (ProductDetails pd : productDetailsList) {
+                        availableProducts.put(pd.getProductId(), pd);
+                        String price = "$5.00";
+                        if (pd.getOneTimePurchaseOfferDetails() != null) {
+                            price = pd.getOneTimePurchaseOfferDetails().getFormattedPrice();
                         }
-                    });
+                        final String finalPrice = price;
+                        final String finalId = pd.getProductId();
+                        mainHandler.post(() -> {
+                            if (listener != null) {
+                                listener.onProductReady(finalId, finalPrice);
+                            }
+                        });
+                    }
                 }
             } else {
                 Log.w(TAG, "Failed to query products: " + billingResult.getDebugMessage());
