@@ -27,23 +27,4 @@ Esta versión de producción (`v1.7.9`, código de versión `74`) introduce sopo
     *   Verificación exitosa con Android SDK 37 (compileSdk 37, targetSdk 37, minSdk 23).
     *   Inclusión y fusión limpia del permiso `com.android.vending.BILLING`.
 
----
-
-## 📝 Textos para Google Play Console (Novedades de esta versión)
-
-### 🇪🇸 Español (es-419 / es-ES):
-```text
-• Nueva opción en el menú: "Apoyar con una Pizza 🍕 ($5)" mediante Google Play Billing.
-• Detección automática de precios en moneda local según tu país.
-• Consumo inmediato de compra que permite realizar aportes múltiples.
-• Iconografía mejorada y optimizaciones internas de estabilidad.
-```
-
-### 🇺🇸 English (en-US):
-```text
-• New menu option: Support with a Pizza 🍕 ($5) via Google Play Billing.
-• Automatic localized currency and price detection.
-• Instant purchase consumption allowing multiple voluntary donations.
-• Improved iconography and internal stability optimizations.
-```
 
