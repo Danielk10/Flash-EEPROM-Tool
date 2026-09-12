@@ -4,6 +4,7 @@ public interface Publicidad {
 
 	public void mostrarInterstitial();
 
-	public void botonAtrasInterstitial();
+	public boolean mostrarInterstitialConCooldown();
 
+	public void botonAtrasInterstitial();
 }

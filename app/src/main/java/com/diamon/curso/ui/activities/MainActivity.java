@@ -174,8 +174,7 @@ public class MainActivity extends AppCompatActivity {
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (mostrarPublicidad != null) {
-                    mostrarPublicidad.mostrarInterstitial();
-                    mostrarPublicidad.cargarInterstial(); // Precarga para la próxima vez
+                    mostrarPublicidad.mostrarInterstitialConCooldown();
                 }
             });
 
@@ -402,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (exitCode == 0) {
+                    boolean wasImportantOp = false;
                     for (int i = 0; i < args.length; i++) {
                         if ("-r".equals(args[i]) && i + 1 < args.length) {
                             String readFile = args[i + 1];
@@ -411,8 +411,19 @@ public class MainActivity extends AppCompatActivity {
                             editor.putString(KEY_BIOS_SOURCE, "Leído del chip (" + selectedProgrammer + ")");
                             editor.putString(KEY_LAST_READ_FILE, readFile);
                             editor.apply();
+                            wasImportantOp = true;
                             break;
+                        } else if ("-w".equals(args[i]) || "-E".equals(args[i]) || "--erase".equals(args[i]) || "-v".equals(args[i])) {
+                            wasImportantOp = true;
                         }
+                    }
+
+                    if (wasImportantOp) {
+                        MainActivity.this.runOnUiThread(() -> {
+                            if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed() && mostrarPublicidad != null) {
+                                mostrarPublicidad.mostrarInterstitialConCooldown();
+                            }
+                        });
                     }
                 } else {
                     if (UsbController.needsPtyBridge(selectedProgrammer) && usbController.getPtyBridge() != null) {
