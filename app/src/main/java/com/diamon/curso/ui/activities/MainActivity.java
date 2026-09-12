@@ -6,7 +6,6 @@ import com.diamon.curso.billing.BillingManager;
 import com.diamon.curso.core.PtyBridge;
 import com.diamon.curso.core.UsbController;
 import com.diamon.curso.core.FlashromExecutor;
-import com.diamon.curso.core.FlashromService;
 import com.diamon.curso.ui.views.PinoutView;
 import com.diamon.curso.utils.AssetHelper;
 
@@ -304,16 +303,16 @@ public class MainActivity extends AppCompatActivity {
             public void onDeviceConnected(String deviceName, int fd, String vidPid, boolean isRecognized, String autoProg) {
                 MainActivity.this.runOnUiThread(() -> {
                     tvStatus.setText(getString(R.string.str_status_usb_connected, deviceName));
-                    MainActivity.this.log("¡Permiso otorgado! Token interno de USB: " + fd);
-                    MainActivity.this.log("Conectado a USB VID:PID " + vidPid);
+                    MainActivity.this.log(getString(R.string.str_log_perm_granted, fd));
+                    MainActivity.this.log(getString(R.string.str_log_connected_vid_pid, vidPid));
 
                     if (isRecognized && autoProg != null && !autoProg.isEmpty()) {
-                        MainActivity.this.log("[INFO] Dispositivo compatible: " + deviceName + " (Reconocido como '" + autoProg + "')");
+                        MainActivity.this.log(getString(R.string.str_log_compat_device, deviceName, autoProg));
                     } else {
                         MainActivity.this.log("════════════════════════════════════════");
-                        MainActivity.this.log("[AVISO] Dispositivo USB conectado.");
+                        MainActivity.this.log(getString(R.string.str_log_usb_device_connected));
                         MainActivity.this.log("VID:PID " + vidPid + " (" + deviceName + ")");
-                        MainActivity.this.log("Puedes seleccionar tu programador en 'Ajustes de Programador' o pulsar 'Detectar'.");
+                        MainActivity.this.log(getString(R.string.str_log_can_select_prog));
                         MainActivity.this.log("════════════════════════════════════════");
                     }
 
@@ -327,13 +326,13 @@ public class MainActivity extends AppCompatActivity {
                     if (selectedProgrammer == null || selectedProgrammer.trim().isEmpty()) {
                         selectedProgrammer = "ch341a_spi";
                     }
-                    MainActivity.this.log("Programador flashrom activo: " + selectedProgrammer);
+                    MainActivity.this.log(getString(R.string.str_log_programmer_selected, selectedProgrammer));
                 });
             }
 
             @Override
             public void onDeviceConnectionFailed(String deviceName) {
-                MainActivity.this.log(deviceName + " falló en enlazarse a la app (openDevice == null)");
+                MainActivity.this.log(getString(R.string.str_log_device_bind_failed, deviceName));
             }
 
             @Override
@@ -345,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
                     btnRead.setEnabled(false);
                     btnWrite.setEnabled(false);
                     btnEraseChip.setEnabled(false);
-                    MainActivity.this.log("Dispositivo USB desconectado.");
+                    MainActivity.this.log(getString(R.string.str_log_usb_disconnected));
                 });
             }
         });
@@ -368,13 +367,6 @@ public class MainActivity extends AppCompatActivity {
                         if (btnAbort != null) btnAbort.setVisibility(View.VISIBLE);
                     }
                 });
-
-                try {
-                    Intent serviceIntent = new Intent(MainActivity.this, FlashromService.class);
-                    startService(serviceIntent);
-                } catch (Exception e) {
-                    Log.e("MainActivity", "Error al iniciar FlashromService", e);
-                }
             }
 
             @Override
@@ -384,13 +376,6 @@ public class MainActivity extends AppCompatActivity {
                         if (btnAbort != null) btnAbort.setVisibility(View.GONE);
                     }
                 });
-
-                try {
-                    Intent serviceIntent = new Intent(MainActivity.this, FlashromService.class);
-                    stopService(serviceIntent);
-                } catch (Exception e) {
-                    Log.e("MainActivity", "Error al detener FlashromService", e);
-                }
 
                 if (MainActivity.this.isDestroyed() || MainActivity.this.isFinishing()) {
                     if (usbController != null) {
@@ -499,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        log("--- Aplicación Iniciada ---");
+        log(getString(R.string.str_log_started));
 
         // Lógica de inicio: primera instalación vs. aperturas posteriores
         int currentVersion = getVersionCode();
@@ -511,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
             // --- APERTURA POSTERIOR: UI inmediata, sin barra de progreso ---
             layoutMainUI.setVisibility(View.VISIBLE);
             layoutLoading.setVisibility(View.GONE);
-            log("Sistema flashrom y assets listos.");
+            log(getString(R.string.str_log_resources_verified));
 
             // Verificación silenciosa en background (solo repara enlaces/pci.ids si faltan)
             executor.execute(() -> {
@@ -587,7 +572,7 @@ public class MainActivity extends AppCompatActivity {
         btnConnect.setOnClickListener(v -> usbController.searchAndRequestProgrammer(selectedProgrammer, prog -> {
             selectedProgrammer = prog;
             getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_PROGRAMMER, selectedProgrammer).apply();
-            log("Auto-configuración: Programador cambiado automáticamente a '" + selectedProgrammer + "'");
+            log(getString(R.string.str_log_auto_config_prog, selectedProgrammer));
         }));
 
         btnProbe.setOnClickListener(v -> ensureProgrammerThenRun(() -> {
@@ -624,14 +609,14 @@ public class MainActivity extends AppCompatActivity {
 
         btnExport.setOnClickListener(v -> {
             if (!hasReadData) {
-                log("Error: No hay datos leídos del chip aún.");
-                log("Usa 'Leer Backup' primero para leer el contenido del chip.");
-                log("(El botón 'Guardar ROM' exporta datos LEÍDOS, no archivos importados.)");
+                log(getString(R.string.str_log_err_no_data_read));
+                log(getString(R.string.str_log_use_read_backup_first));
+                log(getString(R.string.str_log_save_rom_expl));
                 return;
             }
             File sourceFile = new File(getFilesDir(), lastReadFile);
             if (!sourceFile.exists()) {
-                log("Error: El archivo '" + lastReadFile + "' no existe. Lee el chip primero.");
+                log(getString(R.string.str_log_err_file_not_exist, lastReadFile));
                 return;
             }
 
@@ -742,20 +727,20 @@ public class MainActivity extends AppCompatActivity {
             while ((read = in.read(buffer)) != -1) {
                 out.write(buffer, 0, read);
             }
-            log("Éxito: '" + lastReadFile + "' respaldado correctamente en la carpeta seleccionada.");
+            log(getString(R.string.str_log_backup_success, lastReadFile));
         } catch (Exception e) {
-            log("Error guardando el archivo: " + e.getMessage());
+            log(getString(R.string.str_log_backup_error, e.getMessage()));
         }
     }
 
     private void importRomFile(Uri uri) {
         try (InputStream in = getContentResolver().openInputStream(uri)) {
             if (in == null) {
-                throw new IllegalStateException("No se pudo abrir el archivo seleccionado para lectura.");
+                throw new IllegalStateException(getString(R.string.str_err_open_file));
             }
 
             // Detectar metadata y tamano sin cargar a RAM
-            String fileName = "archivo";
+            String fileName = getString(R.string.str_archivo_a);
             long fileSize = -1;
             try {
                 android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
@@ -771,8 +756,7 @@ public class MainActivity extends AppCompatActivity {
 
             long maxSize = 128L * 1024 * 1024; // 128 MB
             if (fileSize > maxSize) {
-                log("Error: El archivo es demasiado grande (" + (fileSize / 1024 / 1024)
-                        + " MB). Máximo soportado: 128 MB.");
+                log(getString(R.string.str_log_file_too_large, (int) (fileSize / 1024 / 1024), 128));
                 return;
             }
 
@@ -794,7 +778,7 @@ public class MainActivity extends AppCompatActivity {
                     if (data.length > 0 && data[0] == ':') {
                         byte[] parsed = parseIntelHex(data);
                         if (parsed.length == 0) {
-                            log("Error: El Intel HEX no contiene datos útiles.");
+                            log(getString(R.string.str_log_hex_no_data));
                             return;
                         }
                         out.write(parsed);
@@ -822,7 +806,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             if (looksLikeText && fileSize < 1024) {
-                                log("[AVISO] El archivo '" + fileName + "' parece ser texto plano.");
+                                log(getString(R.string.str_log_warn_plain_text, fileName));
                             }
                             firstChunk = false;
                         }
@@ -833,7 +817,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (totalWritten == 0) {
-                log("Error: El archivo seleccionado está vacío. No es un binario válido.");
+                log(getString(R.string.str_log_file_empty));
                 return;
             }
 
@@ -844,10 +828,10 @@ public class MainActivity extends AppCompatActivity {
                 sizeStr = String.format(java.util.Locale.US, "%.1f KB", totalWritten / 1024.0);
             }
 
-            log("ROM importada: '" + fileName + "' (" + sizeStr + ", " + (isIntelHex ? "Intel HEX" : "binario crudo")
-                    + ")");
+            log(getString(R.string.str_log_rom_imported, fileName, sizeStr,
+                    (isIntelHex ? getString(R.string.str_intel_hex) : getString(R.string.str_raw_binary))));
             if (isIntelHex) {
-                log("Conversión Intel HEX → binario aplicada correctamente.");
+                log(getString(R.string.str_log_intel_hex_converted));
             }
             
             String safeFileName = fileName.replaceAll("[^a-zA-Z0-9_\\-\\.]", "_");
@@ -855,13 +839,13 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     java.nio.file.Files.copy(outFile.toPath(), new File(getFilesDir(), safeFileName).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception e) {
-                    log("Aviso: No se pudo crear la copia con el nombre original para comandos manuales.");
+                    log(getString(R.string.str_log_warn_copy_failed));
                 }
             }
 
-            log("Archivo guardado como 'bios.bin' — listo para Flashear o Verificar.");
+            log(getString(R.string.str_log_file_saved_bios));
             if (!safeFileName.isEmpty() && !safeFileName.equals("bios.bin")) {
-                log("También disponible como '" + safeFileName + "' para comandos manuales.");
+                log(getString(R.string.str_log_file_also_avail, safeFileName));
             }
 
             SharedPreferences.Editor editor = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
@@ -869,7 +853,7 @@ public class MainActivity extends AppCompatActivity {
             editor.putString(KEY_LAST_READ_FILE, "bios.bin");
             editor.apply();
         } catch (Exception e) {
-            log("Error copiando ROM desde almacenamiento: " + e.getMessage());
+            log(getString(R.string.str_log_err_copy_storage, e.getMessage()));
         }
     }
 
@@ -982,16 +966,16 @@ public class MainActivity extends AppCompatActivity {
 
         if (notifyUser) {
             if (anyDeleted) {
-                log("Datos temporales eliminados (" + String.join(", ", deletedFiles) + ").");
+                log(getString(R.string.str_log_temp_deleted, String.join(", ", deletedFiles)));
             } else {
-                log("No se encontraron archivos temporales para eliminar.");
+                log(getString(R.string.str_log_no_temp_files));
             }
         }
     }
 
     private void ensureProgrammerThenRun(Runnable action) {
         if (selectedProgrammer == null || selectedProgrammer.trim().isEmpty()) {
-            log("Error: No se ha seleccionado un programador. Por favor, configúralo en los ajustes.");
+            log(getString(R.string.str_log_err_no_prog_selected));
             return;
         }
         // Dummy no requiere USB conectado
@@ -1001,29 +985,29 @@ public class MainActivity extends AppCompatActivity {
         }
         // Programador real: verificar que hay conexión USB
         if (!usbController.isConnected()) {
-            log("Error: No hay dispositivo USB conectado. Conecta tu programador primero.");
+            log(getString(R.string.str_log_err_no_usb_connected));
             return;
         }
         // ── Programadores seriales (serprog, buspirate_spi, spidriver): iniciar PTY ──
         if (UsbController.needsPtyBridge(selectedProgrammer)) {
             PtyBridge ptyBridge = usbController.getPtyBridge();
             if (ptyBridge == null || !ptyBridge.isOpen()) {
-                log("[WARN] PtyBridge no está listo. Se intentará ejecutar flashrom sin sincronización previa.");
+                log(getString(R.string.str_log_warn_pty_not_ready));
                 action.run();
                 return;
             }
 
             final boolean isSerprog = "serprog".equals(selectedProgrammer);
             if (isSerprog) {
-                log("Sincronizando con Arduino... esperando beacon de arranque.");
+                log(getString(R.string.str_log_syncing_arduino));
             } else {
-                log("Preparando puente serial para " + selectedProgrammer + "...");
+                log(getString(R.string.str_log_starting_pty, selectedProgrammer));
             }
 
             final com.diamon.curso.core.PtyBridge currentBridge = ptyBridge;
             executor.execute(() -> {
                 if (currentBridge == null) {
-                    runOnUiThread(() -> log("[ERROR] Conexión PTY perdida."));
+                    runOnUiThread(() -> log(getString(R.string.str_log_pty_connection_lost)));
                     return;
                 }
                 // Serprog espera beacon 0xAA 0x55 del firmware Arduino;
@@ -1033,7 +1017,7 @@ public class MainActivity extends AppCompatActivity {
                         : currentBridge.prepareForSerialSession();
                 runOnUiThread(() -> {
                     if (!ready) {
-                        log("[ERROR] No se pudo preparar sesión serial — abortando.");
+                        log(getString(R.string.str_log_err_prepare_serial));
                         currentBridge.close();
                         if (usbController.getPtyBridge() == currentBridge) usbController.closePtyBridge();
                         return;
@@ -1041,9 +1025,9 @@ public class MainActivity extends AppCompatActivity {
                     currentBridge.purge();
                     if (!currentBridge.isForwardingActive()) {
                         currentBridge.startForwarding();
-                        log("Hilos de forwarding activos.");
+                        log(getString(R.string.str_log_forwarding_active));
                     }
-                    log("Puente PTY↔USB listo — lanzando flashrom.");
+                    log(getString(R.string.str_log_pty_bridge_ready));
                     action.run();
                 });
             });
@@ -1065,7 +1049,7 @@ public class MainActivity extends AppCompatActivity {
         String updatedProgrammer = prefs.getString(KEY_PROGRAMMER, "ch341a_spi");
         if (!updatedProgrammer.equals(selectedProgrammer)) {
             selectedProgrammer = updatedProgrammer;
-            log("Programador modificado vía Ajustes: " + selectedProgrammer);
+            log(getString(R.string.str_log_prog_modified_settings, selectedProgrammer));
             // Habilitar botones si es dummy (no requiere USB)
             if (isDummyProgrammer()) {
                 btnProbe.setEnabled(true);
@@ -1073,7 +1057,7 @@ public class MainActivity extends AppCompatActivity {
                 btnRead.setEnabled(true);
                 btnWrite.setEnabled(true);
                 btnEraseChip.setEnabled(true);
-                log("Modo Dummy activo: Los botones están habilitados sin necesidad de USB.");
+                log(getString(R.string.str_log_dummy_mode_active));
             }
         }
     }
@@ -1150,7 +1134,7 @@ public class MainActivity extends AppCompatActivity {
 
         File preferredFlashromBin = new File(getFilesDir(), "usr/sbin/flashrom");
         if (!preferredFlashromBin.exists()) {
-            log("[WARN] flashrom en files/usr/sbin no encontrado; usando fallback jniLibs.");
+            log(getString(R.string.str_log_warn_fallback_jnilibs));
             preferredFlashromBin = new File(getApplicationInfo().nativeLibraryDir, "libflashrom_bin.so");
         }
         if (!preferredFlashromBin.exists()) {
@@ -1204,7 +1188,7 @@ public class MainActivity extends AppCompatActivity {
 
         File preferredFlashromBin = new File(getFilesDir(), "usr/sbin/flashrom");
         if (!preferredFlashromBin.exists()) {
-            log("[WARN] flashrom en files/usr/sbin no encontrado; usando fallback jniLibs.");
+            log(getString(R.string.str_log_warn_fallback_jnilibs));
             preferredFlashromBin = new File(getApplicationInfo().nativeLibraryDir, "libflashrom_bin.so");
         }
         if (!preferredFlashromBin.exists()) {
@@ -1573,15 +1557,14 @@ public class MainActivity extends AppCompatActivity {
         
         // Si la acción requiere un archivo (read, write, verify) pero no hay bios.bin
         if (("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) && (!userBios.exists() || userBios.length() == 0)) {
-            log("Error: No hay bios.bin cargado. Usa 'Cargar ROM' primero.");
+            log(getString(R.string.str_log_err_no_bios_loaded));
             return;
         }
 
         if (userBios.exists() && userBios.length() > 0) {
             long actualSize = userBios.length();
             if (actualSize != chipSize) {
-                log("Aviso: El archivo bios.bin (" + actualSize + " bytes) no coincide con el chip dummy seleccionado (" + chipSize + " bytes).");
-                log("Forzando emulación a VARIABLE_SIZE para evitar error de flashrom.");
+                log(getString(R.string.str_log_warn_dummy_size_mismatch, actualSize, chipSize));
                 String cmd = "flashrom -p dummy:emulate=VARIABLE_SIZE,size=" + actualSize + ",image=bios.bin " + action;
                 if ("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) {
                     cmd += " bios.bin";
@@ -1599,7 +1582,7 @@ public class MainActivity extends AppCompatActivity {
             executeCustomFlashromCommand(cmd);
         } else {
             // Para probe o erase sin archivo cargado
-            log("No hay bios.bin cargado. Generando/usando archivo de prueba...");
+            log(getString(R.string.str_log_generating_test_file));
             ensureDummyTestFile(chipSize);
             executeCustomFlashromCommand(buildDummyCmd(chipName, chipSize, chipFlag, action));
         }
@@ -1713,7 +1696,7 @@ public class MainActivity extends AppCompatActivity {
             }
             log(getString(R.string.str_log_test_file_created, (sizeBytes / 1024)));
         } catch (Exception e) {
-            log("Error creando archivo de prueba: " + e.getMessage());
+            log(getString(R.string.str_log_err_creating_test_file, e.getMessage()));
         }
     }
 

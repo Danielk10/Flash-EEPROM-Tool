@@ -73,10 +73,6 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:label="Comparar HEX" />
-
-        <service
-            android:name="com.diamon.curso.core.FlashromService"
-            android:exported="false" />
     </application>
 
 </manifest>

@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 android {
 
       // Redirigir la carpeta build a /tmp
-    project.layout.buildDirectory.set(file("/tmp/calculo"))
+    project.layout.buildDirectory.set(file("/tmp/flashrom"))
     namespace 'com.diamon.curso'
     compileSdk {
         version = release(37)

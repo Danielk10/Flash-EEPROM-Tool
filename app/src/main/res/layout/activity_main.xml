@@ -343,6 +343,7 @@
             android:layout_weight="1.0"
             android:background="#0A0E17"
             android:padding="8dp"
+            android:saveEnabled="false"
             android:descendantFocusability="blocksDescendants">
 
             <TextView
@@ -350,6 +351,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="monospace"
+                android:saveEnabled="false"
                 android:textIsSelectable="true"
                 android:lineSpacingExtra="3dp"
                 android:longClickable="true"

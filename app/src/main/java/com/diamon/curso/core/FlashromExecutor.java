@@ -2,6 +2,8 @@ package com.diamon.curso.core;
 
 import android.content.Context;
 import android.util.Log;
+
+import com.diamon.curso.R;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -53,9 +55,9 @@ public class FlashromExecutor {
         if (pid > 0) {
             try {
                 terminateNativeProcess(pid);
-                callback.log("\n[PROCESO ABORTADO POR EL USUARIO]\n");
+                callback.log(context.getString(R.string.str_log_process_aborted));
             } catch (Exception e) {
-                callback.log("[ERROR] No se pudo detener el proceso nativo: " + e.getMessage());
+                callback.log(context.getString(R.string.str_log_err_stop_native_process, e.getMessage()));
             }
             currentPid = -1;
         }
@@ -67,7 +69,7 @@ public class FlashromExecutor {
 
     public void execute(File flashromBin, String[] args, int currentFd, boolean needsPty, String selectedProgrammer) {
         if (!flashromBin.exists()) {
-            callback.log("Fallo crítico: Binario 'flashrom' no existe. (" + flashromBin.getAbsolutePath() + ")");
+            callback.log(context.getString(R.string.str_err_critical_flashrom_missing, flashromBin.getAbsolutePath()));
             return;
         }
 
@@ -101,7 +103,7 @@ public class FlashromExecutor {
             // Start process natively to prevent ProcessBuilder from closing the file descriptor
             int[] processInfo = startNativeProcess(flashromBin.getAbsolutePath(), commandArgs, fdToPass, ldPath, "", context.getFilesDir().getAbsolutePath());
             if (processInfo == null || processInfo[0] <= 0) {
-                callback.log("[ERROR] Error al iniciar el proceso nativo.");
+                callback.log(context.getString(R.string.str_log_err_start_native_process));
                 callback.onProcessFinished(-1, args);
                 return;
             }

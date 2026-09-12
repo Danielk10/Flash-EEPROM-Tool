@@ -8,6 +8,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.diamon.curso.R;
+
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
@@ -132,7 +134,7 @@ public class BillingManager implements PurchasesUpdatedListener {
         if (!isConnected) {
             startConnection();
             if (listener != null) {
-                listener.onPurchaseError("Conectando con Google Play... Intenta de nuevo en unos segundos.");
+                listener.onPurchaseError(context.getString(R.string.str_billing_connecting));
             }
             return;
         }
@@ -140,7 +142,7 @@ public class BillingManager implements PurchasesUpdatedListener {
         ProductDetails pd = availableProducts.get(productId);
         if (pd == null) {
             if (listener != null) {
-                listener.onPurchaseError("El producto no está listo o la consola aún lo está procesando.");
+                listener.onPurchaseError(context.getString(R.string.str_billing_not_ready));
             }
             queryProducts();
             return;

@@ -26,12 +26,16 @@ public class LogScrollView extends ScrollView {
 
     @Override
     public void requestChildFocus(View child, View focused) {
-        if (focused != null) {
-            // Trick the ScrollView to prevent auto-scrolling to the focused child
-            super.requestChildFocus(child, null);
-        } else {
-            super.requestChildFocus(child, focused);
+        if (focused == null) {
+            return;
         }
+        super.requestChildFocus(child, focused);
+    }
+
+    @Override
+    public boolean requestChildRectangleOnScreen(View child, Rect rectangle, boolean immediate) {
+        // Prevent any automatic focus-based scrolling adjustments
+        return false;
     }
 
     @Override

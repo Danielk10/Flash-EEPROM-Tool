@@ -159,7 +159,7 @@ public class HexDiffActivity extends AppCompatActivity {
                     long size = cursor.getLong(sizeIdx);
                     if (size > 16 * 1024 * 1024) {
                         cursor.close();
-                        throw new IllegalArgumentException("El archivo es demasiado grande (>16MB). Imposible comparar en memoria.");
+                        throw new IllegalArgumentException(getString(R.string.str_err_file_too_large_diff));
                     }
                 }
                 cursor.close();
@@ -172,7 +172,7 @@ public class HexDiffActivity extends AppCompatActivity {
             while ((nRead = is.read(buf)) != -1) {
                 totalRead += nRead;
                 if (totalRead > 16 * 1024 * 1024) {
-                    throw new IllegalArgumentException("El archivo excede el límite de 16MB. Imposible comparar en memoria.");
+                    throw new IllegalArgumentException(getString(R.string.str_err_file_too_large_diff));
                 }
                 buffer.write(buf, 0, nRead);
             }
@@ -181,7 +181,7 @@ public class HexDiffActivity extends AppCompatActivity {
     }
 
     private String getFileName(Uri uri) {
-        String name = "archivo";
+        String name = getString(R.string.str_archivo_a);
         try {
             android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
             if (cursor != null && cursor.moveToFirst()) {

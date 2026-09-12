@@ -4,32 +4,32 @@
     
     <item
         android:id="@+id/action_hex_viewer"
-        android:title="Ver Memoria HEX"
+        android:title="@string/str_visor_hexadecim"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_hex_diff"
-        android:title="Comparar archivos HEX"
+        android:title="@string/str_comparar_hex"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_programmer_settings"
-        android:title="Configurar Programador Flashrom"
+        android:title="@string/str_configuracin_de"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_set_working_dir"
-        android:title="Ruta de Guardado/Carga"
+        android:title="@string/str_menu_working_dir"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_dummy_test"
-        android:title="Modo de prueba"
+        android:title="@string/str_dummy_test_mode"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_pinouts"
-        android:title="Pinouts de Hardware"
+        android:title="@string/str_pinouts_de_hard"
         app:showAsAction="never" />
 
     <item
@@ -39,7 +39,7 @@
 
     <item
         android:id="@+id/action_policy"
-        android:title="Política de Privacidad"
+        android:title="@string/str_polticas_de_pri"
         app:showAsAction="never" />
 
     <item
@@ -50,6 +50,6 @@
 
     <item
         android:id="@+id/action_about"
-        android:title="Acerca de"
+        android:title="@string/str_acerca_de"
         app:showAsAction="never" />
 </menu>

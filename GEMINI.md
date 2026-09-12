@@ -25,5 +25,5 @@ Una vez que el script `setup-sdk.sh` termine y el SDK esté listo, el proyecto s
 Después de una compilación exitosa, el archivo APK generado se encontrará en la siguiente ruta absoluta fuera del proyecto para mantener el espacio de trabajo limpio:
 
 ```
-/tmp/calculo/outputs/apk/debug/app-debug.apk
+/tmp/flashrom/outputs/apk/debug/app-debug.apk
 ```

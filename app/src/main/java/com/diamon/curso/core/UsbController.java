@@ -95,14 +95,14 @@ public class UsbController {
                             connectToDevice(device);
                         }
                     } else {
-                        callback.log(activity.getString(R.string.str_error) + ": USB permission denied.");
+                        callback.log(activity.getString(R.string.str_error) + ": " + activity.getString(R.string.str_usb_permission_denied));
                     }
                 }
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 synchronized (this) {
                     UsbDevice device = IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_DEVICE, UsbDevice.class);
                     if (device != null && currentConnection != null) {
-                        callback.log("Dispositivo USB desconectado físicamente.");
+                        callback.log(activity.getString(R.string.str_usb_physically_disconnected));
                         disconnectDevice();
                     }
                 }
@@ -147,7 +147,7 @@ public class UsbController {
     public void searchAndRequestProgrammer(String currentProgrammer, java.util.function.Consumer<String> onProgrammerAutoSelected) {
         Map<String, UsbDevice> devices = usbManager.getDeviceList();
         if (devices == null || devices.isEmpty()) {
-            callback.log(activity.getString(R.string.str_error) + ": No USB device detected.");
+            callback.log(activity.getString(R.string.str_error) + ": " + activity.getString(R.string.str_no_usb_detected));
             return;
         }
 
@@ -165,7 +165,7 @@ public class UsbController {
             }
             if (autoProg != null) {
                 onProgrammerAutoSelected.accept(autoProg);
-                callback.log("Detección automática: Dispositivo " + key + " reconocido como " + autoProg);
+                callback.log(activity.getString(R.string.str_auto_detect_recognized, key, autoProg));
                 requestUsbPermission(device);
                 return;
             }
@@ -182,9 +182,9 @@ public class UsbController {
             }
         });
 
-        callback.log(activity.getString(R.string.str_log_warn_dependencies_failed).replace("[WARN]", "[AVISO]") + " -> USB programmer not automatically recognized.");
-        callback.log("Dispositivos conocidos: CH341A, FT2232, Bus Pirate, Dediprog, ST-LINK, etc.");
-        callback.log("Puedes intentar conectarte manualmente — flashrom reportará si es compatible.");
+        callback.log(activity.getString(R.string.str_usb_not_recognized));
+        callback.log(activity.getString(R.string.str_known_devices));
+        callback.log(activity.getString(R.string.str_can_connect_manually));
 
         if (candidates.size() == 1) {
             requestUsbPermission(candidates.get(0));
@@ -205,9 +205,9 @@ public class UsbController {
 
     public void requestUsbPermission(UsbDevice device) {
         String deviceName = device.getProductName() == null ? activity.getString(R.string.str_usb_device) : device.getProductName();
-        callback.log("Dispositivo detectado: " + deviceName + " | Solicitando enlace...");
-        callback.log("VID:PID detectado => "
-                + String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId()));
+        callback.log(activity.getString(R.string.str_device_detected_requesting, deviceName));
+        callback.log(activity.getString(R.string.str_vid_pid_detected,
+                String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId())));
 
         if (usbManager.hasPermission(device)) {
             connectToDevice(device);
@@ -259,15 +259,14 @@ public class UsbController {
         // Programadores seriales (serprog, buspirate_spi, spidriver)
         if (needsPtyBridge(autoProg != null ? autoProg : "")) {
             closePtyBridge();
-            callback.log("Programador serial detectado — iniciando puente PTY...");
+            callback.log(activity.getString(R.string.str_serial_programmer_detected));
             PtyBridge bridge = new PtyBridge();
             bridge.setLogCallback(msg -> callback.log(msg));
             if (bridge.open(activity, device, usbManager, currentConnection, SERPROG_BAUD)) {
                 ptyBridge = bridge;
-                callback.log("PtyBridge activo: flashrom usará " + ptyBridge.getSlavePath()
-                        + " a " + SERPROG_BAUD + " bps");
+                callback.log(activity.getString(R.string.str_pty_bridge_active_format, ptyBridge.getSlavePath(), SERPROG_BAUD));
             } else {
-                callback.log("[WARN] PtyBridge no pudo iniciarse. ¿devpts disponible? Revisa el log nativo.");
+                callback.log(activity.getString(R.string.str_warn_pty_start_failed));
             }
         }
     }

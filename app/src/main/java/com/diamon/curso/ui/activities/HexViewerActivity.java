@@ -56,7 +56,7 @@ public class HexViewerActivity extends AppCompatActivity {
             if (fileUri != null) {
                 data = readUriToBytes(fileUri);
                 fileName = fileUri.getLastPathSegment();
-                biosSource = "Archivo externo: " + fileName;
+                biosSource = getString(R.string.str_external_file, fileName);
             } else {
                 // Cargar el archivo rastreado (último leído o importado)
                 String trackedFile = getSharedPreferences("flashrom_prefs", MODE_PRIVATE)

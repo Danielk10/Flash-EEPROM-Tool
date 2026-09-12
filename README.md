@@ -263,7 +263,7 @@ Una vez que tengas los binarios precompilados en `jniLibs` y los datos de runtim
    ```bash
    ./gradlew assembleDebug
    ```
-   El APK generado se ubicará en `/tmp/calculo/outputs/apk/debug/app-debug.apk` debido a la redirección de compilación para limpieza del workspace.
+   El APK generado se ubicará en `/tmp/flashrom/outputs/apk/debug/app-debug.apk` debido a la redirección de compilación para limpieza del workspace.
 
 ### Archivos y Reportes de Referencia
 - `setup-sdk.sh`: Prepara el SDK/NDK y el archivo `local.properties`.

@@ -76,8 +76,8 @@ public class PtyBridge {
     private int masterFd = -1;
     private int dummySlaveFd = -1;
     private String slavePath = null;
-    private UsbSerialPort usbPort = null;
-    private UsbDeviceConnection usbConnection = null;
+    private volatile UsbSerialPort usbPort = null;
+    private volatile UsbDeviceConnection usbConnection = null;
     private ParcelFileDescriptor masterPfd = null;
     private volatile boolean running = false;
     private Thread threadMasterToUsb = null;
@@ -284,7 +284,8 @@ public class PtyBridge {
      * @return true si todo fue bien, false si hay error.
      */
     public boolean prepareForSerialSession() {
-        if (usbPort == null) {
+        final UsbSerialPort port = this.usbPort;
+        if (port == null) {
             bridgeLog("prepareForSerialSession: puerto USB no disponible");
             return false;
         }
@@ -294,13 +295,13 @@ public class PtyBridge {
         }
 
         try {
-            usbPort.setDTR(true);
-            usbPort.setRTS(true);
+            port.setDTR(true);
+            port.setRTS(true);
             bridgeLog("DTR/RTS activados — programador serial listo");
             // Breve espera de estabilización sin beacon
             Thread.sleep(500);
             purge();
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             bridgeLog("Error preparando sesión serial: " + e.getMessage());
             return false;
         }
@@ -313,9 +314,10 @@ public class PtyBridge {
         byte[] buf = new byte[64];
 
         while (System.currentTimeMillis() < deadlineMs) {
-            if (usbPort == null) return false;
+            final UsbSerialPort port = this.usbPort;
+            if (port == null || !port.isOpen()) return false;
             try {
-                int n = usbPort.read(buf, 100);
+                int n = port.read(buf, 100);
                 if (n <= 0) {
                     continue;
                 }
@@ -330,8 +332,9 @@ public class PtyBridge {
                         state = (b == BEACON_BYTE_1) ? 1 : 0;
                     }
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 diagLastError = "beacon-read: " + e.getMessage();
+                break;
             }
         }
         return false;
@@ -404,17 +407,22 @@ public class PtyBridge {
             return;
         }
         // Drenar buffer USB con reintentos (el bootloader puede seguir enviando)
-        if (usbPort != null) {
+        final UsbSerialPort port = this.usbPort;
+        if (port != null) {
             byte[] drain = new byte[BUFFER_SIZE];
             int totalDrained = 0;
             for (int attempt = 0; attempt < 3; attempt++) {
+                if (this.usbPort == null || !port.isOpen()) {
+                    break;
+                }
                 try {
                     int n;
-                    while ((n = usbPort.read(drain, 20)) > 0) {
+                    while (this.usbPort != null && (n = port.read(drain, 20)) > 0) {
                         totalDrained += n;
                     }
                     Thread.sleep(50); // Esperar por datos rezagados
-                } catch (IOException | InterruptedException ignored) {
+                } catch (Exception ignored) {
+                    break;
                 }
             }
             if (totalDrained > 0) {
@@ -431,7 +439,7 @@ public class PtyBridge {
                     masterIn.read(skip);
                     Log.i(TAG, "Purge PTY: descartados " + avail + " bytes del master");
                 }
-            } catch (IOException ignored) {
+            } catch (Exception ignored) {
             }
         }
     }
@@ -448,21 +456,22 @@ public class PtyBridge {
      * @return String con el diagnóstico legible (para mostrar en el log de la app)
      */
     public String testHandshake() {
-        if (usbPort == null)
+        final UsbSerialPort port = this.usbPort;
+        if (port == null || !port.isOpen())
             return "[ERROR] Puerto USB no disponible";
         try {
             // 1) SYNCNOP (0x10) -> esperado: 15 06
-            usbPort.write(new byte[] { 0x10 }, 1, USB_TIMEOUT_MS);
+            port.write(new byte[] { 0x10 }, 1, USB_TIMEOUT_MS);
             byte[] syncResp = readUsbResponse(2, 5);
             Log.i(TAG, "Handshake test SYNCNOP: [" + bytesToHex(syncResp, syncResp.length) + "]");
 
             // 2) NOP (0x00) -> esperado: 06
-            usbPort.write(new byte[] { 0x00 }, 1, USB_TIMEOUT_MS);
+            port.write(new byte[] { 0x00 }, 1, USB_TIMEOUT_MS);
             byte[] nopResp = readUsbResponse(1, 3);
             Log.i(TAG, "Handshake test NOP: [" + bytesToHex(nopResp, nopResp.length) + "]");
 
             // 3) Query Programmer Name (0x03) -> esperado: 06 + 16 bytes
-            usbPort.write(new byte[] { 0x03 }, 1, USB_TIMEOUT_MS);
+            port.write(new byte[] { 0x03 }, 1, USB_TIMEOUT_MS);
             byte[] nameResp = readUsbResponse(17, 6);
             Log.i(TAG, "Handshake test NAME: [" + bytesToHex(nameResp, nameResp.length) + "]");
 
@@ -487,18 +496,21 @@ public class PtyBridge {
                     + " NOP=" + bytesToHex(nopResp, nopResp.length)
                     + " NAME='" + progName + "'";
 
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             Log.w(TAG, "Handshake test fallo: " + e.getMessage());
             return "[ERROR] Excepción en test: " + e.getMessage();
         }
     }
 
     private byte[] readUsbResponse(int minBytes, int maxAttempts) throws IOException, InterruptedException {
+        final UsbSerialPort port = this.usbPort;
+        if (port == null || !port.isOpen()) return new byte[0];
         byte[] readBuf = new byte[64];
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
 
         for (int attempt = 0; attempt < maxAttempts && out.size() < minBytes; attempt++) {
-            int n = usbPort.read(readBuf, USB_TIMEOUT_MS);
+            if (this.usbPort == null) break;
+            int n = port.read(readBuf, USB_TIMEOUT_MS);
             if (n > 0) {
                 out.write(readBuf, 0, n);
             }
@@ -548,7 +560,8 @@ public class PtyBridge {
                     break;
                 }
                 
-                if (n > 0 && usbPort != null) {
+                final UsbSerialPort port = this.usbPort;
+                if (n > 0 && port != null) {
                     diagPtyReads++;
                     if (!firstWriteLogged) {
                         Log.d(TAG, "PTY→USB write " + n + " bytes");
@@ -566,9 +579,9 @@ public class PtyBridge {
                         // El UART se maneja como un flujo binario. Mantener cada
                         // lectura del PTY intacta evita separar cabeceras/payloads
                         // de O_SPIOP y evita depender de temporizaciones del CH340.
-                        usbPort.write(buf, n, USB_TIMEOUT_MS);
+                        port.write(buf, n, USB_TIMEOUT_MS);
                         diagUsbBytesWritten += n;
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         diagUsbWriteErrors++;
                         if (running) {
                             diagLastError = "usb-write: " + e.getMessage();
@@ -594,103 +607,135 @@ public class PtyBridge {
             diagPtyWriteErrors = 0;
             diagLastError = "none";
             usbToMasterReady = true;
-            bridgeLog("Thread B iniciado — masterFd=" + masterFd + (endpointIn != null ? " (Async USB + JNI PTY)" : " (Sync USB + JNI PTY)"));
+            bridgeLog(getString(R.string.str_log_thread_b_start, masterFd, (endpointIn != null ? getString(R.string.str_log_usb_async_jni_pty) : getString(R.string.str_log_usb_sync_jni_pty))));
 
             UsbRequest request = null;
             ByteBuffer buffer = null;
+            boolean isQueued = false;
             if (endpointIn != null && usbConnection != null) {
-                request = new UsbRequest();
-                request.initialize(usbConnection, endpointIn);
-                // Usamos allocateDirect para mejor rendimiento con JNI/USB
-                buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+                try {
+                    request = new UsbRequest();
+                    request.initialize(usbConnection, endpointIn);
+                    // Usamos allocateDirect para mejor rendimiento con JNI/USB
+                    buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+                } catch (Exception e) {
+                    bridgeLog("Error inicializando UsbRequest: " + e.getMessage());
+                    request = null;
+                    buffer = null;
+                }
             }
 
             byte[] buf = new byte[BUFFER_SIZE];
-            while (running && !Thread.currentThread().isInterrupted()) {
-                try {
-                    if (usbPort != null) {
-                        int n = 0;
-                        if (request != null && buffer != null) {
-                            // MODO ASÍNCRONO: UsbRequest.queue() + requestWait()
-                            buffer.clear();
-                            if (request.queue(buffer, BUFFER_SIZE)) {
+            try {
+                while (running && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        final UsbSerialPort port = this.usbPort;
+                        if (port != null) {
+                            int n = 0;
+                            if (request != null && buffer != null) {
+                                // MODO ASÍNCRONO: UsbRequest.queue() + requestWait()
+                                if (!isQueued) {
+                                    buffer.clear();
+                                    isQueued = request.queue(buffer, BUFFER_SIZE);
+                                    if (!isQueued) {
+                                        bridgeLog(getString(R.string.str_log_usb_request_failed));
+                                        sleepQuietly(100);
+                                        continue;
+                                    }
+                                }
+
                                 UsbRequest response = null;
                                 try {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                        response = usbConnection.requestWait(200);
+                                        response = usbConnection != null ? usbConnection.requestWait(200) : null;
                                     } else {
-                                        response = usbConnection.requestWait();
+                                        response = usbConnection != null ? usbConnection.requestWait() : null;
                                     }
                                 } catch (Exception e) {
                                     // Timeout o error
                                 }
 
                                 if (response == request) {
+                                    isQueued = false;
                                     n = buffer.position();
                                     buffer.flip();
                                     buffer.get(buf, 0, n);
+                                } else if (response == null) {
+                                    // Timeout: la petición sigue en cola esperando datos.
+                                    // En la siguiente iteración continuamos esperando sin reencolar.
+                                    continue;
                                 }
                             } else {
-                                bridgeLog("UsbRequest queue failed");
-                                sleepQuietly(100);
+                                // FALLBACK: Lectura bloqueante estándar si no hay endpointIn
+                                n = port.read(buf, 200);
                             }
-                        } else {
-                            // FALLBACK: Lectura bloqueante estándar si no hay endpointIn
-                            n = usbPort.read(buf, 200);
-                        }
 
-                        diagUsbReads++;
-                        if (n > 0) {
-                            zeroReads = 0;
-                            diagUsbBytesReceived += n;
+                            diagUsbReads++;
+                            if (n > 0) {
+                                zeroReads = 0;
+                                diagUsbBytesReceived += n;
 
-                            // Detección de beacon de resincronización (0xAA 0x55)
-                            boolean beaconDetected = false;
-                            for (int i = 0; i < n - 1; i++) {
-                                if ((buf[i] & 0xFF) == BEACON_BYTE_1 && (buf[i + 1] & 0xFF) == BEACON_BYTE_2) {
-                                    beaconDetected = true;
-                                    break;
+                                // Detección de beacon de resincronización (0xAA 0x55)
+                                boolean beaconDetected = false;
+                                for (int i = 0; i < n - 1; i++) {
+                                    if ((buf[i] & 0xFF) == BEACON_BYTE_1 && (buf[i + 1] & 0xFF) == BEACON_BYTE_2) {
+                                        beaconDetected = true;
+                                        break;
+                                    }
+                                }
+                                if (beaconDetected) {
+                                    bridgeLog(getString(R.string.str_log_beacon_detected));
+                                    try {
+                                        port.write(new byte[]{0x10}, 1, USB_TIMEOUT_MS);
+                                    } catch (IOException ignored) {}
+                                }
+
+                                // Loggear primeros bytes recibidos del Arduino
+                                if (totalReceived < DEBUG_HEX_LIMIT) {
+                                    int logLen = Math.min(n, DEBUG_HEX_LIMIT - totalReceived);
+                                    bridgeLog("USB→PTY RECV [" + n + "B]: " + bytesToHex(buf, logLen));
+                                }
+                                totalReceived += n;
+
+                                // Escribir al master PTY usando JNI no-bloqueante
+                                int written = writeFd(masterFd, buf, n);
+                                if (written >= 0) {
+                                    diagPtyWrites++;
+                                } else {
+                                    diagPtyWriteErrors++;
+                                    diagLastError = "jni-write-error";
+                                    bridgeLog(getString(R.string.str_log_pty_jni_write_error));
+                                }
+                            } else {
+                                zeroReads++;
+                                if (zeroReads == 50) {
+                                    bridgeLog(getString(R.string.str_log_usb_timeout_50));
                                 }
                             }
-                            if (beaconDetected) {
-                                bridgeLog("¡Beacon de resincronización detectado!");
-                                try {
-                                    usbPort.write(new byte[]{0x10}, 1, USB_TIMEOUT_MS);
-                                } catch (IOException ignored) {}
-                            }
-
-                            // Loggear primeros bytes recibidos del Arduino
-                            if (totalReceived < DEBUG_HEX_LIMIT) {
-                                int logLen = Math.min(n, DEBUG_HEX_LIMIT - totalReceived);
-                                bridgeLog("USB→PTY RECV [" + n + "B]: " + bytesToHex(buf, logLen));
-                            }
-                            totalReceived += n;
-
-                            // Escribir al master PTY usando JNI no-bloqueante
-                            int written = writeFd(masterFd, buf, n);
-                            if (written >= 0) {
-                                diagPtyWrites++;
-                            } else {
-                                diagPtyWriteErrors++;
-                                diagLastError = "jni-write-error";
-                                bridgeLog(getString(R.string.str_log_pty_jni_write_error));
-                            }
-                        } else {
-                            zeroReads++;
-                            if (zeroReads == 50) {
-                                bridgeLog(getString(R.string.str_log_usb_timeout_50));
-                            }
                         }
-                    }
-                } catch (IOException e) {
-                    if (running) {
-                        diagLastError = "read: " + e.getMessage();
-                        bridgeLog(getString(R.string.str_log_usb_read_error, e.getMessage()));
+                    } catch (Exception e) {
+                        if (isQueued && request != null) {
+                            try {
+                                request.cancel();
+                            } catch (Exception ignored) {}
+                            isQueued = false;
+                        }
+                        if (running) {
+                            diagLastError = "read: " + e.getMessage();
+                            bridgeLog(getString(R.string.str_log_usb_read_error, e.getMessage()));
+                        }
                     }
                 }
-            }
-            if (request != null) {
-                request.close();
+            } finally {
+                if (request != null) {
+                    try {
+                        if (isQueued) {
+                            request.cancel();
+                            isQueued = false;
+                        }
+                        request.close();
+                    } catch (Exception ignored) {}
+                }
             }
             bridgeLog(getString(R.string.str_log_thread_b_finish, totalReceived, diagPtyWrites));
         }, "PtyBridge-usb-to-master");

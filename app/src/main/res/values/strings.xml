@@ -32,13 +32,6 @@
     <string name="str_ff_ff_ff_ff_ff_">FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF </string>
     <string name="str__">| </string>
     <string name="str_str">................</string>
-    <string name="str_identificar">Identify</string>
-    <string name="str_leer">Read</string>
-    <string name="str_escribir">Write</string>
-    <string name="str_borrar">Erase</string>
-    <string name="str_verificar">Verify</string>
-    <string name="str_limpiar_pantall">Clear Screen</string>
-    <string name="str_vereditar_buffe">View/Edit Buffer</string>
     <string name="str_visor_hexadecim">Hexadecimal Viewer</string>
     <string name="str_comparar_hex">Compare Hex</string>
     <string name="str_configuracin_de">Programmer Settings</string>
@@ -46,13 +39,8 @@
     <string name="str_pinouts_de_hard">Hardware Pinouts</string>
     <string name="str_acerca_de">About</string>
     <string name="menu_export_serprog">Export Arduino serprog Firmware</string>
-    <string name="str_advertencia">Warning</string>
-    <string name="str_operacin_exitos">Operation Successful</string>
     <string name="str_error">Error</string>
     <string name="str_cancelar">Cancel</string>
-    <string name="str_opciones">Options</string>
-    <string name="str_archivo">File</string>
-    <string name="str_salir">Exit</string>
     <string name="str_detener">Stop</string>
     
     <!-- Extracted strings from Java code -->
@@ -78,12 +66,6 @@
     <string name="str_ambiguity_msg">flashrom detected multiple possible chips. Select the exact model:</string>
     <string name="str_logs_copied">Logs copied to clipboard.</string>
     <string name="str_saved">Saved: %1$s</string>
-    <string name="str_dummy_read">Read emulated chip</string>
-    <string name="str_dummy_write">Write and verify</string>
-    <string name="str_dummy_erase">Erase emulated chip</string>
-    <string name="str_dummy_probe">Identify emulated chip</string>
-    <string name="str_dummy_select_chip">Select predefined chip</string>
-    <string name="str_dummy_valid_chips">Valid chips for emulation</string>
     <string name="str_dummy_chip_emulate">Select chip to emulate</string>
     <string name="str_dummy_chip_selected">Chip selected for emulation: %1$s</string>
     <string name="str_dummy_info_title">Dummy Programmer Info</string>
@@ -143,7 +125,6 @@
     <string name="str_pinout_lpc_desc_lad">LAD0-3 = Multiplexed Data/Address Bus (4 bits)</string>
     <string name="str_pinout_lpc_desc_frame">LFRAME# = LPC cycle start active low</string>
     <string name="str_pinout_lpc_desc_clk">LCLK    = Clock typically 33 MHz</string>
-    <string name="str_pinout_spi_conn_header">SPI Connector</string>
     <string name="str_hint_comando">E.g. flashrom --version | flashrom -p ch341a_spi -L</string>
     <string name="str_err_flashrom_running">A flashrom operation is already running. Please abort or wait for it to finish.</string>
     <string name="str_err_missing_flashrom_prefix">Error: The command must start with \'flashrom\'. E.g.: flashrom -p ch341a_spi -r bios.bin</string>
@@ -162,7 +143,7 @@
     <string name="str_log_usb_timeout_50">Thread B: 50 USB timeouts (Arduino not responding?)</string>
     <string name="str_log_usb_read_error">USB READ ERROR: %1$s</string>
     <string name="str_log_thread_b_finish">Thread B finished — USB received: %1$d, PTY writes: %2$d</string>
-    <string name="str_err_critical_flashrom_missing">"Critical failure: \'flashrom\' binary not found. (%1$s)"</string>
+    <string name="str_err_critical_flashrom_missing">Critical failure: \'flashrom\' binary not found. (%1$s)</string>
     <string name="str_err_logical_usb_lost">Logical error: USB FD lost.</string>
     <string name="str_log_verify_disabled">Verification disabled: Skipping verification step (-n)</string>
     <string name="str_log_writing_flash_op">Writing flash</string>
@@ -182,10 +163,72 @@
     <string name="str_dummy_opt_select">Select predefined chip</string>
     <string name="str_dummy_opt_info">Valid emulation chips</string>
     <string name="str_about_html"><![CDATA[<h2>Flash SPI Tool</h2><p>Advanced application for reading, verifying, and writing Firmware (SPI Flash Memories) with native <b>flashrom</b>.</p><hr/><b>Project License:</b> GPLv3.<br/><br/><b>Dependencies and Libraries:</b><br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/><br/><b>Developer Related Projects:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — PIC programmer via Android with P018A protocol<br/>]]></string>
-    <string name="menu_donate_pizza">Support with a Pizza 🍕 ($5)</string>
+    <string name="menu_donate_pizza">Help me with a Pizza 🍕 $5</string>
     <string name="donate_dialog_title">Support the Project</string>
     <string name="donate_dialog_message">Did you like my work or find Flash SPI Tool helpful? You can buy the developer a pizza to support continuous development and updates.</string>
-    <string name="donate_dialog_btn">Buy a Pizza 🍕 (%1$s)</string>
+    <string name="donate_dialog_btn">Buy a Pizza 🍕 %1$s</string>
     <string name="donate_thank_you_title">Thank You So Much! ❤️</string>
     <string name="donate_thank_you_message">Your support means a lot! Thank you for backing Flash SPI Tool.</string>
+    <string name="str_hint_programmer_param">e.g. ch341a_spi or ft2232_spi:type=2232H</string>
+    <string name="str_menu_working_dir">Save/Load Path</string>
+    <string name="str_external_file">External file: %1$s</string>
+    <string name="str_err_file_too_large_diff">File is too large (>16MB). Cannot compare in memory.</string>
+    <string name="str_billing_connecting">Connecting to Google Play... Please try again in a few seconds.</string>
+    <string name="str_billing_not_ready">Product is not ready or Google Play Console is still processing it.</string>
+    <string name="str_log_process_aborted">\n[PROCESS ABORTED BY USER]\n</string>
+    <string name="str_log_err_stop_native_process">[ERROR] Failed to stop native process: %1$s</string>
+    <string name="str_log_err_start_native_process">[ERROR] Failed to start native process.</string>
+    <string name="str_usb_permission_denied">USB permission denied.</string>
+    <string name="str_usb_physically_disconnected">USB device physically disconnected.</string>
+    <string name="str_no_usb_detected">No USB device detected.</string>
+    <string name="str_auto_detect_recognized">Automatic detection: Device %1$s recognized as %2$s</string>
+    <string name="str_usb_not_recognized">[NOTICE] USB programmer not automatically recognized.</string>
+    <string name="str_known_devices">Known devices: CH341A, FT2232, Bus Pirate, Dediprog, ST-LINK, etc.</string>
+    <string name="str_can_connect_manually">You can try connecting manually — flashrom will report if compatible.</string>
+    <string name="str_device_detected_requesting">Device detected: %1$s | Requesting link...</string>
+    <string name="str_vid_pid_detected">VID:PID detected => %1$s</string>
+    <string name="str_serial_programmer_detected">Serial programmer detected — starting PTY bridge...</string>
+    <string name="str_pty_bridge_active_format">PtyBridge active: flashrom will use %1$s at %2$d bps</string>
+    <string name="str_warn_pty_start_failed">[WARN] PtyBridge could not start. devpts available? Check native log.</string>
+    <string name="str_log_perm_granted">Permission granted! Internal USB token: %1$d</string>
+    <string name="str_log_connected_vid_pid">Connected to USB VID:PID %1$s</string>
+    <string name="str_log_compat_device">[INFO] Compatible device: %1$s (Recognized as \'%2$s\')</string>
+    <string name="str_log_usb_device_connected">[NOTICE] USB device connected.</string>
+    <string name="str_log_can_select_prog">You can select your programmer in \'Programmer Settings\' or press \'Detect\'.</string>
+    <string name="str_log_usb_disconnected">USB device disconnected.</string>
+    <string name="str_log_device_bind_failed">%1$s failed to bind to app (openDevice == null)</string>
+    <string name="str_log_auto_config_prog">Auto-configuration: Programmer automatically changed to \'%1$s\'</string>
+    <string name="str_log_err_no_data_read">Error: No data read from chip yet.</string>
+    <string name="str_log_use_read_backup_first">Use \'Read Chip\' first to read chip contents.</string>
+    <string name="str_log_save_rom_expl">(The \'Save ROM\' button exports READ data, not imported files.)</string>
+    <string name="str_log_err_file_not_exist">Error: File \'%1$s\' does not exist. Read chip first.</string>
+    <string name="str_log_backup_success">Success: \'%1$s\' backed up successfully to selected folder.</string>
+    <string name="str_log_backup_error">Error saving file: %1$s</string>
+    <string name="str_log_file_too_large">Error: File is too large (%1$d MB). Maximum supported: %2$d MB.</string>
+    <string name="str_log_hex_no_data">Error: Intel HEX does not contain useful data.</string>
+    <string name="str_log_warn_plain_text">[NOTICE] File \'%1$s\' appears to be plain text.</string>
+    <string name="str_log_file_empty">Error: Selected file is empty. Not a valid binary.</string>
+    <string name="str_log_rom_imported">ROM imported: \'%1$s\' (%2$s, %3$s)</string>
+    <string name="str_raw_binary">raw binary</string>
+    <string name="str_intel_hex">Intel HEX</string>
+    <string name="str_log_intel_hex_converted">Intel HEX -> binary conversion applied successfully.</string>
+    <string name="str_log_warn_copy_failed">Notice: Could not create copy with original name for manual commands.</string>
+    <string name="str_log_file_saved_bios">File saved as \'bios.bin\' — ready to Flash or Verify.</string>
+    <string name="str_log_file_also_avail">Also available as \'%1$s\' for manual commands.</string>
+    <string name="str_log_err_copy_storage">Error copying ROM from storage: %1$s</string>
+    <string name="str_log_temp_deleted">Temporary data deleted (%1$s).</string>
+    <string name="str_log_no_temp_files">No temporary files found to delete.</string>
+    <string name="str_log_err_no_prog_selected">Error: No programmer selected. Please configure it in settings.</string>
+    <string name="str_log_err_no_usb_connected">Error: No USB device connected. Connect your programmer first.</string>
+    <string name="str_log_warn_pty_not_ready">[WARN] PtyBridge is not ready. Attempting to execute flashrom without prior synchronization.</string>
+    <string name="str_log_syncing_arduino">Synchronizing with Arduino... waiting for startup beacon.</string>
+    <string name="str_log_pty_connection_lost">[ERROR] PTY connection lost.</string>
+    <string name="str_log_err_prepare_serial">[ERROR] Could not prepare serial session — aborting.</string>
+    <string name="str_log_prog_modified_settings">Programmer modified via Settings: %1$s</string>
+    <string name="str_log_dummy_mode_active">Dummy Mode active: Buttons are enabled without requiring USB.</string>
+    <string name="str_log_warn_fallback_jnilibs">[WARN] flashrom in files/usr/sbin not found; using fallback jniLibs.</string>
+    <string name="str_log_err_no_bios_loaded">Error: No bios.bin loaded. Use \'Load ROM\' first.</string>
+    <string name="str_log_warn_dummy_size_mismatch">Notice: File bios.bin (%1$d bytes) does not match selected dummy chip (%2$d bytes). Forcing emulation to VARIABLE_SIZE to prevent flashrom error.</string>
+    <string name="str_log_generating_test_file">No bios.bin loaded. Generating/using test file...</string>
+    <string name="str_log_err_creating_test_file">Error creating test file: %1$s</string>
 </resources>

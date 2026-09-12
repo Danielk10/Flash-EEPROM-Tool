@@ -152,7 +152,7 @@ Antes de subir cualquier archivo a Google Play, se ejecutan las siguientes compr
    ```
 2. **Verificar la existencia del archivo de mapeo (Mapping):**
    R8 genera el archivo en:
-   `/tmp/calculo/outputs/mapping/release/mapping.txt`
+   `/tmp/flashrom/outputs/mapping/release/mapping.txt`
    *(Google Play lo incluye automáticamente dentro del `.aab` para traducir los reportes de fallos).*
 3. **Instalar el APK en un dispositivo físico y probar:**
    * Abrir la app (debe iniciar inmediatamente sin cerrarse).
@@ -168,7 +168,7 @@ Antes de subir cualquier archivo a Google Play, se ejecutan las siguientes compr
 2. Ve a **Prueba y lanza** > **Producción** (o Canal de prueba cerrada si deseas validar primero).
 3. Haz clic en **Crear nueva versión**.
 4. Sube el paquete:
-   `/tmp/calculo/outputs/bundle/release/app-release.aab`
+   `/tmp/flashrom/outputs/bundle/release/app-release.aab`
 5. Google Play analizará el AAB:
    * Detectará la librería Billing 8.3.0 (requisito obligatorio superado).
    * Detectará los metadatos de ofuscación R8 generados en el bundle.

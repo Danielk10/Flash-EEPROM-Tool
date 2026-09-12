@@ -44,7 +44,7 @@
             android:inputType="text"
             android:textColor="#FFFFFF"
             android:textColorHint="#9E9E9E"
-            android:hint="Ej: ch341a_spi o ft2232_spi:type=2232H"
+            android:hint="@string/str_hint_programmer_param"
             android:layout_marginBottom="12dp" />
 
         <Button
