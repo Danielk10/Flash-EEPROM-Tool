@@ -31,6 +31,11 @@ public class UsbController {
         void onDeviceDisconnected();
     }
 
+    /** Interfaz compatible con API 23+ para reemplazar java.util.function.Consumer (API 24+) */
+    public interface OnProgrammerSelectedListener {
+        void onSelected(String programmer);
+    }
+
     private final Activity activity;
     private final UsbManager usbManager;
     private final Callback callback;
@@ -144,7 +149,7 @@ public class UsbController {
         return currentFd >= 0;
     }
 
-    public void searchAndRequestProgrammer(String currentProgrammer, java.util.function.Consumer<String> onProgrammerAutoSelected) {
+    public void searchAndRequestProgrammer(String currentProgrammer, OnProgrammerSelectedListener onProgrammerAutoSelected) {
         Map<String, UsbDevice> devices = usbManager.getDeviceList();
         if (devices == null || devices.isEmpty()) {
             callback.log(activity.getString(R.string.str_error) + ": " + activity.getString(R.string.str_no_usb_detected));
@@ -164,7 +169,7 @@ public class UsbController {
                 autoProg = USB_AUTO_MAP.get(key);
             }
             if (autoProg != null) {
-                onProgrammerAutoSelected.accept(autoProg);
+                onProgrammerAutoSelected.onSelected(autoProg);
                 callback.log(activity.getString(R.string.str_auto_detect_recognized, key, autoProg));
                 requestUsbPermission(device);
                 return;

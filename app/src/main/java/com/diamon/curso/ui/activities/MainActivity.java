@@ -434,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
                             java.util.List<String> newArgs = new ArrayList<>(Arrays.asList(args));
                             newArgs.add("-c");
                             newArgs.add(chosenChip);
-                            executeCustomFlashromCommand("flashrom " + String.join(" ", newArgs));
+                            executeCustomFlashromCommand("flashrom " + android.text.TextUtils.join(" ", newArgs));
                         })
                         .setNegativeButton(R.string.str_cancelar, null)
                         .show();
@@ -979,7 +979,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (notifyUser) {
             if (anyDeleted) {
-                log(getString(R.string.str_log_temp_deleted, String.join(", ", deletedFiles)));
+                log(getString(R.string.str_log_temp_deleted, android.text.TextUtils.join(", ", deletedFiles)));
             } else {
                 log(getString(R.string.str_log_no_temp_files));
             }
@@ -1154,7 +1154,7 @@ public class MainActivity extends AppCompatActivity {
             log(getString(R.string.str_err_critical_flashrom_missing, preferredFlashromBin.getAbsolutePath()));
             return;
         }
-        log("$ flashrom " + String.join(" ", args));
+        log("$ flashrom " + android.text.TextUtils.join(" ", args));
 
         flashromExecutor.execute(preferredFlashromBin, args, usbController.getCurrentFd(),
                 UsbController.needsPtyBridge(detectedSerialProg != null ? detectedSerialProg : ""),
@@ -1209,7 +1209,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        log("$ flashrom " + String.join(" ", args));
+        log("$ flashrom " + android.text.TextUtils.join(" ", args));
 
         // Configurar si saltar verificación en escritura
         String opLabel = "";
