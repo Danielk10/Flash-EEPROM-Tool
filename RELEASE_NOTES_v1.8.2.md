@@ -48,7 +48,7 @@ Esta versión de producción (`v1.8.2`, código de versión `77`) soluciona prob
 
 * **Versión:** 1.8.2
 * **Version Code:** 77
-* **Target SDK:** 37 (Android 15)
+* **Target SDK:** 37 (Android 17)
 * **Min SDK:** 23 (Android 6.0 Marshmallow)
 * **NDK:** r30 (30.0.14904198)
 * **Build Tools:** 37.0.0

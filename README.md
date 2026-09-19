@@ -11,7 +11,7 @@ Aplicación Android para lectura/escritura/verificación de memorias **SPI, LPC/
 Soporta programadores **USB directos** (CH341A, FT2232, Dediprog, etc.) vía libusb parcheada y programadores **seriales** (serprog/Arduino, Bus Pirate, SPIDriver) vía puente PTY↔USB.
 
 > Nombre visible de la app: **Flash SPI Tool**.
-> Versión actual: **1.7.7** (Código de versión: **69**).
+> Versión actual: **1.8.2** (Código de versión: **77**).
 > Rango de soporte Android: **API 23 a API 37** (Android 6.0 a Android 17+).
 
 ---
