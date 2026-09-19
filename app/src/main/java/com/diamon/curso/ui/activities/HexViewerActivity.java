@@ -71,7 +71,17 @@ public class HexViewerActivity extends AppCompatActivity {
                     return;
                 }
                 fileName = dataFile.getName();
-                data = java.nio.file.Files.readAllBytes(dataFile.toPath());
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    data = java.nio.file.Files.readAllBytes(dataFile.toPath());
+                } else {
+                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream((int) dataFile.length());
+                    try (java.io.FileInputStream fis = new java.io.FileInputStream(dataFile)) {
+                        byte[] buf = new byte[8192];
+                        int n;
+                        while ((n = fis.read(buf)) != -1) bos.write(buf, 0, n);
+                    }
+                    data = bos.toByteArray();
+                }
             }
 
             if (fileName != null && fileName.toLowerCase().endsWith(".hex")) {

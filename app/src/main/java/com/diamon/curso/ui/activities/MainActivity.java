@@ -50,6 +50,7 @@ import androidx.core.content.IntentCompat;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -837,7 +838,19 @@ public class MainActivity extends AppCompatActivity {
             String safeFileName = fileName.replaceAll("[^a-zA-Z0-9_\\-\\.]", "_");
             if (!safeFileName.isEmpty() && !safeFileName.equals("bios.bin")) {
                 try {
-                    java.nio.file.Files.copy(outFile.toPath(), new File(getFilesDir(), safeFileName).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    File dest = new File(getFilesDir(), safeFileName);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        java.nio.file.Files.copy(outFile.toPath(), dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        try (FileInputStream fis = new FileInputStream(outFile);
+                             FileOutputStream fos = new FileOutputStream(dest)) {
+                            byte[] buf = new byte[8192];
+                            int n;
+                            while ((n = fis.read(buf)) != -1) {
+                                fos.write(buf, 0, n);
+                            }
+                        }
+                    }
                 } catch (Exception e) {
                     log(getString(R.string.str_log_warn_copy_failed));
                 }

@@ -93,7 +93,17 @@ public class HexDiffActivity extends AppCompatActivity {
         File biosFile = new File(getFilesDir(), "bios.bin");
         if (biosFile.exists()) {
             try {
-                dataA = java.nio.file.Files.readAllBytes(biosFile.toPath());
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    dataA = java.nio.file.Files.readAllBytes(biosFile.toPath());
+                } else {
+                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream((int) biosFile.length());
+                    try (java.io.FileInputStream fis = new java.io.FileInputStream(biosFile)) {
+                        byte[] buf = new byte[8192];
+                        int n;
+                        while ((n = fis.read(buf)) != -1) bos.write(buf, 0, n);
+                    }
+                    dataA = bos.toByteArray();
+                }
                 nameA = getString(R.string.str_bios_internal);
                 btnLoadFile1.setText(getString(R.string.str_file_a, nameA));
             } catch (Exception ignored) {
