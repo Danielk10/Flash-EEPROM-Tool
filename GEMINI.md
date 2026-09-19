@@ -27,3 +27,8 @@ Después de una compilación exitosa, el archivo APK generado se encontrará en 
 ```
 /tmp/flashrom/outputs/apk/debug/app-debug.apk
 ```
+
+## 4. Notas de Versión para Google Play (Bilingüe Obligatorio)
+
+Siempre que se prepare un lanzamiento o se suba una actualización a **Google Play**, es obligatorio generar y proporcionar las notas de versión estructuradas tanto en **Español** (`es-419` / `es-ES`) como en **Inglés** (`en-US`), usando viñetas concisas (`- Elemento`) compatibles con el límite de caracteres de Google Play Console.
+
