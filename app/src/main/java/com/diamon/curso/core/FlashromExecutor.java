@@ -28,8 +28,18 @@ public class FlashromExecutor {
     private static native int waitForNativeProcess(int pid);
     private static native void terminateNativeProcess(int pid);
 
+    private static boolean nativeLibraryLoaded = false;
     static {
-        System.loadLibrary("curso");
+        try {
+            System.loadLibrary("curso");
+            nativeLibraryLoaded = true;
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Error cargando librería nativa: " + e.getMessage());
+        }
+    }
+
+    public static boolean isNativeLibraryLoaded() {
+        return nativeLibraryLoaded;
     }
 
     public interface Callback {
@@ -51,6 +61,7 @@ public class FlashromExecutor {
     }
 
     public synchronized void abort() {
+        if (!nativeLibraryLoaded) return;
         int pid = currentPid;
         if (pid > 0) {
             try {
@@ -68,6 +79,11 @@ public class FlashromExecutor {
     }
 
     public void execute(File flashromBin, String[] args, int currentFd, boolean needsPty, String selectedProgrammer) {
+        if (!nativeLibraryLoaded) {
+            callback.log("[CRITICAL] La librería nativa no está disponible en este dispositivo. Verifica que tu arquitectura (ABI) sea arm64-v8a.");
+            callback.onProcessFinished(-1, args);
+            return;
+        }
         if (!flashromBin.exists()) {
             callback.log(context.getString(R.string.str_err_critical_flashrom_missing, flashromBin.getAbsolutePath()));
             return;

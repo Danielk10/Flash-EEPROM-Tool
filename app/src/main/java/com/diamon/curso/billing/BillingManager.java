@@ -21,6 +21,7 @@ import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,6 +71,7 @@ public class BillingManager implements PurchasesUpdatedListener {
                     isConnected = true;
                     Log.d(TAG, "Billing client connected successfully.");
                     queryProducts();
+                    processPendingPurchases();
                 } else {
                     isConnected = false;
                     Log.w(TAG, "Billing setup failed: " + billingResult.getDebugMessage());
@@ -131,7 +133,7 @@ public class BillingManager implements PurchasesUpdatedListener {
     }
 
     public void launchPurchaseFlow(Activity activity, String productId) {
-        if (!isConnected) {
+        if (billingClient == null || !billingClient.isReady()) {
             startConnection();
             if (listener != null) {
                 listener.onPurchaseError(context.getString(R.string.str_billing_connecting));
@@ -148,20 +150,27 @@ public class BillingManager implements PurchasesUpdatedListener {
             return;
         }
 
-        BillingFlowParams.ProductDetailsParams detailsParams =
-                BillingFlowParams.ProductDetailsParams.newBuilder()
-                        .setProductDetails(pd)
-                        .build();
+        try {
+            BillingFlowParams.ProductDetailsParams detailsParams =
+                    BillingFlowParams.ProductDetailsParams.newBuilder()
+                            .setProductDetails(pd)
+                            .build();
 
-        BillingFlowParams flowParams = BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(Collections.singletonList(detailsParams))
-                .build();
+            BillingFlowParams flowParams = BillingFlowParams.newBuilder()
+                    .setProductDetailsParamsList(Collections.singletonList(detailsParams))
+                    .build();
 
-        BillingResult result = billingClient.launchBillingFlow(activity, flowParams);
-        if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-            Log.e(TAG, "Launch billing flow error: " + result.getDebugMessage());
+            BillingResult result = billingClient.launchBillingFlow(activity, flowParams);
+            if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                Log.e(TAG, "Launch billing flow error: " + result.getDebugMessage());
+                if (listener != null) {
+                    listener.onPurchaseError(result.getDebugMessage());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Excepción al lanzar flujo de compra", e);
             if (listener != null) {
-                listener.onPurchaseError(result.getDebugMessage());
+                listener.onPurchaseError(context.getString(R.string.str_billing_not_ready));
             }
         }
     }
@@ -186,27 +195,66 @@ public class BillingManager implements PurchasesUpdatedListener {
     private void handlePurchase(Purchase purchase) {
         if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
             // Consumir el producto para permitir volver a donar en el futuro
-            ConsumeParams consumeParams = ConsumeParams.newBuilder()
-                    .setPurchaseToken(purchase.getPurchaseToken())
-                    .build();
+            consumeWithRetry(purchase, 0);
+        }
+    }
 
-            billingClient.consumeAsync(consumeParams, new ConsumeResponseListener() {
-                @Override
-                public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String purchaseToken) {
-                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                        Log.i(TAG, "Producto consumido exitosamente.");
-                        mainHandler.post(() -> {
-                            if (listener != null) {
-                                String prodId = purchase.getProducts().isEmpty() ? PRODUCT_ID_PIZZA : purchase.getProducts().get(0);
-                                listener.onPurchaseSuccess(prodId);
-                            }
-                        });
-                    } else {
-                        Log.e(TAG, "Error consumiendo producto: " + billingResult.getDebugMessage());
+    private static final int MAX_CONSUME_RETRIES = 2;
+
+    private void consumeWithRetry(Purchase purchase, int attempt) {
+        if (billingClient == null || !billingClient.isReady()) {
+            Log.w(TAG, "BillingClient no disponible para consumir compra, intento " + attempt);
+            return;
+        }
+
+        ConsumeParams consumeParams = ConsumeParams.newBuilder()
+                .setPurchaseToken(purchase.getPurchaseToken())
+                .build();
+
+        billingClient.consumeAsync(consumeParams, new ConsumeResponseListener() {
+            @Override
+            public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String purchaseToken) {
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    Log.i(TAG, "Producto consumido exitosamente.");
+                    mainHandler.post(() -> {
+                        if (listener != null) {
+                            String prodId = purchase.getProducts().isEmpty() ? PRODUCT_ID_PIZZA : purchase.getProducts().get(0);
+                            listener.onPurchaseSuccess(prodId);
+                        }
+                    });
+                } else {
+                    Log.e(TAG, "Error consumiendo producto (intento " + attempt + "): " + billingResult.getDebugMessage());
+                    if (attempt < MAX_CONSUME_RETRIES) {
+                        // Reintentar tras 2 segundos
+                        mainHandler.postDelayed(() -> consumeWithRetry(purchase, attempt + 1), 2000);
                     }
                 }
-            });
-        }
+            }
+        });
+    }
+
+    /**
+     * Recupera compras pendientes (no consumidas) para evitar reembolsos automáticos.
+     * Google reembolsa compras no confirmadas tras 3 días.
+     */
+    private void processPendingPurchases() {
+        if (billingClient == null || !billingClient.isReady()) return;
+
+        billingClient.queryPurchasesAsync(
+                QueryPurchasesParams.newBuilder()
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build(),
+                (billingResult, purchaseList) -> {
+                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && purchaseList != null) {
+                        for (Purchase purchase : purchaseList) {
+                            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                                Log.i(TAG, "Compra pendiente encontrada, consumiendo...");
+                                handlePurchase(purchase);
+                            }
+                        }
+                    }
+                }
+        );
     }
 
     public void destroy() {

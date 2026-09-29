@@ -40,6 +40,7 @@ public class UsbController {
     private final UsbManager usbManager;
     private final Callback callback;
 
+    private UsbDevice currentDevice;
     private UsbDeviceConnection currentConnection;
     private int currentFd = -1;
     private PtyBridge ptyBridge = null;
@@ -107,8 +108,10 @@ public class UsbController {
                 synchronized (this) {
                     UsbDevice device = IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_DEVICE, UsbDevice.class);
                     if (device != null && currentConnection != null) {
-                        callback.log(activity.getString(R.string.str_usb_physically_disconnected));
-                        disconnectDevice();
+                        if (currentDevice == null || device.getDeviceId() == currentDevice.getDeviceId()) {
+                            callback.log(activity.getString(R.string.str_usb_physically_disconnected));
+                            disconnectDevice();
+                        }
                     }
                 }
             }
@@ -143,6 +146,10 @@ public class UsbController {
 
     public PtyBridge getPtyBridge() {
         return ptyBridge;
+    }
+
+    public UsbDevice getCurrentDevice() {
+        return currentDevice;
     }
 
     public boolean isConnected() {
@@ -242,8 +249,10 @@ public class UsbController {
     }
 
     private void connectToDevice(UsbDevice device) {
+        currentDevice = device;
         currentConnection = usbManager.openDevice(device);
         if (currentConnection == null) {
+            currentDevice = null;
             callback.onDeviceConnectionFailed(device.getProductName());
             return;
         }
@@ -291,6 +300,7 @@ public class UsbController {
             } catch (Exception ignored) {}
             currentConnection = null;
         }
+        currentDevice = null;
         currentFd = -1;
         callback.onDeviceDisconnected();
     }

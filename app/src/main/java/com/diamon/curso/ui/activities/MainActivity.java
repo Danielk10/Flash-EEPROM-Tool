@@ -24,6 +24,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
+import android.os.PowerManager;
+import android.view.WindowManager;
 import android.text.InputType;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
@@ -168,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
     private volatile String lastReadFile = "bios.bin"; // archivo del último read exitoso
     private MostrarPublicidad mostrarPublicidad;
     private BillingManager billingManager;
+    private PowerManager.WakeLock operationWakeLock;
 
     // API para Visor Hexadecimal (Anuncio al regresar)
     private final ActivityResultLauncher<Intent> hexViewerLauncher = registerForActivityResult(
@@ -292,7 +295,15 @@ public class MainActivity extends AppCompatActivity {
 
         btnAbort.setOnClickListener(v -> flashromExecutor.abort());
 
-        clearTransientRomState(false);
+        // Restaurar estado de ROM persistida (no borrar archivos al recrear Activity por rotación/config change)
+        String savedLastReadFile = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_LAST_READ_FILE, "bios.bin");
+        if (savedLastReadFile != null && !savedLastReadFile.isEmpty()) {
+            lastReadFile = savedLastReadFile;
+        }
+        File lastFile = new File(getFilesDir(), lastReadFile);
+        if (lastFile.exists() && lastFile.length() > 0) {
+            hasReadData = true;
+        }
 
         usbController = new UsbController(this, new UsbController.Callback() {
             @Override
@@ -366,6 +377,19 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.runOnUiThread(() -> {
                     if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
                         if (btnAbort != null) btnAbort.setVisibility(View.VISIBLE);
+                        // Mantener CPU y pantalla activa durante operaciones de flash
+                        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                        try {
+                            if (operationWakeLock == null) {
+                                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                                operationWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FlashSPITool::FlashromOp");
+                            }
+                            if (!operationWakeLock.isHeld()) {
+                                operationWakeLock.acquire(); // Sin límite de tiempo: se libera estrictamente al finalizar la operación en releaseWakeLockAndScreenOn()
+                            }
+                        } catch (Exception e) {
+                            Log.w(TAG, "No se pudo adquirir wake lock: " + e.getMessage());
+                        }
                     }
                 });
             }
@@ -373,6 +397,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProcessFinished(int exitCode, String[] args) {
                 MainActivity.this.runOnUiThread(() -> {
+                    releaseWakeLockAndScreenOn();
                     if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
                         if (btnAbort != null) btnAbort.setVisibility(View.GONE);
                     }
@@ -421,6 +446,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAmbiguityDetected(String[] args, List<String> suggestedChips) {
                 MainActivity.this.runOnUiThread(() -> {
+                    releaseWakeLockAndScreenOn();
                     if (MainActivity.this.isFinishing() || MainActivity.this.isDestroyed()) {
                         return;
                     }
@@ -1713,8 +1739,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void releaseWakeLockAndScreenOn() {
+        try {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {}
+        try {
+            if (operationWakeLock != null && operationWakeLock.isHeld()) {
+                operationWakeLock.release();
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error liberando wake lock: " + e.getMessage());
+        }
+    }
+
     @Override
     protected void onDestroy() {
+        releaseWakeLockAndScreenOn();
         if (mostrarPublicidad != null) {
             mostrarPublicidad.disposeBanner();
         }
@@ -1729,7 +1769,6 @@ public class MainActivity extends AppCompatActivity {
             executor.shutdownNow(); // Finalizar todos los hilos
         }
         super.onDestroy();
-        clearTransientRomState(false);
     }
 
     @SuppressWarnings("deprecation")
