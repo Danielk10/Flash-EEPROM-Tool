@@ -32,24 +32,4 @@ Se verificó el 100% de los flujos de hardware con la suite local `test_all_devi
 * **SPIDriver (PTY):** ✅ Handshake y transferencias de comandos SPI exitosas.
 * **CH341A (USB Directo):** ✅ Detección de chip virtual `GD25Q80(B)` vía interfaz USB directa.
 
----
 
-## 📋 Resumen Bilingüe para Google Play (Release Notes)
-
-### Español (`es-419` / `es-ES`)
-```
-- Corrección de persistencia: la ROM leída ya no se pierde al rotar la pantalla.
-- Control de energía mejorado: CPU activa durante lecturas y escrituras prolongadas.
-- Mayor tolerancia a fallos en la inicialización de librerías nativas.
-- Desconexión USB selectiva para evitar desconectar el programador por error.
-- Mejoras de estabilidad y rendimiento en Android 6.0 a Android 17.
-```
-
-### English (`en-US`)
-```
-- Data persistence fix: ROM dumps are no longer lost on screen rotation.
-- Enhanced power management: keeps CPU active during long read/write operations.
-- Better fault tolerance when initializing native binary libraries.
-- Selective USB disconnect: unplugging other USB devices no longer drops programmer.
-- General stability and compatibility improvements across Android 6.0 to 17.
-```
