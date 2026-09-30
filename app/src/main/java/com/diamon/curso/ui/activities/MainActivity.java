@@ -1526,9 +1526,12 @@ public class MainActivity extends AppCompatActivity {
             aboutText.setText(text);
         }
 
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(aboutText);
+
         new android.app.AlertDialog.Builder(this)
                 .setTitle(R.string.str_acerca_de)
-                .setView(aboutText)
+                .setView(scroll)
                 .setPositiveButton(R.string.str_close, null)
                 .show();
     }

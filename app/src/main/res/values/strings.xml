@@ -37,7 +37,7 @@
     <string name="str_configuracin_de">Programmer Settings</string>
     <string name="str_polticas_de_pri">Privacy Policy</string>
     <string name="str_pinouts_de_hard">Hardware Pinouts</string>
-    <string name="str_acerca_de">About</string>
+    <string name="str_acerca_de">About / Licenses</string>
     <string name="menu_export_serprog">Export Arduino serprog Firmware</string>
     <string name="str_error">Error</string>
     <string name="str_cancelar">Cancel</string>
@@ -110,7 +110,7 @@
     <string name="str_pinout_arduino_header">Arduino UNO serprog — Connection to Flash SPI</string>
     <string name="str_pinout_buspirate_header">Bus Pirate — Connection to Flash SPI</string>
     <string name="str_pinout_spidriver_header">SPIDriver — Connection to Flash SPI</string>
-    <string name="str_pinout_ch341a_note">⚠ Jumper 1-2: SPI  ⚠ Jumper 2-3: TTL/UART  ⚠ 3.3V ONLY</string>
+    <string name="str_pinout_ch341a_note">⚠ Jumper 1-2: SPI  ⚠ Jumper 2-3: TTL/UART  ⚠ Only 25xx SPI Flash (No 24C EEPROM)  ⚠ 3.3V</string>
     <string name="str_pinout_soic8_note">⚠ HOLD and WP → VCC if unused  ⚠ 3.3V maximum</string>
     <string name="str_pinout_spi_note">CPOL=0, CPHA=0 | Mode 0  |  Typical speed: 1–50 MHz</string>
     <string name="str_pinout_lpc_note">flashrom supports LPC/FWH natively in PLCC32</string>
@@ -162,8 +162,8 @@
     <string name="str_dummy_opt_probe">Identify emulated chip</string>
     <string name="str_dummy_opt_select">Select predefined chip</string>
     <string name="str_dummy_opt_info">Valid emulation chips</string>
-    <string name="str_about_html"><![CDATA[<h2>Flash SPI Tool</h2><p>Advanced application for reading, verifying, and writing Firmware (SPI Flash Memories) with native <b>flashrom</b>.</p><hr/><b>Project License:</b> GPLv3.<br/><br/><b>Dependencies and Libraries:</b><br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/><br/><b>Developer Related Projects:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — PIC programmer via Android with P018A protocol<br/>]]></string>
-    <string name="menu_donate_pizza">Help me with a Pizza 🍕 $5</string>
+    <string name="str_about_html"><![CDATA[<h2>Flash SPI Tool</h2><p>Advanced application for reading, verifying, and writing Firmware in <b>SPI Flash Memories</b> using the native <b>flashrom</b> engine.</p><hr/><h3>Memory and Chip Compatibility</h3><p><b>✔ Supported Chips:</b><br/>• <b>SPI Flash Memories (25xx series):</b> Winbond (W25Q, W25X), Macronix (MX25L), GigaDevice (GD25Q), Spansion/Cypress (S25FL), EON (EN25), etc.<br/>• SPI, LPC, FWH, and MTD bus chips officially supported by flashrom.</p><p><b>❌ Unsupported Memories (24C series I2C EEPROMs):</b><br/>• The <b>24C series EEPROMs</b> (24C02, 24C04, 24C08, 24C16, 24C32, 24C64, 24C128, 24C256, etc.) use the <b>I2C</b> protocol (2 wires: SDA and SCL), not SPI.<br/>• <b>flashrom</b> operates exclusively on the SPI bus via the <code>ch341a_spi</code> driver and <b>does not support the I2C protocol</b>.<br/>• Furthermore, 24C EEPROMs lack a universal electronic identification command (JEDEC ID 0x9F), which is why chip detection will always report that the IC was not detected.</p><hr/><h3>CH341A Programmer Configuration</h3><p>• <b>Programmer Mode (Jumper on pins 1-2):</b> Required for the app to recognize the device as a USB programmer (VID 0x1A86, PID 0x5512). In this mode, the SPI interface operates for the 25xx series.<br/>• <b>Serial TTL/UART Mode (Jumper on pins 2-3):</b> The hardware switches to COM serial port mode (PID 0x5523) and will not work for programming Flash memories.<br/>• <b>ZIF Socket:</b> Even though the physical CH341A board has silk-screened markings for 24xx and 25xx, with this app, chips must only be inserted into the <b>25 SPI FLASH</b> section.</p><hr/><h3>Licenses and Open Source Libraries</h3><p><b>Project License:</b> GNU GPLv3.<br/><br/><b>Dependencies and Libraries:</b><br/>• <a href="https://github.com/flashrom/flashrom">flashrom</a> (GPL-2.0)<br/>• <a href="https://github.com/mik3y/usb-serial-for-android">usb-serial-for-android</a> (MIT)<br/>• <a href="https://github.com/libusb/libusb">libusb</a> (LGPL-2.1+)<br/>• <a href="https://github.com/pciutils/pciutils">pciutils</a> (GPL-2.0+)<br/>• <a href="https://developer.intra2net.com/git/libftdi">libftdi</a> (LGPL-2.1+)<br/>• <a href="https://gitlab.zapb.de/libjaylink/libjaylink">libjaylink</a> (GPL-2.0+)<br/><br/><b>Developer Related Projects:</b><br/>• <a href="https://github.com/Danielk10/PIC-k150-Programing">PIC k150 Programming</a> — PIC programmer via Android with P018A protocol<br/></p>]]></string>
+    <string name="menu_donate_pizza">Buy a Pizza 🍕 $5</string>
     <string name="donate_dialog_title">Support the Project</string>
     <string name="donate_dialog_message">Did you like my work or find Flash SPI Tool helpful? You can buy the developer a pizza to support continuous development and updates.</string>
     <string name="donate_dialog_btn">Buy a Pizza 🍕 %1$s</string>
