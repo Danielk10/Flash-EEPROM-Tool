@@ -1,10 +1,24 @@
 # Notas de Lanzamiento - Flash SPI Tool v1.8.5
 
-Esta versión (`v1.8.5`, código de versión `80`) añade aclaraciones fundamentales sobre la compatibilidad de memorias y arquitecturas de hardware (diferenciación entre Flash SPI y EEPROM I2C), mejoras en la interfaz de usuario, desplazamiento suave en los diálogos de información y licencias, y optimización de cadenas en español e inglés, garantizando compatibilidad total en todo el rango soportado (**Android 6.0 / API 23 hasta Android 17 / API 37**).
+Esta versión (`v1.8.5`, código de versión `80`) corrige errores críticos de memoria (OutOfMemoryError), añade aclaraciones sobre compatibilidad de memorias y hardware (SPI vs I2C), mejoras en la interfaz de usuario, y optimización de cadenas en español e inglés, garantizando compatibilidad total en todo el rango soportado (**Android 6.0 / API 23 hasta Android 17 / API 37**).
 
 ---
 
-## 🛠️ Mejoras y Novedades de la Versión
+## 🐛 Correcciones Críticas de Estabilidad (OOM)
+
+### Fix: OutOfMemoryError al importar archivos Intel HEX grandes (#87, #88, #89)
+* **Problema:** La app se cerraba inesperadamente (crash) al importar archivos firmware grandes en formato Intel HEX en dispositivos con heap limitado (128-256 MB).
+* **Causa raíz:**
+  - `parseIntelHex()` cargaba el archivo completo en un `String` Java (UTF-16, duplicando el tamaño) y luego lo dividía con `split("\n")`, creando miles de objetos String en memoria.
+  - Los saltos de dirección (address gaps) en archivos HEX generaban arrays de relleno de decenas de megabytes en una sola asignación.
+* **Solución:**
+  - Se habilitó `android:largeHeap="true"` en el `AndroidManifest.xml`, otorgando a la app 512 MB+ de heap disponible.
+  - Se refactorizó `parseIntelHex()` para usar `BufferedReader` (lectura línea por línea en streaming) en lugar de cargar todo el archivo en memoria.
+  - Los rellenos de saltos de dirección ahora se escriben en bloques pequeños de 4 KB en lugar de una sola asignación masiva.
+
+---
+
+## 🛠️ Mejoras y Novedades
 
 ### 1. Clarificación Técnica de Compatibilidad de Chips (SPI vs I2C)
 * **Contexto:** Se detectaron consultas de usuarios intentando leer memorias EEPROM de la serie 24C (I2C) utilizando el programador CH341A.

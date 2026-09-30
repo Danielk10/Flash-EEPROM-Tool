@@ -897,72 +897,89 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private byte[] parseIntelHex(byte[] source) {
-        String content = new String(source, java.nio.charset.StandardCharsets.US_ASCII);
-        String[] lines = content.replace("\r", "").split("\n");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         int upperAddress = 0;
         int expectedAddress = -1;
 
-        for (String rawLine : lines) {
-            String line = rawLine.trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (!line.startsWith(":")) {
-                throw new IllegalArgumentException("Línea Intel HEX inválida (sin ':'): " + line);
-            }
-            if (line.length() < 11 || (line.length() % 2) == 0) {
-                throw new IllegalArgumentException("Línea Intel HEX malformada: " + line);
-            }
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        new java.io.ByteArrayInputStream(source),
+                        java.nio.charset.StandardCharsets.US_ASCII))) {
 
-            int byteCount = parseHexByte(line, 1);
-            int address = parseHexWord(line, 3);
-            int recordType = parseHexByte(line, 7);
-            int expectedLen = 11 + (byteCount * 2);
-            if (line.length() != expectedLen) {
-                throw new IllegalArgumentException("Longitud Intel HEX inconsistente: " + line);
-            }
+            String rawLine;
+            while ((rawLine = reader.readLine()) != null) {
+                String line = rawLine.trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (!line.startsWith(":")) {
+                    throw new IllegalArgumentException("Línea Intel HEX inválida (sin ':'): " + line);
+                }
+                if (line.length() < 11 || (line.length() % 2) == 0) {
+                    throw new IllegalArgumentException("Línea Intel HEX malformada: " + line);
+                }
 
-            int checksum = 0;
-            for (int i = 1; i < line.length(); i += 2) {
-                checksum = (checksum + parseHexByte(line, i)) & 0xFF;
-            }
-            if (checksum != 0) {
-                throw new IllegalArgumentException("Checksum inválido en Intel HEX: " + line);
-            }
+                int byteCount = parseHexByte(line, 1);
+                int address = parseHexWord(line, 3);
+                int recordType = parseHexByte(line, 7);
+                int expectedLen = 11 + (byteCount * 2);
+                if (line.length() != expectedLen) {
+                    throw new IllegalArgumentException("Longitud Intel HEX inconsistente: " + line);
+                }
 
-            if (recordType == 0x00) {
-                int absolute = upperAddress + address;
-                if (expectedAddress < 0) {
-                    expectedAddress = absolute;
+                int checksum = 0;
+                for (int i = 1; i < line.length(); i += 2) {
+                    checksum = (checksum + parseHexByte(line, i)) & 0xFF;
                 }
-                if (absolute > expectedAddress) {
-                    output.write(new byte[absolute - expectedAddress], 0, absolute - expectedAddress);
-                    expectedAddress = absolute;
+                if (checksum != 0) {
+                    throw new IllegalArgumentException("Checksum inválido en Intel HEX: " + line);
                 }
-                if (absolute < expectedAddress) {
-                    throw new IllegalArgumentException("Intel HEX desordenado: dirección decreciente no soportada.");
+
+                if (recordType == 0x00) {
+                    int absolute = upperAddress + address;
+                    if (expectedAddress < 0) {
+                        expectedAddress = absolute;
+                    }
+                    if (absolute > expectedAddress) {
+                        // Fill address gap in small 4 KB chunks to avoid OOM
+                        int gap = absolute - expectedAddress;
+                        byte[] zeroBuf = new byte[Math.min(gap, 4096)];
+                        int remaining = gap;
+                        while (remaining > 0) {
+                            int toWrite = Math.min(remaining, zeroBuf.length);
+                            output.write(zeroBuf, 0, toWrite);
+                            remaining -= toWrite;
+                        }
+                        expectedAddress = absolute;
+                    }
+                    if (absolute < expectedAddress) {
+                        throw new IllegalArgumentException("Intel HEX desordenado: dirección decreciente no soportada.");
+                    }
+                    int dataStart = 9;
+                    for (int i = 0; i < byteCount; i++) {
+                        output.write(parseHexByte(line, dataStart + (i * 2)));
+                    }
+                    expectedAddress += byteCount;
+                } else if (recordType == 0x01) {
+                    break; // EOF
+                } else if (recordType == 0x04) {
+                    if (byteCount != 2) {
+                        throw new IllegalArgumentException("Intel HEX tipo 04 inválido: " + line);
+                    }
+                    upperAddress = parseHexWord(line, 9) << 16;
+                    expectedAddress = -1;
+                } else if (recordType == 0x02) {
+                    if (byteCount != 2) {
+                        throw new IllegalArgumentException("Intel HEX tipo 02 inválido: " + line);
+                    }
+                    upperAddress = parseHexWord(line, 9) << 4;
+                    expectedAddress = -1;
                 }
-                int dataStart = 9;
-                for (int i = 0; i < byteCount; i++) {
-                    output.write(parseHexByte(line, dataStart + (i * 2)));
-                }
-                expectedAddress += byteCount;
-            } else if (recordType == 0x01) {
-                break; // EOF
-            } else if (recordType == 0x04) {
-                if (byteCount != 2) {
-                    throw new IllegalArgumentException("Intel HEX tipo 04 inválido: " + line);
-                }
-                upperAddress = parseHexWord(line, 9) << 16;
-                expectedAddress = -1;
-            } else if (recordType == 0x02) {
-                if (byteCount != 2) {
-                    throw new IllegalArgumentException("Intel HEX tipo 02 inválido: " + line);
-                }
-                upperAddress = parseHexWord(line, 9) << 4;
-                expectedAddress = -1;
             }
+        } catch (IllegalArgumentException e) {
+            throw e; // Re-throw parse errors as-is
+        } catch (java.io.IOException e) {
+            throw new IllegalArgumentException("Error leyendo Intel HEX: " + e.getMessage());
         }
         return output.toByteArray();
     }

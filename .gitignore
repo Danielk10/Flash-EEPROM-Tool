@@ -39,3 +39,8 @@ arduino-cli
 firmware_build/
 
 
+*.log
+buspirate_pty
+serprog_pty
+spidriver_pty
+mock_usb.bin
