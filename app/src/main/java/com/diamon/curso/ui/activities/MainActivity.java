@@ -1111,7 +1111,6 @@ public class MainActivity extends AppCompatActivity {
             log(getString(R.string.str_err_critical_flashrom_missing, preferredFlashromBin.getAbsolutePath()));
             return;
         }
-        args = applyVerifyWritePreference(args);
         log("$ flashrom " + android.text.TextUtils.join(" ", args));
 
         flashromExecutor.execute(preferredFlashromBin, args, usbController.getCurrentFd(),
@@ -1547,12 +1546,21 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        if ("-w".equals(action)) {
+            if (cbVerifyWrite != null && !cbVerifyWrite.isChecked()) {
+                action = "-w bios.bin -n";
+                log(getString(R.string.str_log_verify_disabled));
+            } else {
+                action = "-w bios.bin";
+            }
+        }
+
         if (userBios.exists() && userBios.length() > 0) {
             long actualSize = userBios.length();
             if (actualSize != chipSize) {
                 log(getString(R.string.str_log_warn_dummy_size_mismatch, actualSize, chipSize));
                 String cmd = "flashrom -p dummy:emulate=VARIABLE_SIZE,size=" + actualSize + ",image=bios.bin " + action;
-                if ("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) {
+                if ("-r".equals(action) || "-v".equals(action)) {
                     cmd += " bios.bin";
                 }
                 executeCustomFlashromCommand(cmd.trim());
@@ -1560,7 +1568,7 @@ public class MainActivity extends AppCompatActivity {
             }
             
             String cmd = buildDummyCmd(chipName, chipSize, chipFlag, action);
-            if ("-r".equals(action) || "-w".equals(action) || "-v".equals(action)) {
+            if ("-r".equals(action) || "-v".equals(action)) {
                 cmd += " bios.bin";
             }
             // Cambiar image=bios_test.bin a image=bios.bin
@@ -1596,9 +1604,13 @@ public class MainActivity extends AppCompatActivity {
                             ensureDummyTestFile(size);
                             executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, "-r read_test.bin"));
                             break;
-                        case 1: // Escribir + verificar
+                        case 1: // Escribir (+ verificar según casilla)
                             ensureDummyTestFile(size);
-                            executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, "-w bios_test.bin"));
+                            String writeAction = (cbVerifyWrite != null && !cbVerifyWrite.isChecked()) ? "-w bios_test.bin -n" : "-w bios_test.bin";
+                            if (cbVerifyWrite != null && !cbVerifyWrite.isChecked()) {
+                                log(getString(R.string.str_log_verify_disabled));
+                            }
+                            executeCustomFlashromCommand(buildDummyCmd(chipName, size, chipFlag, writeAction));
                             break;
                         case 2: // Borrar chip emulado
                             ensureDummyTestFile(size);
