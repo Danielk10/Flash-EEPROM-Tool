@@ -1111,6 +1111,7 @@ public class MainActivity extends AppCompatActivity {
             log(getString(R.string.str_err_critical_flashrom_missing, preferredFlashromBin.getAbsolutePath()));
             return;
         }
+        args = applyVerifyWritePreference(args);
         log("$ flashrom " + android.text.TextUtils.join(" ", args));
 
         flashromExecutor.execute(preferredFlashromBin, args, usbController.getCurrentFd(),
@@ -1180,12 +1181,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         
-        List<String> finalArgsList = new ArrayList<>(Arrays.asList(resolvedArgs));
-        
-        if (cbVerifyWrite != null && !cbVerifyWrite.isChecked() && getString(R.string.str_log_writing_flash_op).equals(opLabel)) {
-            finalArgsList.add("-n");
-            log(getString(R.string.str_log_verify_disabled));
-        }
+        List<String> finalArgsList = new ArrayList<>(Arrays.asList(applyVerifyWritePreference(resolvedArgs)));
         
         if (isLongOp && !finalArgsList.contains("--progress")) {
             finalArgsList.add("--progress");
@@ -1195,6 +1191,23 @@ public class MainActivity extends AppCompatActivity {
 
         flashromExecutor.execute(preferredFlashromBin, resolvedArgs, usbController.getCurrentFd(),
                 UsbController.needsPtyBridge(selectedProgrammer), selectedProgrammer);
+    }
+
+    /**
+     * Aplica la casilla "Verify Write": si está desmarcada y los argumentos incluyen una
+     * escritura (-w), agrega -n (--noverify) a flashrom. Es común a todas las rutas de
+     * ejecución (programadores USB, serie y modo dummy).
+     */
+    private String[] applyVerifyWritePreference(String[] args) {
+        if (cbVerifyWrite == null || cbVerifyWrite.isChecked()) {
+            return args;
+        }
+        List<String> list = new ArrayList<>(Arrays.asList(args));
+        if (list.contains("-w") && !list.contains("-n") && !list.contains("--noverify")) {
+            list.add("-n");
+            log(getString(R.string.str_log_verify_disabled));
+        }
+        return list.toArray(new String[0]);
     }
 
     private boolean isDummyProgrammer() {
