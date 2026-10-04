@@ -74,6 +74,12 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:label="Comparar HEX" />
+
+        <!-- Fix Issue #95: Evita el crash fatal NPE de DataTransport cuando se invoca AlarmManagerSchedulerBroadcastReceiver sin datos URI -->
+        <receiver
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+            android:exported="false"
+            tools:node="remove" />
     </application>
 
 </manifest>
