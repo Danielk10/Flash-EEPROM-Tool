@@ -45,7 +45,42 @@
             android:textColor="#FFFFFF"
             android:textColorHint="#9E9E9E"
             android:hint="@string/str_hint_programmer_param"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvSerprogTransportTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_serprog_transport_title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgSerprogTransport"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/rbTransportSocket"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/str_transport_socket_desc"
+                android:textColor="#FFFFFF"
+                app:buttonTint="@color/btn_tint_blue"
+                android:textSize="13sp" />
+
+            <RadioButton
+                android:id="@+id/rbTransportPty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/str_transport_pty_desc"
+                android:textColor="#FFFFFF"
+                app:buttonTint="@color/btn_tint_blue"
+                android:textSize="13sp" />
+        </RadioGroup>
 
         <Button
             android:id="@+id/btnSaveProgrammer"

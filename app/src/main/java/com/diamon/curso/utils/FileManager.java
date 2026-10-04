@@ -35,14 +35,26 @@ public class FileManager {
             Uri fileUri = context.getContentResolver().insert(externalUri, values);
 
             if (fileUri != null) {
-                try (OutputStream out = context.getContentResolver().openOutputStream(fileUri);
-                        InputStream in = new FileInputStream(sourceFile)) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
+                try (InputStream inStream = new FileInputStream(sourceFile);
+                     OutputStream outStream = context.getContentResolver().openOutputStream(fileUri)) {
+                    if (outStream instanceof FileOutputStream) {
+                        try (java.nio.channels.FileChannel inChannel = ((FileInputStream) inStream).getChannel();
+                             java.nio.channels.FileChannel outChannel = ((FileOutputStream) outStream).getChannel()) {
+                            long size = inChannel.size();
+                            long transferred = 0;
+                            while (transferred < size) {
+                                transferred += inChannel.transferTo(transferred, size - transferred, outChannel);
+                            }
+                            return true;
+                        }
+                    } else {
+                        byte[] buffer = new byte[65536];
+                        int read;
+                        while ((read = inStream.read(buffer)) != -1) {
+                            outStream.write(buffer, 0, read);
+                        }
+                        return true;
                     }
-                    return true;
                 } catch (IOException e) {
                     Log.e(TAG, "Error exportando via MediaStore", e);
                 }
@@ -55,12 +67,12 @@ public class FileManager {
                 return false;
 
             File destFile = new File(destFolder, fileName);
-            try (InputStream in = new FileInputStream(sourceFile);
-                    OutputStream out = new FileOutputStream(destFile)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
+            try (java.nio.channels.FileChannel inChannel = new FileInputStream(sourceFile).getChannel();
+                 java.nio.channels.FileChannel outChannel = new FileOutputStream(destFile).getChannel()) {
+                long size = inChannel.size();
+                long transferred = 0;
+                while (transferred < size) {
+                    transferred += inChannel.transferTo(transferred, size - transferred, outChannel);
                 }
                 return true;
             } catch (IOException e) {

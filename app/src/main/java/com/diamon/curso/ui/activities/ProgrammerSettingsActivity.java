@@ -32,6 +32,9 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
     private Spinner spinnerProgrammer;
     private EditText etProgrammerParam;
     private Button btnSaveProgrammer;
+    private android.widget.RadioGroup rgSerprogTransport;
+    private android.widget.RadioButton rbTransportSocket;
+    private android.widget.RadioButton rbTransportPty;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +46,21 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
         etProgrammerParam = findViewById(R.id.etProgrammerParam);
         btnSaveProgrammer = findViewById(R.id.btnSaveProgrammer);
         spinnerProgrammer = findViewById(R.id.spinnerProgrammer);
+        rgSerprogTransport = findViewById(R.id.rgSerprogTransport);
+        rbTransportSocket = findViewById(R.id.rbTransportSocket);
+        rbTransportPty = findViewById(R.id.rbTransportPty);
 
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         String current = prefs.getString(KEY_PROGRAMMER, "ch341a_spi");
         etProgrammerParam.setText(current);
+
+        String currentTransport = prefs.getString(com.diamon.curso.core.UsbController.KEY_SERPROG_TRANSPORT,
+                com.diamon.curso.core.UsbController.TRANSPORT_SOCKET);
+        if (com.diamon.curso.core.UsbController.TRANSPORT_PTY.equals(currentTransport)) {
+            rbTransportPty.setChecked(true);
+        } else {
+            rbTransportSocket.setChecked(true);
+        }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_item,
                 SUPPORTED_PROGRAMMERS);
@@ -93,7 +107,15 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
             if (value.isEmpty()) {
                 value = "ch341a_spi";
             }
-            prefs.edit().putString(KEY_PROGRAMMER, value).apply();
+            String selectedTransport = rbTransportPty.isChecked()
+                    ? com.diamon.curso.core.UsbController.TRANSPORT_PTY
+                    : com.diamon.curso.core.UsbController.TRANSPORT_SOCKET;
+
+            prefs.edit()
+                    .putString(KEY_PROGRAMMER, value)
+                    .putString(com.diamon.curso.core.UsbController.KEY_SERPROG_TRANSPORT, selectedTransport)
+                    .apply();
+
             Toast.makeText(this, getString(R.string.str_saved, value), Toast.LENGTH_SHORT).show();
             finish();
         });

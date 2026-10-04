@@ -231,4 +231,7 @@
     <string name="str_log_warn_dummy_size_mismatch">Notice: File bios.bin (%1$d bytes) does not match selected dummy chip (%2$d bytes). Forcing emulation to VARIABLE_SIZE to prevent flashrom error.</string>
     <string name="str_log_generating_test_file">No bios.bin loaded. Generating/using test file...</string>
     <string name="str_log_err_creating_test_file">Error creating test file: %1$s</string>
+    <string name="str_serprog_transport_title">Serial Transport Mode (Serprog)</string>
+    <string name="str_transport_socket_desc">Local TCP Socket (127.0.0.1) - Recommended (High speed, zero latency)</string>
+    <string name="str_transport_pty_desc">Pseudoterminal PTY (/dev/pts) - Classic mode (Optimized C++ engine)</string>
 </resources>

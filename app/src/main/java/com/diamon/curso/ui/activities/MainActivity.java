@@ -988,7 +988,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                     currentBridge.purge();
                     if (!currentBridge.isForwardingActive()) {
-                        currentBridge.startForwarding();
+                        if (!usbController.startBridgeForwarding(selectedProgrammer)) {
+                            log(getString(R.string.str_log_err_prepare_serial));
+                            return;
+                        }
                         log(getString(R.string.str_log_forwarding_active));
                     }
                     log(getString(R.string.str_log_pty_bridge_ready));
@@ -1076,7 +1079,10 @@ public class MainActivity extends AppCompatActivity {
             if (!ptyBridge.isForwardingActive()) {
                 log(getString(R.string.str_log_starting_pty, detectedSerialProg));
                 ptyBridge.purge();
-                ptyBridge.startForwarding();
+                if (!usbController.startBridgeForwarding(detectedSerialProg)) {
+                    log(getString(R.string.str_log_err_prepare_serial));
+                    return;
+                }
                 log(getString(R.string.str_log_forwarding_active));
             }
 

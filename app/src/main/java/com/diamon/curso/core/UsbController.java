@@ -311,9 +311,43 @@ public class UsbController {
                 || "spidriver".equals(prog);
     }
 
+    // ── Transporte serprog (Socket TCP local vs PTY) ──
+    public static final String PREFS = "flashrom_prefs";
+    public static final String KEY_SERPROG_TRANSPORT = "serprog_transport_mode";
+    public static final String TRANSPORT_SOCKET = "socket";
+    public static final String TRANSPORT_PTY = "pty";
+
+    /**
+     * True si para este programador debe usarse el Socket TCP local.
+     * Sólo serprog lo soporta en flashrom (buspirate_spi/spidriver requieren dev=).
+     */
+    public boolean shouldUseSocketTransport(String prog) {
+        if (!"serprog".equals(prog)) return false;
+        String mode = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_SERPROG_TRANSPORT, TRANSPORT_SOCKET);
+        return TRANSPORT_SOCKET.equals(mode);
+    }
+
+    /**
+     * Inicia el forwarding del puente con el transporte preferido para el programador.
+     * El transporte queda fijado mientras dure la conexión USB.
+     */
+    public boolean startBridgeForwarding(String prog) {
+        if (ptyBridge == null) return false;
+        boolean ok = ptyBridge.startForwarding(shouldUseSocketTransport(prog), "serprog".equals(prog));
+        if (ok && "serprog".equals(prog) && ptyBridge.isSocketMode() != shouldUseSocketTransport(prog)) {
+            callback.log("[INFO] Transporte activo: " + (ptyBridge.isSocketMode() ? "Socket TCP" : "PTY")
+                    + " (el cambio de transporte se aplica al reconectar el programador)");
+        }
+        return ok;
+    }
+
     public String buildPtyProgrammerParam(String programmer) {
         if (ptyBridge == null || !ptyBridge.isOpen())
             return programmer;
+        if ("serprog".equals(programmer) && ptyBridge.isSocketMode()) {
+            return "serprog:ip=127.0.0.1:" + ptyBridge.getSocketPort();
+        }
         String devPath = ptyBridge.getSlavePath();
         if ("serprog".equals(programmer)) {
             return "serprog:dev=" + devPath + ":" + ptyBridge.getBaudRate();

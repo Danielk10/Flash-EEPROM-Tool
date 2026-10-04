@@ -25,6 +25,76 @@ public class HexViewerActivity extends AppCompatActivity {
     private TextView tvHexSummary;
     private RecyclerView recyclerHex;
     private HexAdapter hexAdapter;
+    private HexDataSource currentDataSource;
+
+    public interface HexDataSource extends java.io.Closeable {
+        long size();
+        int read(long offset, byte[] dest, int destOffset, int length);
+    }
+
+    public static class MappedFileSource implements HexDataSource {
+        private final java.io.RandomAccessFile raf;
+        private final java.nio.channels.FileChannel channel;
+        private final java.nio.MappedByteBuffer mappedBuffer;
+        private final long size;
+
+        public MappedFileSource(File file) throws Exception {
+            this.raf = new java.io.RandomAccessFile(file, "r");
+            this.channel = raf.getChannel();
+            this.size = channel.size();
+            this.mappedBuffer = channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, size);
+        }
+
+        @Override
+        public long size() {
+            return size;
+        }
+
+        @Override
+        public int read(long offset, byte[] dest, int destOffset, int length) {
+            if (offset >= size) return 0;
+            int toRead = (int) Math.min((long) length, size - offset);
+            synchronized (mappedBuffer) {
+                mappedBuffer.position((int) offset);
+                mappedBuffer.get(dest, destOffset, toRead);
+            }
+            return toRead;
+        }
+
+        @Override
+        public void close() {
+            try {
+                channel.close();
+            } catch (Exception ignored) {}
+            try {
+                raf.close();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public static class ByteArraySource implements HexDataSource {
+        private final byte[] data;
+
+        public ByteArraySource(byte[] data) {
+            this.data = data != null ? data : new byte[0];
+        }
+
+        @Override
+        public long size() {
+            return data.length;
+        }
+
+        @Override
+        public int read(long offset, byte[] dest, int destOffset, int length) {
+            if (offset >= data.length) return 0;
+            int toRead = (int) Math.min((long) length, data.length - offset);
+            System.arraycopy(data, (int) offset, dest, destOffset, toRead);
+            return toRead;
+        }
+
+        @Override
+        public void close() {}
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +113,17 @@ public class HexViewerActivity extends AppCompatActivity {
         loadDataFromIntent();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (currentDataSource != null) {
+            try {
+                currentDataSource.close();
+            } catch (Exception ignored) {}
+            currentDataSource = null;
+        }
+    }
+
     private void loadDataFromIntent() {
         Uri fileUri = getIntent().getData();
         String fileName = "bios.bin";
@@ -51,18 +132,22 @@ public class HexViewerActivity extends AppCompatActivity {
         String biosSource = getSharedPreferences("flashrom_prefs", MODE_PRIVATE)
                 .getString("bios_source", null);
 
-        byte[] data;
         try {
             if (fileUri != null) {
-                data = readUriToBytes(fileUri);
                 fileName = fileUri.getLastPathSegment();
                 biosSource = getString(R.string.str_external_file, fileName);
+                byte[] data = readUriToBytes(fileUri);
+
+                if (fileName != null && fileName.toLowerCase().endsWith(".hex")) {
+                    parseIntelHex(data, biosSource);
+                } else {
+                    displayBinary(new ByteArraySource(data), fileName, biosSource);
+                }
             } else {
                 // Cargar el archivo rastreado (último leído o importado)
                 String trackedFile = getSharedPreferences("flashrom_prefs", MODE_PRIVATE)
                         .getString("last_read_file", "bios.bin");
                 File dataFile = new File(getFilesDir(), trackedFile);
-                // Fallback a bios.bin si el archivo rastreado no existe
                 if (!dataFile.exists()) {
                     dataFile = new File(getFilesDir(), "bios.bin");
                 }
@@ -71,25 +156,16 @@ public class HexViewerActivity extends AppCompatActivity {
                     return;
                 }
                 fileName = dataFile.getName();
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    data = java.nio.file.Files.readAllBytes(dataFile.toPath());
+
+                if (fileName.toLowerCase().endsWith(".hex")) {
+                    byte[] data = java.nio.file.Files.readAllBytes(dataFile.toPath());
+                    parseIntelHex(data, biosSource);
                 } else {
-                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream((int) dataFile.length());
-                    try (java.io.FileInputStream fis = new java.io.FileInputStream(dataFile)) {
-                        byte[] buf = new byte[8192];
-                        int n;
-                        while ((n = fis.read(buf)) != -1) bos.write(buf, 0, n);
-                    }
-                    data = bos.toByteArray();
+                    // Mapeo virtual directo con mmap (0 ms, 0 MB heap)
+                    MappedFileSource mmapSource = new MappedFileSource(dataFile);
+                    displayBinary(mmapSource, fileName, biosSource);
                 }
             }
-
-            if (fileName != null && fileName.toLowerCase().endsWith(".hex")) {
-                parseIntelHex(data, biosSource);
-            } else {
-                displayBinary(data, fileName, biosSource);
-            }
-
         } catch (Exception e) {
             tvHexSummary.setText(getString(R.string.str_err_load_data, e.getMessage()));
         }
@@ -109,13 +185,20 @@ public class HexViewerActivity extends AppCompatActivity {
         }
     }
 
-    private void displayBinary(byte[] data, String name, String biosSource) {
-        String summary = getString(R.string.str_binary_summary, name, data.length);
+    private void displayBinary(HexDataSource source, String name, String biosSource) {
+        if (currentDataSource != null && currentDataSource != source) {
+            try {
+                currentDataSource.close();
+            } catch (Exception ignored) {}
+        }
+        currentDataSource = source;
+
+        String summary = getString(R.string.str_binary_summary, name, source.size());
         if (biosSource != null) {
             summary += getString(R.string.str_source_label, biosSource);
         }
         tvHexSummary.setText(summary);
-        hexAdapter = new HexAdapter(data, 0);
+        hexAdapter = new HexAdapter(source, 0);
         recyclerHex.setAdapter(hexAdapter);
     }
 
@@ -124,12 +207,10 @@ public class HexViewerActivity extends AppCompatActivity {
             String content = new String(hexData);
             String[] lines = content.split("\\r?\\n");
 
-            // Intel HEX puede tener Extended Address (Type 02/04) para direcciones > 64KB
             long minAddr = Long.MAX_VALUE;
             long maxAddr = 0;
             int upperAddress = 0;
 
-            // Primera pasada: calcular rango incluyendo Extended Address
             for (String line : lines) {
                 line = line.trim();
                 if (!line.startsWith(":") || line.length() < 11)
@@ -137,15 +218,15 @@ public class HexViewerActivity extends AppCompatActivity {
                 int byteCount = Integer.parseInt(line.substring(1, 3), 16);
                 int address = Integer.parseInt(line.substring(3, 7), 16);
                 int type = Integer.parseInt(line.substring(7, 9), 16);
-                if (type == 0x00) { // Data record
+                if (type == 0x00) {
                     long absolute = (long) upperAddress + address;
                     minAddr = Math.min(minAddr, absolute);
                     maxAddr = Math.max(maxAddr, absolute + byteCount);
-                } else if (type == 0x04 && line.length() >= 15) { // Extended Linear Address
+                } else if (type == 0x04 && line.length() >= 15) {
                     upperAddress = Integer.parseInt(line.substring(9, 13), 16) << 16;
-                } else if (type == 0x02 && line.length() >= 15) { // Extended Segment Address
+                } else if (type == 0x02 && line.length() >= 15) {
                     upperAddress = Integer.parseInt(line.substring(9, 13), 16) << 4;
-                } else if (type == 0x01) { // EOF
+                } else if (type == 0x01) {
                     break;
                 }
             }
@@ -155,9 +236,8 @@ public class HexViewerActivity extends AppCompatActivity {
                 return;
             }
 
-            // Limitar el tamaño del buffer para evitar OOM
             long bufferSize = maxAddr - minAddr;
-            if (bufferSize > 32L * 1024 * 1024) { // 32 MB máximo para visualización
+            if (bufferSize > 32L * 1024 * 1024) {
                 tvHexSummary.setText(getString(R.string.str_err_hex_too_large, String.valueOf(bufferSize / 1024 / 1024)));
                 return;
             }
@@ -165,7 +245,6 @@ public class HexViewerActivity extends AppCompatActivity {
             byte[] binBuffer = new byte[(int) bufferSize];
             java.util.Arrays.fill(binBuffer, (byte) 0xFF);
 
-            // Segunda pasada: llenar datos con Extended Address
             upperAddress = 0;
             for (String line : lines) {
                 line = line.trim();
@@ -197,7 +276,12 @@ public class HexViewerActivity extends AppCompatActivity {
                 summary += getString(R.string.str_source_label, biosSource);
             }
             tvHexSummary.setText(summary);
-            hexAdapter = new HexAdapter(binBuffer, (int) minAddr);
+            ByteArraySource hexSource = new ByteArraySource(binBuffer);
+            if (currentDataSource != null) {
+                try { currentDataSource.close(); } catch (Exception ignored) {}
+            }
+            currentDataSource = hexSource;
+            hexAdapter = new HexAdapter(hexSource, (int) minAddr);
             recyclerHex.setAdapter(hexAdapter);
 
         } catch (Exception e) {
@@ -212,11 +296,11 @@ public class HexViewerActivity extends AppCompatActivity {
     }
 
     static class HexAdapter extends RecyclerView.Adapter<HexAdapter.HexViewHolder> {
-        private final byte[] data;
-        private final int startAddress;
+        private final HexDataSource dataSource;
+        private final long startAddress;
 
-        public HexAdapter(byte[] data, int startAddress) {
-            this.data = data;
+        public HexAdapter(HexDataSource dataSource, long startAddress) {
+            this.dataSource = dataSource;
             this.startAddress = startAddress;
         }
 
@@ -229,16 +313,17 @@ public class HexViewerActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull HexViewHolder holder, int position) {
-            int rowStart = position * 16;
-            int currentAddr = startAddress + rowStart;
-            int length = Math.min(16, data.length - rowStart);
+            long rowStart = (long) position * 16;
+            long currentAddr = startAddress + rowStart;
+            byte[] rowData = new byte[16];
+            int length = dataSource.read(rowStart, rowData, 0, 16);
 
             StringBuilder hexBuilder = new StringBuilder(48);
             StringBuilder asciiBuilder = new StringBuilder(16);
 
             for (int i = 0; i < 16; i++) {
                 if (i < length) {
-                    byte b = data[rowStart + i];
+                    byte b = rowData[i];
                     hexBuilder.append(String.format("%02X ", b));
                     if (b >= 32 && b <= 126) {
                         asciiBuilder.append((char) b);
@@ -258,7 +343,7 @@ public class HexViewerActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return (int) Math.ceil((double) data.length / 16.0);
+            return (int) Math.ceil((double) dataSource.size() / 16.0);
         }
 
         static class HexViewHolder extends RecyclerView.ViewHolder {

@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
+import com.hoho.android.usbserial.driver.FtdiSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -34,6 +35,18 @@ import java.util.concurrent.TimeoutException;
  * UsbSerialPort (usb-serial-for-android)
  * ↕
  * [Arduino con firmware serprog]
+ *
+ * Desde la migración a motor nativo (ver tag git "legacy-java-pty-bridge" para
+ * la versión 100% Java), el forwarding lo realizan dos hilos C++ en
+ * usb_bridge.cpp que hablan directamente con el endpoint bulk vía usbfs.
+ * Java sólo abre/configura el puerto (baudios, DTR/RTS, beacon, purge) y luego
+ * entrega los descriptores. Transportes disponibles hacia flashrom:
+ *
+ *   • Socket TCP local: flashrom -p serprog:ip=127.0.0.1:PUERTO (sólo serprog)
+ *   • PTY clásico:      flashrom -p serprog:dev=/dev/pts/N:BAUD
+ *
+ * Si el motor nativo no pudiera arrancar, se recurre automáticamente a los
+ * hilos Java originales sobre el PTY (modo de compatibilidad).
  */
 public class PtyBridge {
 
@@ -46,6 +59,9 @@ public class PtyBridge {
     private static final int DEBUG_HEX_LIMIT = 32;
 
     private android.hardware.usb.UsbEndpoint endpointIn = null;
+    private android.hardware.usb.UsbEndpoint endpointOut = null;
+    /** FTDI antepone 2 bytes de estado a cada paquete IN que el motor nativo debe descartar. */
+    private boolean isFtdi = false;
 
     /** Callback para enviar logs al UI de la app (no sólo logcat) */
     public interface LogCallback {
@@ -72,6 +88,28 @@ public class PtyBridge {
     // JNI: lee bytes directamente de un FD nativo con timeout (retorna bytes leídos, 0 timeout, -1 error)
     public static native int readFd(int fd, byte[] data, int timeoutMs);
 
+    // ── Motor nativo (usb_bridge.cpp) ──
+    // JNI: crea un servidor TCP en 127.0.0.1:puerto_efímero → [listenFd, puerto] o null
+    private static native int[] createLoopbackServer();
+
+    // JNI: arranca los hilos nativos. Exactamente uno de ptyFd/listenFd debe ser >= 0.
+    // Retorna un handle opaco (> 0) o 0 si falla.
+    private static native long nativeBridgeStart(int usbFd, int epIn, int epOut, int inPacket,
+                                                 int ptyFd, int listenFd,
+                                                 boolean ftdi, boolean beaconResync);
+
+    // JNI: detiene los hilos nativos (no cierra el FD USB ni el master PTY)
+    private static native void nativeBridgeStop(long handle);
+
+    // JNI: false si los hilos nativos terminaron (p. ej. desconexión USB)
+    private static native boolean nativeBridgeIsRunning(long handle);
+
+    // JNI: [usbRx, usbTx, rxXfers, txXfers, usbErr, commErr, clients, resyncs, dropped, deviceGone]
+    private static native long[] nativeBridgeStats(long handle);
+
+    // JNI: último error registrado por el motor nativo
+    private static native String nativeBridgeLastError(long handle);
+
     // -------- Estado --------
     private int masterFd = -1;
     private int dummySlaveFd = -1;
@@ -87,6 +125,13 @@ public class PtyBridge {
     private int baudRate = 57600;
     private LogCallback logCallback = null;
     private android.content.Context context = null;
+
+    // Estado del motor nativo / transporte
+    private volatile long nativeHandle = 0;
+    private volatile boolean socketMode = false;
+    private volatile int socketPort = -1;
+    /** Serializa stop/stats del motor nativo para no usar un handle ya liberado. */
+    private final Object nativeLock = new Object();
 
     // Contadores de diagnóstico para Thread B
     private volatile int diagPtyReads = 0;
@@ -196,7 +241,13 @@ public class PtyBridge {
             // cuya basura del bootloader contaminaría el PTY slave.
             usbPort.setDTR(false);
             usbPort.setRTS(false);
-            findEndpoints(device);
+            // Endpoints exactos del puerto abierto (necesarios para el motor nativo).
+            endpointIn = usbPort.getReadEndpoint();
+            endpointOut = usbPort.getWriteEndpoint();
+            if (endpointIn == null) {
+                findEndpoints(device);
+            }
+            isFtdi = targetDriver instanceof FtdiSerialDriver;
         } catch (IOException e) {
             Log.e(TAG, "Error abriendo UsbSerialPort: " + e.getMessage());
             cleanupPty();
@@ -221,19 +272,121 @@ public class PtyBridge {
      * DEBE llamarse DESPUÉS de purge() y testHandshake(), justo antes de flashrom.
      * Si se llama antes, los hilos reenviarán basura del bootloader al PTY slave
      * y flashrom leerá esa basura como respuesta corrupta.
+     *
+     * Equivale a {@code startForwarding(false, true)} (PTY + resync por beacon).
      */
-    public void startForwarding() {
+    public boolean startForwarding() {
+        return startForwarding(false, true);
+    }
+
+    /**
+     * Inicia el forwarding eligiendo transporte:
+     * 1) Socket TCP local con motor nativo (si preferSocket),
+     * 2) PTY con motor nativo,
+     * 3) PTY con hilos Java (compatibilidad, si el motor nativo no arranca).
+     *
+     * @param preferSocket  true para exponer serprog por 127.0.0.1 (sólo válido para serprog)
+     * @param beaconResync  true para responder SYNCNOP al beacon 0xAA55 del firmware serprog
+     * @return true si el forwarding quedó activo por alguna de las vías
+     */
+    public boolean startForwarding(boolean preferSocket, boolean beaconResync) {
         if (running) {
             Log.w(TAG, "startForwarding() llamado pero ya está running — ignorando");
-            return;
+            return true;
         }
 
+        // 1) Socket TCP loopback + motor nativo
+        if (preferSocket) {
+            if (startNativeEngine(true, beaconResync)) {
+                running = true;
+                bridgeLog("Motor nativo C++ activo — transporte Socket TCP 127.0.0.1:" + socketPort);
+                return true;
+            }
+            bridgeLog("[WARN] No se pudo iniciar el Socket TCP local; se usará PTY");
+        }
+
+        // 2) PTY + motor nativo
+        if (startNativeEngine(false, beaconResync)) {
+            running = true;
+            bridgeLog("Motor nativo C++ activo — transporte PTY " + slavePath);
+            return true;
+        }
+
+        // 3) Compatibilidad: hilos Java originales sobre el PTY
+        if (masterFd < 0) {
+            bridgeLog("[ERROR] Sin PTY disponible: no se puede iniciar el forwarding");
+            return false;
+        }
+        bridgeLog("[WARN] Motor nativo no disponible — usando hilos Java (modo compatibilidad)");
         running = true;
         masterToUsbReady = false;
         usbToMasterReady = false;
         startForwardingThreads();
         waitForwardingReady();
         bridgeLog("Forwarding activo — puente PTY↔USB listo");
+        return true;
+    }
+
+    /** Arranca usb_bridge.cpp sobre el socket loopback (useSocket) o sobre el master PTY. */
+    private boolean startNativeEngine(boolean useSocket, boolean beaconResync) {
+        final UsbDeviceConnection conn = this.usbConnection;
+        if (conn == null || endpointIn == null || endpointOut == null) {
+            bridgeLog("Motor nativo: endpoints/conexión USB no disponibles");
+            return false;
+        }
+        int usbFd = conn.getFileDescriptor();
+        if (usbFd < 0) return false;
+
+        int listenFd = -1;
+        int port = -1;
+        if (useSocket) {
+            int[] server;
+            try {
+                server = createLoopbackServer();
+            } catch (Throwable t) {
+                bridgeLog("createLoopbackServer falló: " + t.getMessage());
+                return false;
+            }
+            if (server == null || server.length < 2) return false;
+            listenFd = server[0];
+            port = server[1];
+        } else if (masterFd < 0) {
+            return false;
+        }
+
+        long handle;
+        try {
+            handle = nativeBridgeStart(usbFd,
+                    endpointIn.getAddress(), endpointOut.getAddress(), endpointIn.getMaxPacketSize(),
+                    useSocket ? -1 : masterFd, listenFd, isFtdi, beaconResync);
+        } catch (Throwable t) {
+            bridgeLog("nativeBridgeStart falló: " + t.getMessage());
+            handle = 0;
+        }
+        if (handle == 0) {
+            if (listenFd >= 0) closeFd(listenFd);
+            return false;
+        }
+        nativeHandle = handle;
+        socketMode = useSocket;
+        socketPort = port;
+        return true;
+    }
+
+    private void stopNativeEngine() {
+        synchronized (nativeLock) {
+            long h = nativeHandle;
+            nativeHandle = 0;
+            if (h != 0) {
+                try {
+                    nativeBridgeStop(h);
+                } catch (Throwable t) {
+                    Log.w(TAG, "nativeBridgeStop: " + t.getMessage());
+                }
+            }
+            socketMode = false;
+            socketPort = -1;
+        }
     }
 
     /**
@@ -352,12 +505,29 @@ public class PtyBridge {
         return baudRate;
     }
 
+    /** True si flashrom debe conectarse por serprog:ip=127.0.0.1:{@link #getSocketPort()}. */
+    public boolean isSocketMode() {
+        return socketMode && socketPort > 0;
+    }
+
+    public int getSocketPort() {
+        return socketPort;
+    }
+
+    /** True si el forwarding lo realiza el motor C++ (no los hilos Java de compatibilidad). */
+    public boolean isNativeEngineActive() {
+        return nativeHandle != 0;
+    }
+
     /**
      * Detiene los hilos y libera todos los recursos (PTY + puerto USB-serial).
      * Seguro llamarlo desde onDestroy() o cuando flashrom termina.
      */
     public void close() {
         running = false;
+
+        // El motor nativo usa el FD USB y el master PTY: detenerlo ANTES de cerrarlos.
+        stopNativeEngine();
 
         // Interrumpir hilos
         if (threadMasterToUsb != null) {
@@ -377,7 +547,27 @@ public class PtyBridge {
 
     /** Reporte de diagnóstico de Thread A/B para depuración visible en la app */
     public String getDiagnosticReport() {
-        return "ptyReads=" + diagPtyReads + " usbBytesWritten=" + diagUsbBytesWritten
+        synchronized (nativeLock) {
+            final long h = nativeHandle;
+            if (h != 0) {
+                try {
+                    long[] s = nativeBridgeStats(h);
+                    if (s != null && s.length >= 10) {
+                        return "engine=native-cpp transport=" + (socketMode ? "socket:127.0.0.1:" + socketPort : "pty:" + slavePath)
+                                + " usbRx=" + s[0] + "B usbTx=" + s[1] + "B"
+                                + " rxXfers=" + s[2] + " txXfers=" + s[3]
+                                + " usbErrors=" + s[4] + " commErrors=" + s[5]
+                                + " clients=" + s[6] + " resyncs=" + s[7]
+                                + " dropped=" + s[8] + "B deviceGone=" + (s[9] != 0)
+                                + " alive=" + nativeBridgeIsRunning(h)
+                                + " lastError=" + nativeBridgeLastError(h);
+                    }
+                } catch (Throwable t) {
+                    return "engine=native-cpp (stats no disponibles: " + t.getMessage() + ")";
+                }
+            }
+        }
+        return "engine=java ptyReads=" + diagPtyReads + " usbBytesWritten=" + diagUsbBytesWritten
                 + " usbWriteErrors=" + diagUsbWriteErrors
                 + " usbReads=" + diagUsbReads + " usbBytesRecv=" + diagUsbBytesReceived
                 + " ptyWrites=" + diagPtyWrites + " ptyErrors=" + diagPtyWriteErrors
