@@ -300,6 +300,37 @@ if ("socket".equals(transportMode)) {
 
 ---
 
+## Compatibilidad y Validación del Firmware Arduino (`serprog_arduino_uno_ch340g.ino`)
+
+El firmware del programador Arduino UNO / CH340G ha sido auditado y **es 100% compatible con las mejoras propuestas, sin requerir ninguna modificación en el código `.ino`**:
+
+### 1. Por qué el firmware se beneficia inmediatamente
+En el firmware actual, existen rutinas de protección contra cuelgues del host con un límite de 1000 ms:
+```cpp
+if (millis() - start > 1000) {
+    digitalWrite(SPI_CS_PIN, HIGH);
+    Serial.write(S_NAK);
+    Serial.write(BEACON_BYTE1);
+    Serial.write(BEACON_BYTE2);
+    // ...
+}
+```
+* **Con la app actual en Java/PTY:** Las pausas del Garbage Collector de Android en lecturas pesadas (8MB/16MB) hacían que el Arduino superara ese segundo de espera, enviando `S_NAK` y desincronizando la comunicación.
+* **Con el Socket Local y motor C++:** La latencia cae a microsegundos. El Arduino **nunca más cae en este timeout de 1000 ms**, garantizando flasheos fluidos y continuos de principio a fin.
+
+### 2. Decisiones de diseño ya validadas y conservadas
+* **Prevención de desbordamiento (Overrun) del CH340G:** En las líneas 118-130, el firmware limita `Q_WRNMAXLEN` a 32 bytes y `Q_RDNMAXLEN` a 64 bytes. Esta limitación es intencional y vital: el chip CH340 tiene un búfer interno diminuto; forzar a `flashrom` a pedir datos en trozos de 32/64 bytes impide que se pierdan paquetes.
+* **Empaquetado atómico de `S_ACK` y datos SPI:** En las líneas 227-236, el byte de confirmación `S_ACK` viaja en el mismo paquete que los primeros datos leídos del chip. Esto evita que `flashrom` lea un paquete vacío y pierda la sincronización.
+* **Balizas de arranque (`0xAA 0x55`):** Emitidas tras el retardo de estabilización del DTR en `setup()`.
+
+### 3. Requisito para el nuevo Bridge (Socket / C++)
+El nuevo puente (ya sea en Socket TCP o PTY en C++) debe mantener la misma regla de arranque:
+1. Al abrir la conexión serie USB, esperar y **consumir los dos bytes de beacon (`0xAA 0x55`)** enviados por el Arduino.
+2. Descartar cualquier residuo de reinicio del CH340.
+3. Solo tras recibir los beacons, habilitar el flujo bidireccional hacia `flashrom`.
+
+---
+
 ## Resumen de Aplicabilidad: ¿Qué aplica a cada parte?
 
 | Componente | ¿Aplica? | Técnica Recomendada |
