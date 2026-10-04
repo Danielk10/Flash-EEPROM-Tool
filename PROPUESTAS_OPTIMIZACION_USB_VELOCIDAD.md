@@ -1,103 +1,143 @@
-# Propuestas de Optimización: Máximo Rendimiento y Latencia Cero en Comunicación USB
+# Propuestas de Optimización: Máximo Rendimiento, Latencia Cero y Memoria Directa
 
-Este documento detalla tres soluciones de arquitectura para eliminar los cuellos de botella de velocidad, latencia y pausas de recolección de basura (*Garbage Collector*) en **Flash-EEPROM-Tool**, especialmente durante operaciones con programadores basados en serie (`serprog`, Arduino, CH340, FTDI).
+Este documento detalla las soluciones de arquitectura para eliminar los cuellos de botella de velocidad, latencia, pausas de recolección de basura (*Garbage Collector*) y uso de memoria en **Flash-EEPROM-Tool**.
+
+Cubre tanto la capa de **transporte de comunicación USB** (para programadores `serprog`, Arduino, CH340, FTDI) como la capa de **gestión de memoria y archivos** (lectura/guardado de volcados, visor hexadecimal y exportación).
 
 ---
 
-## Comparativa de Arquitectura: Actual vs. Propuestas
+## Comparativa de Arquitectura: Actual vs. Optimizada
 
 ```
-1. ARQUITECTURA ACTUAL (Híbrida con PTY y Java):
-   Hardware USB ↔ Kernel Linux ↔ UsbRequest (Java) ↔ JNI / poll() ↔ Master PTY ↔ /dev/pts/X ↔ flashrom (C)
-   [Riesgo: Múltiples cambios de contexto, copias de memoria en heap Java, pausas de GC]
+1. ARQUITECTURA ACTUAL (Híbrida con PTY y Arrays en Java Heap):
+   • USB: Hardware ↔ Kernel ↔ UsbRequest (byte[]) ↔ JNI / poll() ↔ Master PTY ↔ /dev/pts/X ↔ flashrom (C)
+   • Archivos: Disco ↔ FileInputStream / readAllBytes() ↔ Heap Java (byte[]) ↔ RecyclerView
+   [Riesgos: Copias redundantes de memoria, pausas de GC, saturación de PTY y OutOfMemoryError en chips > 16MB]
 
-2. PROPUESTA 1 (Búferes Directos DMA):
-   Hardware USB ↔ Kernel Linux ↔ UsbRequest (Direct ByteBuffer) ↔ GetDirectBufferAddress() ↔ Master PTY ↔ flashrom (C)
-   [Mejora: Cero copias entre kernel y JVM, DMA directo, sin fragmentación de memoria]
+2. PROPUESTA 1 (Búferes Directos DMA y Mapeo en Memoria mmap):
+   • USB: Hardware ↔ UsbRequest (Direct ByteBuffer) ↔ GetDirectBufferAddress() ↔ DMA directo
+   • Archivos: Disco ↔ MappedByteBuffer (mmap) ↔ Lectura paginada bajo demanda en RAM virtual
+   [Mejora: Cero copias en memoria, consumo de RAM plano (~0 MB), sin pausas de GC ni errores OOM]
 
-3. PROPUESTA 2 (Socket TCP Loopback en vez de PTY):
-   Hardware USB ↔ UsbRequest / Bridge ↔ Socket TCP Local (127.0.0.1:9999) ↔ flashrom (-p serprog:ip=127.0.0.1:9999)
-   [Mejora: Mayor capacidad de búfer en kernel, sin restricciones tty/termios de Linux]
+3. PROPUESTA 2 (Socket TCP Loopback Local en vez de PTY):
+   • USB: Hardware ↔ UsbRequest / Bridge ↔ Socket TCP Local (127.0.0.1:9999) ↔ flashrom (-p serprog:ip=127.0.0.1:9999)
+   • Naturaleza: Canal en memoria RAM interna del procesador (sin internet/Wi-Fi)
+   [Mejora: Búferes del kernel de cientos de KB, control de flujo nativo, sin restricciones de terminales tty]
 
 4. PROPUESTA 3 (Puente 100% Nativo en C++):
-   Hardware USB (USB FD) ↔ Thread C++ (libusb / ioctl / epoll) ↔ Master PTY / Socket ↔ flashrom (C)
-   [Mejora: JVM 100% fuera del flujo de datos, latencia de microsegundos, cero pausas]
+   • USB: Descriptor USB (FD) ↔ Thread C++ (libusb / ioctl / epoll) ↔ Socket / PTY ↔ flashrom (C)
+   [Mejora: JVM 100% excluida del flujo de datos en tiempo real, latencia de microsegundos]
 ```
 
 ---
 
-## Solución 1: Optimización Inmediata con Búferes Directos DMA (`ByteBuffer.allocateDirect`)
+## Solución 1: Memoria Directa (DMA) y Eliminación de Arrays `byte[]`
 
 ### El Porqué
-Actualmente, el flujo de datos en `PtyBridge.java` manipula arrays primitivos `byte[]` asignados en la memoria heap de Java. Cada vez que se transfieren bloques entre el sistema operativo y la JVM:
-1. La máquina virtual debe duplicar (*memcopy*) o fijar (*pin*) los búferes entre el espacio de usuario de Android y el kernel.
-2. Durante lecturas de chips pesados (4MB, 8MB, 16MB o más), la creación y reciclaje continuo de arrays en Java genera presión sobre el recolector de basura (*Garbage Collector*). Cuando el GC entra en pausa (*Stop-The-World*), la lectura USB se detiene momentáneamente, provocando que el firmware del programador (Arduino/serprog) supere su tiempo de espera de 1000ms y desincronice el protocolo SPI.
+El uso de arrays primitivos `byte[]` en el heap de Java es el principal causante de degradación en operaciones continuas de flasheo y manejo de volcados:
+1. **Copias redundantes:** Cada vez que un array `byte[]` cruza hacia el kernel o hacia C/JNI, la máquina virtual ART debe fijar o duplicar la memoria.
+2. **Pausas del Garbage Collector (*Stop-The-World*):** En chips de 4MB, 8MB, 16MB o 32MB, crear y destruir arrays en bucles continuos dispara el GC. Una pausa de tan solo 50 ms puede provocar que el Arduino/serprog agote su timeout de 1000 ms y pierda la sincronía del protocolo SPI.
+3. **Riesgo de `OutOfMemoryError`:** Cargar una imagen de BIOS completa en la RAM de Java para visualizarla satura la memoria en dispositivos de gama media o baja.
 
-Al utilizar memoria directa (*Off-Heap Direct Memory*), el controlador USB del procesador realiza transferencias **DMA (Direct Memory Access)** directamente a la memoria física compartida con C/C++, alcanzando la eficiencia de streaming que utilizan herramientas masivas como EtchDroid.
+---
 
 ### Cómo Implementarlo en el Proyecto
 
-#### 1. En `PtyBridge.java`: Migrar a `ByteBuffer.allocateDirect`
-Sustituir los arrays de bytes de los hilos de transmisión por búferes directos preasignados:
+#### A. En la Comunicación USB (`PtyBridge.java`): DMA Directo
+Sustituir los arrays temporales por búferes nativos fuera del heap (*Off-Heap*):
 
 ```java
-// Asignar memoria nativa fija (fuera del heap del GC)
+// Asignación de memoria física contigua directa (fuera del heap de Java)
 private final ByteBuffer usbReadBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 private final ByteBuffer usbWriteBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 
 // En el hilo de lectura USB:
 usbRequest.initialize(usbConnection, endpointIn);
-// queue() con Direct ByteBuffer pasa el puntero de memoria físico al kernel
+// queue() con ByteBuffer directo instruye al hardware USB a usar DMA
 usbRequest.queue(usbReadBuffer);
 ```
 
-#### 2. En `native-lib.cpp`: Operar directamente sobre el puntero nativo
-Añadir soporte en JNI para escribir y leer directamente del descriptor de archivo PTY sin pasar por arrays de Java intermedios:
-
+En `native-lib.cpp`, se accede directamente al puntero físico sin copias:
 ```cpp
 extern "C" JNIEXPORT jint JNICALL
 Java_com_diamon_curso_core_PtyBridge_writeFdDirect(
     JNIEnv *env, jclass clazz, jint fd, jobject directBuffer, jint len) {
     
-    // Obtener la dirección física de memoria sin copias de la JVM
     void *bufAddress = env->GetDirectBufferAddress(directBuffer);
     if (!bufAddress || len <= 0) return -1;
 
-    ssize_t written = write(fd, bufAddress, (size_t) len);
-    return (jint) written;
+    return (jint) write(fd, bufAddress, (size_t) len);
 }
 ```
+
+#### B. En el Visor Hexadecimal (`HexViewerActivity.java`): Mapeo Virtual con `mmap`
+Actualmente se cargan todos los bytes a la memoria con:
+`data = java.nio.file.Files.readAllBytes(dataFile.toPath());`
+
+**Reemplazo con `MappedByteBuffer` (Mapeo de archivos en memoria):**
+```java
+// 1. Mapear el archivo completo mediante la llamada del sistema mmap() de Linux
+FileChannel channel = new RandomAccessFile(dataFile, "r").getChannel();
+MappedByteBuffer mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+
+// 2. En el adaptador del RecyclerView: leer bajo demanda solo los 16 bytes visibles
+@Override
+public void onBindViewHolder(@NonNull HexViewHolder holder, int position) {
+    long rowOffset = (long) position * 16;
+    byte[] row = new byte[16];
+    
+    synchronized (mappedBuffer) {
+        mappedBuffer.position((int) rowOffset);
+        int toRead = (int) Math.min(16L, channel.size() - rowOffset);
+        mappedBuffer.get(row, 0, toRead);
+    }
+    
+    // Formatear y renderizar únicamente la fila en pantalla
+    holder.bindRow(rowOffset, row);
+}
+```
+* **Ventaja:** Apertura instantánea (0 ms) sin importar si el archivo pesa 16MB o 128MB. El consumo de RAM pasa de decenas de megabytes a prácticamente **cero**, ya que el kernel de Linux solo pagina en RAM los bytes que se están dibujando en pantalla.
+
+#### C. En la Exportación de Archivos (`FileManager.java`): Transferencia Zero-Copy
+En lugar de bucles `while ((read = in.read(buffer)) != -1)` con arrays de 8 KB:
+
+```java
+// Transferencia directa a nivel de bloques del kernel mediante syscall sendfile()
+try (FileChannel inChannel = new FileInputStream(sourceFile).getChannel();
+     FileChannel outChannel = ((FileOutputStream) outStream).getChannel()) {
+    
+    inChannel.transferTo(0, inChannel.size(), outChannel);
+}
+```
+* **Ventaja:** El archivo se copia directamente entre descriptores de almacenamiento a nivel de kernel, sin transferir un solo byte por el espacio de usuario ni por la máquina virtual de Java.
 
 ---
 
 ## Solución 2: Reemplazo del Puente PTY por un Socket TCP Local (`serprog:ip=127.0.0.1:puerto`)
 
 ### El Porqué
-El mecanismo de terminal virtual pseudoterminal (`/dev/pts/*`) de Linux fue concebido para emular consolas interactivas de texto, no para transferencias binarias masivas y continuas de hardware:
-1. **Límites de búfer del kernel:** Los búferes de tty en el kernel de Linux suelen tener un tamaño máximo restringido (habitualmente 4 KB). Si `flashrom` escribe una ráfaga más rápido de lo que el programador drena el USB, el PTY se satura inmediatamente y bloquea el hilo de escritura.
-2. **Soporte nativo de red en flashrom:** `flashrom` soporta de manera nativa la comunicación con `serprog` a través de sockets de red mediante el parámetro `-p serprog:ip=127.0.0.1:puerto`.
-3. **Mayor escalabilidad:** La pila de red loopback de Linux (`lo`) cuenta con búferes internos configurables de cientos de kilobytes, soporte óptimo de contrapresión (*backpressure*) y no depende de la gestión de permisos en `/dev/pts`.
+* **¿Es una conexión de red real?** No. Ocurre dentro de la memoria RAM del propio dispositivo a través de la interfaz loopback (`127.0.0.1` / `localhost`). No requiere conexión Wi-Fi, datos móviles ni permisos especiales de red.
+* **El problema del PTY (`/dev/pts/*`):** Los pseudoterminales fueron creados para consolas interactivas de texto y tienen colas de búfer reducidas en el kernel (generalmente 4 KB). Con transferencias binarias rápidas, el PTY se llena y bloquea los hilos de escritura.
+* **Soporte oficial en flashrom:** `flashrom` incluye de fábrica el modo de red para serprog:
+  `flashrom -p serprog:ip=127.0.0.1:puerto`
+  La pila TCP interna de Linux maneja búferes de cientos de kilobytes, control de flujo y contrapresión (*backpressure*) automática, eliminando bloqueos sin depender de los permisos de `/dev/pts`.
 
 ### Cómo Implementarlo en el Proyecto
 
-#### 1. Crear un servidor de Socket Local en Java o C++
-En lugar de abrir descriptores PTY (`createPty()`), se instancia un `ServerSocket` en un puerto local efímero:
-
+#### 1. Instanciar un servidor local en Java
 ```java
 // En UsbController / PtyBridge:
 ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
 int localPort = serverSocket.getLocalPort();
 
-// Aceptar la conexión entrante de flashrom:
+// Aceptar la conexión de flashrom:
 Socket clientSocket = serverSocket.accept();
-clientSocket.setTcpNoDelay(true); // Desactivar algoritmo de Nagle para latencia mínima
+clientSocket.setTcpNoDelay(true); // Desactivar Nagle para latencia ultra-baja
 InputStream socketIn = clientSocket.getInputStream();
 OutputStream socketOut = clientSocket.getOutputStream();
 ```
 
-#### 2. Pasar el parámetro a `flashrom`
-En `UsbController.java`, ajustar el constructor de parámetros para usar la sintaxis IP de serprog:
-
+#### 2. Ajustar el parámetro de flashrom en `UsbController.java`
 ```java
 public String buildProgrammerParam(String programmer, int localPort) {
     if ("serprog".equals(programmer)) {
@@ -107,33 +147,27 @@ public String buildProgrammerParam(String programmer, int localPort) {
 }
 ```
 
-El puente ahora simplemente reenvía bytes entre el socket local y el dispositivo USB, eliminando los fallos asociados a `dummySlaveFd`, control de flujo de terminales y reseteos del PTY.
-
 ---
 
 ## Solución 3: Puente 100% Nativo en C/C++ (Cero Java en el Flujo de Datos)
 
 ### El Porqué
-En la arquitectura actual, cada bloque de datos que entra o sale del microchip debe cruzar la frontera entre el entorno nativo y la máquina virtual Java:
-- La máquina virtual ART de Android añade sobrecarga por cambio de contexto (*context switching*) y comprobaciones de límites en cada llamada JNI repetitiva.
-- Si el hilo de Java se demora unos milisegundos debido a la actividad de la interfaz de usuario o servicios del sistema, la cola del programador se vacía o se satura.
+En programadores serie (`serprog`), los datos actualmente realizan este ciclo:
+`Hardware ↔ Kernel ↔ UsbRequest (Java) ↔ JNI ↔ Master PTY / Socket ↔ flashrom (C)`
 
-Tras solicitar y obtener el permiso USB desde Android en Java, es posible extraer el descriptor de archivo nativo (`usbConnection.getFileDescriptor()`) y transferirle el control absoluto de la comunicación a un hilo POSIX nativo en C++.
+Cada cambio de contexto entre Java y el código nativo genera micro-demoras. Moviendo el bucle de transporte a C++ en `native-lib.cpp`, Java solo solicita el permiso USB y entrega el File Descriptor (`usbConnection.getFileDescriptor()`). A partir de ahí, un hilo worker en C++ se encarga del intercambio directo.
 
 ### Cómo Implementarlo en el Proyecto
 
-#### 1. Iniciar el puente desde Java pasando solo los descriptores
+#### 1. Arrancar el puente nativo pasando los descriptores
 ```java
 int usbFd = currentConnection.getFileDescriptor();
-int masterFd = this.masterFd; // o el FD del socket local
+int commFd = this.masterFd; // o el descriptor del socket local
 
-// Arrancar hilo nativo en segundo plano
-startNativeUsbBridge(usbFd, masterFd, endpointIn.getAddress(), endpointOut.getAddress());
+startNativeUsbBridge(usbFd, commFd, endpointIn.getAddress(), endpointOut.getAddress());
 ```
 
-#### 2. Lógica del bucle de I/O en `native-lib.cpp`
-En C++, se crea un hilo worker que utiliza la llamada del sistema `poll()` o `epoll()` para multiplexar el descriptor USB y el descriptor PTY/Socket:
-
+#### 2. Bucle multiplexado en `native-lib.cpp`
 ```cpp
 #include <poll.h>
 #include <linux/usbdevice_fs.h>
@@ -142,20 +176,20 @@ En C++, se crea un hilo worker que utiliza la llamada del sistema `poll()` o `ep
 void* nativeBridgeThread(void* arg) {
     BridgeArgs* args = (BridgeArgs*) arg;
     struct pollfd fds[2];
-    fds[0].fd = args->ptyMasterFd;
+    fds[0].fd = args->commFd; // Descriptor PTY o Socket TCP
     fds[0].events = POLLIN;
-    fds[1].fd = args->usbFd;
+    fds[1].fd = args->usbFd;  // Descriptor nativo USB
     fds[1].events = POLLIN;
 
     uint8_t buffer[4096];
 
     while (args->running) {
-        int ret = poll(fds, 2, 50); // Timeout de 50ms
+        int ret = poll(fds, 2, 50); // Espera activa por interrupciones
         if (ret <= 0) continue;
 
-        // 1. Datos desde flashrom hacia USB
+        // 1. flashrom -> USB
         if (fds[0].revents & POLLIN) {
-            ssize_t n = read(args->ptyMasterFd, buffer, sizeof(buffer));
+            ssize_t n = read(args->commFd, buffer, sizeof(buffer));
             if (n > 0) {
                 struct usbdevfs_bulktransfer bulk;
                 bulk.ep = args->outEndpoint;
@@ -166,7 +200,7 @@ void* nativeBridgeThread(void* arg) {
             }
         }
 
-        // 2. Datos desde USB hacia flashrom
+        // 2. USB -> flashrom
         if (fds[1].revents & POLLIN) {
             struct usbdevfs_bulktransfer bulk;
             bulk.ep = args->inEndpoint;
@@ -174,7 +208,7 @@ void* nativeBridgeThread(void* arg) {
             bulk.timeout = 100;
             bulk.data = buffer;
             if (ioctl(args->usbFd, USBDEVFS_BULK, &bulk) >= 0 && bulk.len > 0) {
-                write(args->ptyMasterFd, buffer, bulk.len);
+                write(args->commFd, buffer, bulk.len);
             }
         }
     }
@@ -182,15 +216,25 @@ void* nativeBridgeThread(void* arg) {
 }
 ```
 
-### Beneficios Clave de la Solución 3:
-1. **Latencia a nivel de microsegundos:** La transmisión ocurre en código de máquina compilado, igualando la velocidad de una máquina Linux de escritorio.
-2. **Inmunidad absoluta al Garbage Collector:** La JVM puede pausar o gestionar vistas sin que la comunicación USB sufra el más mínimo retardo.
-3. **Consumo mínimo de CPU y batería:** `poll()` duerme el hilo en el kernel hasta que hay datos disponibles por interrupción de hardware.
+---
+
+## Resumen de Aplicabilidad: ¿Qué aplica a cada parte?
+
+| Componente | ¿Aplica? | Técnica Recomendada |
+| :--- | :--- | :--- |
+| **USB Nativo `libusb` (CH341A, ST-LINK, J-Link, FT2232H)** | Ya va en C nativo a máxima velocidad | Usar **Foreground Service + WakeLock** para evitar que Android suspenda la CPU o corte la energía USB. |
+| **USB Serie (`serprog` / Arduino / CH340)** | Sí (crítico) | Aplicar **Solución 1** (`ByteBuffer.allocateDirect`) y **Solución 2** (Socket Local `127.0.0.1`). |
+| **Visor Hexadecimal (`HexViewerActivity`)** | Sí (crítico) | Aplicar **Mapeo `mmap` (`MappedByteBuffer`)** para abrir ROMs gigantes en 0 ms con 0 MB de consumo de RAM. |
+| **Exportación a Descargas (`FileManager`)** | Sí | Aplicar **`FileChannel.transferTo()`** (syscall `sendfile`). |
 
 ---
 
-## Hoja de Ruta de Implementación Recomendada
+## Hoja de Ruta de Implementación
 
-1. **Fase 1 (Inmediata / Bajo impacto):** Implementar la **Solución 1** (`ByteBuffer.allocateDirect`) en `PtyBridge.java` y `native-lib.cpp`. Es compatible con la estructura actual y elimina las copias innecesarias de memoria.
-2. **Fase 2 (Medio plazo / Mayor estabilidad):** Migrar de PTY a Socket TCP Local (**Solución 2**), desacoplándose de los problemas de asignación de terminales `/dev/pts`.
-3. **Fase 3 (Largo plazo / Máximo rendimiento):** Consolidar el puente nativo en C++ (**Solución 3**), logrando paridad completa de rendimiento con herramientas de escritorio.
+1. **Paso 1 (Inmediato - Sin romper nada):**
+   - Implementar `MappedByteBuffer` en `HexViewerActivity` para que el visor hexagonal vuele sin importar el tamaño del archivo.
+   - Usar `FileChannel.transferTo()` en `FileManager` para exportaciones zero-copy.
+2. **Paso 2 (Optimización del puente serie):**
+   - Migrar `PtyBridge.java` a `ByteBuffer.allocateDirect` con JNI directo.
+3. **Paso 3 (Arquitectura definitiva de alta velocidad):**
+   - Reemplazar PTY por Socket Local `serprog:ip=127.0.0.1:puerto`.
