@@ -218,41 +218,85 @@ void* nativeBridgeThread(void* arg) {
 
 ---
 
+## Estrategia Dual: Mantener PTY en C++ y Dar la Opción al Usuario en la UI
+
+Si deseas conservar el soporte de **Pseudoterminal (PTY)** pero potenciado con C++ y además ofrecer el nuevo modo de **Socket TCP Local**, es completamente viable y altamente recomendado:
+
+### La Belleza de POSIX: El mismo motor C++ sirve para ambos modos
+En el kernel de Linux, **"todo es un descriptor de archivo" (`int fd`)**:
+* El extremo maestro del PTY (`masterFd`) es un descriptor de archivo.
+* El socket TCP local (`clientSocketFd`) es exactamente otro descriptor de archivo.
+
+La función nativa en C++ `nativeBridgeThread()` **no necesita duplicarse ni cambiar una sola línea**:
+* Si el usuario elige modo Socket: `args->commFd = socketFd;`
+* Si el usuario elige modo PTY: `args->commFd = masterPtyFd;`
+
+En ambos casos, las llamadas `poll()`, `read()` y `write()` en C++ se comportan con idéntica eficiencia y latencia de microsegundos.
+
+---
+
+### Cómo Implementar la Elección del Usuario en la UI
+
+#### 1. Configuración en la Interfaz (`ProgrammerSettingsActivity.java`)
+En la pantalla de ajustes de programador, se añade un selector (RadioGroup o Switch) para programadores de tipo serial:
+
+```java
+// Opciones en la UI:
+// [●] Socket TCP Local (127.0.0.1) - Recomendado (Mayor velocidad y estabilidad)
+// [○] Pseudoterminal PTY (/dev/pts) - Modo Clásico (Motor C++ optimizado)
+
+SharedPreferences prefs = getSharedPreferences("flashrom_prefs", MODE_PRIVATE);
+prefs.edit().putString("serprog_transport_mode", isSocket ? "socket" : "pty").apply();
+```
+
+#### 2. Despacho Dinámico en `UsbController.java`
+Al iniciar una operación con un dispositivo serial (`serprog`, `buspirate_spi`, `spidriver`), se consulta la preferencia guardada:
+
+```java
+String transportMode = prefs.getString("serprog_transport_mode", "socket"); // "socket" por defecto
+
+if ("socket".equals(transportMode)) {
+    // Modo Socket TCP: Inicia servidor local y pasa parámetro IP a flashrom
+    int port = startLocalSocketBridge(device);
+    return "serprog:ip=127.0.0.1:" + port;
+} else {
+    // Modo PTY: Inicia el PTY optimizado con motor C++ y pasa parámetro dev
+    String ptyPath = startOptimizedPtyBridge(device);
+    return "serprog:dev=" + ptyPath + ":" + baudRate;
+}
+```
+
+### Ventajas de la Estrategia Dual:
+1. **Cero riesgo de regresión:** No se pierde la compatibilidad histórica del PTY, pero ahora funciona sin los bloqueos de Java gracias al motor en C++.
+2. **Control técnico total:** Si en algún dispositivo o clon de Arduino el PTY presenta ventajas de sincronización, el usuario puede alternarlo con un toque.
+3. **Transparencia y satisfacción del usuario:** El usuario avanzado puede experimentar y comparar la velocidad de ambos métodos en tiempo real.
+
+---
+
 ## Sinergia de Soluciones: ¿Se pueden aplicar las tres a la vez?
 
-**Sí, y de hecho juntas forman la arquitectura definitiva de alto rendimiento.** No son opciones que compitan entre sí, sino piezas complementarias de un único sistema integrado:
+**Sí, encajan como piezas de un único sistema modular:**
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                   LA ARQUITECTURA PERFECTA INTEGRADA                  │
+│                   LA ARQUITECTURA INTEGRADA DUAL                      │
 ├────────────────────────────────────────────────────────────────────────┤
-│ 1. flashrom se conecta por Socket Local:                               │
-│    flashrom -p serprog:ip=127.0.0.1:9999    (Solución 2: Reemplaza PTY)│
+│ 1. Selección de Transporte en la UI:                                   │
+│    • Opción A (Socket): flashrom -p serprog:ip=127.0.0.1:puerto        │
+│    • Opción B (PTY):    flashrom -p serprog:dev=/dev/pts/X:baud        │
 │                               ▲                                        │
-│                               │ Tráfico binario directo en RAM         │
+│                               │ Flujo bidireccional en RAM             │
 │                               ▼                                        │
-│ 2. Un hilo en C++ nativo mueve los datos:                              │
-│    Socket (127.0.0.1) ◄───[C++ / poll]───► USB Hardware (FD)           │
-│    (Solución 3: Cero pausas de Java en la comunicación serie)          │
+│ 2. Un único hilo nativo en C++ mueve los datos:                        │
+│    commFd (Socket o PTY) ◄───[C++ / poll]───► USB Hardware (FD)       │
+│    (Cero pausas de Java en la comunicación serie)                      │
 │                                                                        │
 │ 3. La memoria de archivos y visor vuela:                               │
 │    • Visor Hexadecimal: usa mmap (MappedByteBuffer)                    │
 │    • Exportar a Descargas: usa sendfile (transferTo)                   │
-│    (Solución 1: Cero arrays byte[], cero OutOfMemoryError)             │
+│    (Cero arrays byte[], cero OutOfMemoryError)                         │
 └────────────────────────────────────────────────────────────────────────┘
 ```
-
-### ¿Tiene sentido mantener el PTY si usamos el Socket Local?
-**No, queda 100% obsoleto y debe eliminarse.**
-
-El PTY (`/dev/pts/X`) y el Socket Local (`127.0.0.1:puerto`) son dos mecanismos alternativos para resolver exactamente la misma necesidad: comunicarle a `flashrom` los bytes del programador `serprog`.
-* Si se implementa el **Socket Local**, todo el código complejo de `createPty()`, `/dev/pts/X`, `dummySlaveFd`, `writeFd`, `readFd` y las configuraciones de terminal se eliminan por completo del proyecto.
-* El Socket Local es superior en todos los aspectos: maneja búferes de red en la RAM del kernel, no impone disciplinas de terminal ni límites estrechos de 4 KB, y es la forma oficial recomendada por el equipo de `flashrom`.
-
-### Cómo encajan las tres piezas en la app final:
-1. **El Socket TCP Local (Solución 2)** es la **vía de comunicación** entre tu app y `flashrom`.
-2. **El puente en C++ (Solución 3)** es el **motor** que transfiere datos entre el hardware USB y ese Socket a velocidad nativa sin tocar la JVM.
-3. **La memoria directa y mmap (Solución 1)** es el **cerebro de almacenamiento**, gestionando los archivos leídos/escritos en disco, el visor hexadecimal y las exportaciones sin consumir RAM ni disparar el Garbage Collector.
 
 ---
 
@@ -261,7 +305,7 @@ El PTY (`/dev/pts/X`) y el Socket Local (`127.0.0.1:puerto`) son dos mecanismos 
 | Componente | ¿Aplica? | Técnica Recomendada |
 | :--- | :--- | :--- |
 | **USB Nativo `libusb` (CH341A, ST-LINK, J-Link, FT2232H)** | Ya va en C nativo a máxima velocidad | Usar **Foreground Service + WakeLock** para evitar que Android suspenda la CPU o corte la energía USB. |
-| **USB Serie (`serprog` / Arduino / CH340)** | Sí (crítico) | Aplicar **Solución 2** (Socket Local `127.0.0.1`) + **Solución 3** (Motor en C++ nativo) eliminando el PTY. |
+| **USB Serie (`serprog` / Arduino / CH340)** | Sí (crítico) | Ofrecer en UI **Socket Local `127.0.0.1`** (por defecto) y **PTY optimizado**, ambos propulsados por el motor en C++ nativo. |
 | **Visor Hexadecimal (`HexViewerActivity`)** | Sí (crítico) | Aplicar **Mapeo `mmap` (`MappedByteBuffer`)** para abrir ROMs gigantes en 0 ms con 0 MB de consumo de RAM. |
 | **Exportación a Descargas (`FileManager`)** | Sí | Aplicar **`FileChannel.transferTo()`** (syscall `sendfile`). |
 
@@ -269,10 +313,11 @@ El PTY (`/dev/pts/X`) y el Socket Local (`127.0.0.1:puerto`) son dos mecanismos 
 
 ## Hoja de Ruta de Implementación
 
-1. **Paso 1 (Inmediato - Sin romper nada):**
+1. **Paso 1 (Inmediato - Sin tocar USB):**
    - Implementar `MappedByteBuffer` en `HexViewerActivity` para que el visor hexagonal vuele sin importar el tamaño del archivo.
    - Usar `FileChannel.transferTo()` en `FileManager` para exportaciones zero-copy.
-2. **Paso 2 (Optimización del puente serie):**
-   - Reemplazar PTY por Socket Local `serprog:ip=127.0.0.1:puerto` (**Solución 2**) y eliminar el código de `/dev/pts`.
-3. **Paso 3 (Arquitectura definitiva de alta velocidad):**
-   - Conectar el USB con el Socket Local directamente desde un worker thread en C++ (**Solución 3**).
+2. **Paso 2 (Motor C++ para PTY):**
+   - Mover el bucle de I/O de `PtyBridge.java` a la función `nativeBridgeThread()` en `native-lib.cpp`, eliminando las pausas de Java en el PTY actual.
+3. **Paso 3 (Añadir Socket Local y Selector en UI):**
+   - Añadir la opción de Socket TCP Local conectada a la misma función `nativeBridgeThread()`.
+   - Incorporar el selector en `ProgrammerSettingsActivity` para que el usuario decida libremente entre Socket y PTY.
