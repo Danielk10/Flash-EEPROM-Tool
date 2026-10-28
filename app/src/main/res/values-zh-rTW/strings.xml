@@ -422,11 +422,9 @@ MD5 B：%5$s</string>
     <string name="str_chip_cleared_toast">晶片型號已重置為自動</string>
     <string name="str_detected_chips_label">最近檢測到的晶片：</string>
     <string name="str_custom_chip_option">✏️ 手動輸入晶片型號...</string>
-    <string name="menu_language">🌐 語言 / Language / Idioma</string>
-    <string name="str_select_language_title">選擇語言</string>
-    <string name="str_lang_system">系統預設</string>
-    <string name="str_lang_en">English</string>
-    <string name="str_lang_es">Español</string>
-    <string name="str_lang_zh_cn">簡體中文 (Simplified Chinese)</string>
-    <string name="str_lang_zh_tw">繁體中文 (Traditional Chinese)</string>
+    <string name="str_spi_speed_title">SPI 時鐘頻率 (CH347T/F)</string>
+    <string name="str_spi_speed_warning">自動套用於 GUI 指令。30/60 MHz 可能因晶片、線材品質與接線而不穩定；若出現錯誤，請使用 15 MHz。</string>
+    <string name="str_spi_speed_15">15 MHz（預設，安全）</string>
+    <string name="str_spi_speed_30">30 MHz（快速）</string>
+    <string name="str_spi_speed_60">60 MHz（最高）</string>
 </resources>

@@ -17,6 +17,56 @@
     <usb-device
         vendor-id="1027"
         product-id="24597" /> <!-- 0x6015: FT230X, FT231X, FT234XD -->
+    <usb-device
+        vendor-id="1027"
+        product-id="24641" /> <!-- 0x6041: FT4233H -->
+    <usb-device
+        vendor-id="1027"
+        product-id="35480" /> <!-- 0x8a98: TIAO TUMPA -->
+    <usb-device
+        vendor-id="1027"
+        product-id="35481" /> <!-- 0x8a99: TIAO TUMPA Lite -->
+    <usb-device
+        vendor-id="1027"
+        product-id="48098" /> <!-- 0xbbe2: Kristech KT-LINK -->
+    <usb-device
+        vendor-id="1027"
+        product-id="53240" /> <!-- 0xcff8: Amontec JTAGkey -->
+
+    <!-- 0x096C / 0x1449: GOEPEL PicoTAP -->
+    <usb-device
+        vendor-id="2412"
+        product-id="5193" />
+
+    <!-- 0x1457 / 0x5118: FIC OpenMoko debug board -->
+    <usb-device
+        vendor-id="5207"
+        product-id="20760" />
+
+    <!-- 0x15BA: Olimex ARM-USB-OCD/TINY -->
+    <usb-device
+        vendor-id="5562"
+        product-id="3" /> <!-- 0x0003: ARM-USB-OCD -->
+    <usb-device
+        vendor-id="5562"
+        product-id="4" /> <!-- 0x0004: ARM-USB-TINY -->
+    <usb-device
+        vendor-id="5562"
+        product-id="42" /> <!-- 0x002a: ARM-USB-TINY-H -->
+    <usb-device
+        vendor-id="5562"
+        product-id="43" /> <!-- 0x002b: ARM-USB-OCD-H -->
+
+    <!-- 0x18D1: Google Servo debug boards -->
+    <usb-device
+        vendor-id="6353"
+        product-id="20481" /> <!-- 0x5001: Servo -->
+    <usb-device
+        vendor-id="6353"
+        product-id="20482" /> <!-- 0x5002: Servo V2 legacy -->
+    <usb-device
+        vendor-id="6353"
+        product-id="20483" /> <!-- 0x5003: Servo V2 -->
 
     <!-- 0x10C4 / 0xEA??: Silabs CP210x -->
     <usb-device
@@ -68,7 +118,10 @@
         product-id="21795" /> <!-- 0x5523: CH347 / CH341 UART -->
     <usb-device
         vendor-id="6790"
-        product-id="21979" /> <!-- 0x55db: CH347 SPI (Mode 3) -->
+        product-id="21979" /> <!-- 0x55db: CH347T SPI (Mode 3) -->
+    <usb-device
+        vendor-id="6790"
+        product-id="21982" /> <!-- 0x55de: CH347F SPI -->
     <usb-device
         vendor-id="6790"
         product-id="21972" /> <!-- 0x55d4: CH9102F -->
@@ -114,9 +167,8 @@
     <usb-device vendor-id="1155" product-id="56026" /> <!-- 0xdada: Dediprog SF100 -->
     <usb-device vendor-id="1155" product-id="56032" /> <!-- 0xdae0: Dediprog SF600 -->
 
-    <!-- SEGGER J-Link -->
-    <usb-device vendor-id="4966" product-id="257" /> <!-- 0x1366 / 0x0101: J-Link -->
-    <usb-device vendor-id="4966" product-id="261" /> <!-- 0x1366 / 0x0105: J-Link Ultra -->
+    <!-- SEGGER J-Link: libjaylink reconoce todos los modelos/PID -->
+    <usb-device vendor-id="4966" />
     <usb-device vendor-id="8137" product-id="12" />  <!-- 0x1fc9 / 0x000c: J-Link OpenSDA -->
 
     <!-- Microchip PICkit 2 -->

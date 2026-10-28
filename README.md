@@ -36,11 +36,11 @@ Flash SPI Tool implementa una arquitectura de comunicación dual de alta fidelid
 
 | Programador | Modo de Conexión | Identificador USB (VID:PID) | Descripción Técnica y Características |
 |---|---|---|---|
-| **CH341A (Black / Green)** | TCP Bridge Socket / USB Directo | `1a86:5512`<br>`1a86:5523`<br>`1a86:55db` (CH347) | Clásico programador SPI/I2C de bajo costo. Utiliza un bridge nativo con sockets TCP locales y descriptores `libusb` inyectados vía `ANDROID_USB_FD` con herencia despojada de `O_CLOEXEC`. |
+| **CH341A / CH347T / CH347F** | TCP Bridge Socket / USB Directo | `1a86:5512` (CH341A)<br>`1a86:5523`<br>`1a86:55db` (CH347T)<br>`1a86:55de` (CH347F) | Programadores SPI/I2C de bajo costo. CH347T/F aceptan la frecuencia SPI seleccionable en la app (`spispeed=15M/30M/60M`). Usa un bridge nativo con sockets TCP locales y descriptores `libusb` inyectados vía `ANDROID_USB_FD` con herencia despojada de `O_CLOEXEC`. |
 | **Serprog (RP2040, Arduino, STM32)** | Pseudo-Terminal PTY / Socket TCP | `2341:0043` / `0001` (Arduino)<br>`1a86:7523` (CH340)<br>`10c4:ea60` (CP2102)<br>`067b:2303` (PL2303) | Protocolo serie estándar configurado de forma fija y transparente a **115.200 baudios** para compatibilidad 100% garantizada con el firmware Arduino oficial (`frser-arduino`), Raspberry Pi Pico y microcontroladores compatibles, con sincronización de beacon `0xAA 0x55`. |
 | **Bus Pirate (v3 / v4)** | PTY Serial Bridge | `0403:6001` (FTDI) | Dispositivo multiprotocolo. Conmutación automática a modo binario `BBIO` y control directo de líneas SPI mediante pseudo-terminales dedicados. |
 | **SPIDriver** | PTY Serial Bridge | `0403:6015` / FTDI Serial | Herramienta de desarrollo SPI a 460.800 baudios con soporte de protocolo binario/ASCII, validación de eco `e` y control granular de Chip Select. |
-| **Programadores USB Directos Adicionales** | libusb Nativa Parcheada | FTDI FT2232H/FT4232H/FT232H, ST-Link v3, Segger J-Link, Dediprog SF100/SF600, Pickit2, USB-Blaster | Operación directa mediante invocación nativa y bypass de permisos de kernel. |
+| **Programadores USB Directos Adicionales** | libusb Nativa Parcheada | FTDI FT2232H/FT4232H/FT232H/FT4233H, TIAO TUMPA, Olimex ARM-USB, GOEPEL PicoTAP, ST-Link v3, Segger J-Link (cualquier PID), Dediprog SF100/SF600, Pickit2, USB-Blaster | Operación directa mediante invocación nativa y bypass de permisos de kernel. |
 
 ```
                                ┌─────────────────────────┐

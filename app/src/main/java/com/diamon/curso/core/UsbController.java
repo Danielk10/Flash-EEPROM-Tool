@@ -58,12 +58,27 @@ public class UsbController {
         // CH341A SPI
         put("1a86:5512", "ch341a_spi");
         put("1a86:5523", "ch347_spi"); // ch347 SPI/I2C/UART
-        put("1a86:55db", "ch347_spi"); // ch347 SPI (Mode 3)
-        // FT2232H / FT4232H / FT232H (VID 0403)
+        put("1a86:55db", "ch347_spi"); // CH347T SPI (Mode 3)
+        put("1a86:55de", "ch347_spi"); // CH347F SPI
+        // FT2232H / FT4232H / FT232H / FT4233H y placas FTDI compatibles
         put("0403:6010", "ft2232_spi");
         put("0403:6011", "ft2232_spi");
         put("0403:6014", "ft2232_spi");
         put("0403:6015", "ft2232_spi");
+        put("0403:6041", "ft2232_spi"); // FT4233H
+        put("0403:8a98", "ft2232_spi"); // TIAO TUMPA
+        put("0403:8a99", "ft2232_spi"); // TIAO TUMPA Lite
+        put("0403:bbe2", "ft2232_spi"); // Kristech KT-LINK
+        put("0403:cff8", "ft2232_spi"); // Amontec JTAGkey
+        put("096c:1449", "ft2232_spi"); // GOEPEL PicoTAP
+        put("1457:5118", "ft2232_spi"); // FIC OpenMoko debug board
+        put("15ba:0003", "ft2232_spi"); // Olimex ARM-USB-OCD
+        put("15ba:0004", "ft2232_spi"); // Olimex ARM-USB-TINY
+        put("15ba:002a", "ft2232_spi"); // Olimex ARM-USB-TINY-H
+        put("15ba:002b", "ft2232_spi"); // Olimex ARM-USB-OCD-H
+        put("18d1:5001", "ft2232_spi"); // Google Servo
+        put("18d1:5002", "ft2232_spi"); // Google Servo V2 legacy
+        put("18d1:5003", "ft2232_spi"); // Google Servo V2
         // Bus Pirate
         put("0403:6001", "buspirate_spi");
         // ST-LINK
@@ -90,12 +105,30 @@ public class UsbController {
         put("1443:0007", "digilent_spi");
         // DirtyJTAG
         put("1209:c0ca", "dirtyjtag_spi");
-        // Serprog
-        put("2341:0043", "serprog");
-        put("2341:0001", "serprog");
-        put("1a86:7523", "serprog");
-        put("10c4:ea60", "serprog");
-        put("067b:2303", "serprog");
+        // Serprog (adaptadores USB-serie; el firmware debe implementar serprog)
+        put("2341:0043", "serprog"); // Arduino Uno
+        put("2341:0001", "serprog"); // Arduino
+        put("16c0:0483", "serprog"); // Teensy
+        put("03eb:2044", "serprog"); // Atmel LUFA
+        put("1eaf:0004", "serprog"); // LeafLabs Maple
+        put("0d28:0204", "serprog"); // ARM mbed
+        put("0483:5740", "serprog"); // STM32 virtual COM port
+        put("2e8a:0005", "serprog"); // Raspberry Pi Pico (MicroPython)
+        put("2e8a:000a", "serprog"); // Raspberry Pi Pico SDK
+        put("1a86:7523", "serprog"); // CH340
+        put("1a86:55d4", "serprog"); // CH9102F
+        put("10c4:ea60", "serprog"); // CP2102
+        put("10c4:ea70", "serprog"); // CP2105
+        put("10c4:ea71", "serprog"); // CP2108
+        put("067b:2303", "serprog"); // PL2303
+        put("067b:23a3", "serprog"); // PL2303GC
+        put("067b:23b3", "serprog"); // PL2303GB
+        put("067b:23c3", "serprog"); // PL2303GT
+        put("067b:23d3", "serprog"); // PL2303GL
+        put("067b:23e3", "serprog"); // PL2303GE
+        put("067b:23f3", "serprog"); // PL2303GS
+        put("067b:2323", "serprog"); // PL2303 variant
+        put("067b:2304", "serprog"); // PL2303 variant
     }};
 
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
@@ -186,13 +219,7 @@ public class UsbController {
         // Auto-selección lógica
         for (UsbDevice device : candidates) {
             String key = String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId());
-            String autoProg = null;
-            String prodName = device.getProductName();
-            if (prodName != null && prodName.toLowerCase(Locale.US).contains("spidriver")) {
-                autoProg = "spidriver";
-            } else if (USB_AUTO_MAP.containsKey(key)) {
-                autoProg = USB_AUTO_MAP.get(key);
-            }
+            String autoProg = resolveAutoProgrammer(device);
             if (autoProg != null) {
                 onProgrammerAutoSelected.onSelected(autoProg);
                 callback.log(activity.getString(R.string.str_auto_detect_recognized, key, autoProg));
@@ -270,6 +297,26 @@ public class UsbController {
                 + String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId());
     }
 
+    private static String resolveAutoProgrammer(UsbDevice device) {
+        if (device == null) {
+            return null;
+        }
+        String productName = device.getProductName();
+        if (productName != null && productName.toLowerCase(Locale.US).contains("spidriver")) {
+            return "spidriver";
+        }
+        String key = String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId());
+        String mapped = USB_AUTO_MAP.get(key);
+        if (mapped != null) {
+            return mapped;
+        }
+        // libjaylink reconoce cualquier J-Link de SEGGER, no solo los PID listados.
+        if (device.getVendorId() == 0x1366) {
+            return "jlink_spi";
+        }
+        return null;
+    }
+
     private void connectToDevice(UsbDevice device) {
         if (usbManager == null) {
             callback.log(activity.getString(R.string.str_error) + ": " + activity.getString(R.string.str_err_usb_host_not_supported));
@@ -288,12 +335,8 @@ public class UsbController {
         String deviceName = device.getProductName() == null ? activity.getString(R.string.str_usb_device) : device.getProductName();
         String vidPid = String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId());
 
-        boolean isRecognized = USB_AUTO_MAP.containsKey(vidPid);
-        String autoProg = isRecognized ? USB_AUTO_MAP.get(vidPid) : null;
-        if (deviceName != null && deviceName.toLowerCase(Locale.US).contains("spidriver")) {
-            autoProg = "spidriver";
-            isRecognized = true;
-        }
+        String autoProg = resolveAutoProgrammer(device);
+        boolean isRecognized = autoProg != null;
 
         callback.onDeviceConnected(deviceName, currentFd, vidPid, isRecognized, autoProg);
 

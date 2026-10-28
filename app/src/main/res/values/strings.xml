@@ -355,11 +355,9 @@
     <string name="str_chip_cleared_toast">Chip model reset to Auto</string>
     <string name="str_detected_chips_label">Recently detected chips:</string>
     <string name="str_custom_chip_option">✏️ Enter custom chip model...</string>
-    <string name="menu_language">🌐 Language / 语言 / Idioma</string>
-    <string name="str_select_language_title">Select Language</string>
-    <string name="str_lang_system">System Default</string>
-    <string name="str_lang_en">English</string>
-    <string name="str_lang_es">Español</string>
-    <string name="str_lang_zh_cn">简体中文 (Simplified Chinese)</string>
-    <string name="str_lang_zh_tw">繁體中文 (Traditional Chinese)</string>
+    <string name="str_spi_speed_title">SPI clock frequency (CH347T/F)</string>
+    <string name="str_spi_speed_warning">Applied automatically to GUI commands. 30/60 MHz may be unstable depending on the chip, cable quality and wiring; use 15 MHz if errors occur.</string>
+    <string name="str_spi_speed_15">15 MHz (default, safe)</string>
+    <string name="str_spi_speed_30">30 MHz (fast)</string>
+    <string name="str_spi_speed_60">60 MHz (maximum)</string>
 </resources>

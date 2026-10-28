@@ -1,9 +1,12 @@
 package com.diamon.curso.ui.activities;
 
 import com.diamon.curso.R;
+import com.diamon.curso.core.SpiSpeed;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -30,8 +33,10 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
     };
 
     private Spinner spinnerProgrammer;
+    private Spinner spinnerSpiSpeed;
     private EditText etProgrammerParam;
     private Button btnSaveProgrammer;
+    private View layoutSpiSpeed;
     private android.widget.RadioGroup rgSerprogTransport;
     private android.widget.RadioButton rbTransportSocket;
     private android.widget.RadioButton rbTransportPty;
@@ -46,6 +51,8 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
         etProgrammerParam = findViewById(R.id.etProgrammerParam);
         btnSaveProgrammer = findViewById(R.id.btnSaveProgrammer);
         spinnerProgrammer = findViewById(R.id.spinnerProgrammer);
+        spinnerSpiSpeed = findViewById(R.id.spinnerSpiSpeed);
+        layoutSpiSpeed = findViewById(R.id.layoutSpiSpeed);
         rgSerprogTransport = findViewById(R.id.rgSerprogTransport);
         rbTransportSocket = findViewById(R.id.rbTransportSocket);
         rbTransportPty = findViewById(R.id.rbTransportPty);
@@ -53,6 +60,39 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         String current = prefs.getString(KEY_PROGRAMMER, "ch341a_spi");
         etProgrammerParam.setText(current);
+
+        String[] speedLabels = {
+                getString(R.string.str_spi_speed_15),
+                getString(R.string.str_spi_speed_30),
+                getString(R.string.str_spi_speed_60)
+        };
+        ArrayAdapter<String> speedAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, speedLabels);
+        speedAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        spinnerSpiSpeed.setAdapter(speedAdapter);
+
+        String savedSpeed = SpiSpeed.normalize(prefs.getString(SpiSpeed.PREF_KEY, SpiSpeed.DEFAULT));
+        for (int i = 0; i < SpiSpeed.OPTIONS.length; i++) {
+            if (SpiSpeed.OPTIONS[i].equals(savedSpeed)) {
+                spinnerSpiSpeed.setSelection(i, false);
+                break;
+            }
+        }
+
+        etProgrammerParam.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                updateSpiSpeedVisibility();
+            }
+        });
+        updateSpiSpeedVisibility();
 
         String currentTransport = prefs.getString(com.diamon.curso.core.UsbController.KEY_SERPROG_TRANSPORT,
                 com.diamon.curso.core.UsbController.TRANSPORT_SOCKET);
@@ -86,14 +126,8 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
         }
 
         spinnerProgrammer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            private boolean isFirstLaunch = true;
-
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (isFirstLaunch) {
-                    isFirstLaunch = false;
-                    return; // Evitamos sobreescribir el etProgrammerParam al instanciar la actividad
-                }
                 etProgrammerParam.setText(SUPPORTED_PROGRAMMERS[position]);
             }
 
@@ -110,14 +144,27 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
             String selectedTransport = rbTransportPty.isChecked()
                     ? com.diamon.curso.core.UsbController.TRANSPORT_PTY
                     : com.diamon.curso.core.UsbController.TRANSPORT_SOCKET;
+            int speedPosition = spinnerSpiSpeed.getSelectedItemPosition();
+            String selectedSpeed = (speedPosition >= 0 && speedPosition < SpiSpeed.OPTIONS.length)
+                    ? SpiSpeed.OPTIONS[speedPosition]
+                    : SpiSpeed.DEFAULT;
 
             prefs.edit()
                     .putString(KEY_PROGRAMMER, value)
+                    .putString(SpiSpeed.PREF_KEY, selectedSpeed)
                     .putString(com.diamon.curso.core.UsbController.KEY_SERPROG_TRANSPORT, selectedTransport)
                     .apply();
 
             Toast.makeText(this, getString(R.string.str_saved, value), Toast.LENGTH_SHORT).show();
             finish();
         });
+    }
+
+    private void updateSpiSpeedVisibility() {
+        if (layoutSpiSpeed == null || etProgrammerParam == null) {
+            return;
+        }
+        boolean visible = SpiSpeed.supportsSpiSpeed(etProgrammerParam.getText().toString());
+        layoutSpiSpeed.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 }

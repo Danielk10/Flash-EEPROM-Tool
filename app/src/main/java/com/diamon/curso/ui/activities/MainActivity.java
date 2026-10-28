@@ -4,6 +4,7 @@ import com.diamon.curso.R;
 import com.diamon.curso.ads.MostrarPublicidad;
 import com.diamon.curso.billing.BillingManager;
 import com.diamon.curso.core.PtyBridge;
+import com.diamon.curso.core.SpiSpeed;
 import com.diamon.curso.core.UsbController;
 import com.diamon.curso.core.FlashromExecutor;
 import com.diamon.curso.ui.views.PinoutView;
@@ -52,8 +53,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.os.LocaleListCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -83,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_DUMMY_CHIP_INDEX = "dummy_chip_index";
     private static final String KEY_SELECTED_CHIP = "selected_chip";
 
-    private LinearLayout layoutChipSelector;
     private TextView tvSelectedChip;
     private Button btnSetChip;
     private ImageButton btnClearChip;
@@ -301,7 +299,6 @@ public class MainActivity extends AppCompatActivity {
         cbVerifyWrite = findViewById(R.id.cbVerifyWrite);
         etCustomCommand = findViewById(R.id.etCustomCommand);
 
-        layoutChipSelector = findViewById(R.id.layoutChipSelector);
         tvSelectedChip = findViewById(R.id.tvSelectedChip);
         btnSetChip = findViewById(R.id.btnSetChip);
         btnClearChip = findViewById(R.id.btnClearChip);
@@ -309,9 +306,6 @@ public class MainActivity extends AppCompatActivity {
         selectedChip = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_SELECTED_CHIP, "");
         updateChipSelectorUI();
 
-        if (layoutChipSelector != null) {
-            layoutChipSelector.setOnClickListener(v -> showChipSelectionDialog());
-        }
         if (btnSetChip != null) {
             btnSetChip.setOnClickListener(v -> showChipSelectionDialog());
         }
@@ -1233,6 +1227,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String[] effectiveArgs = list.toArray(new String[0]);
+
+        // Aplicar la frecuencia SPI solo a los comandos generados por la GUI.
+        // Los comandos escritos en la consola no pasan por executeFlashromTask().
+        String spiSpeed = getSharedPreferences(PREFS, MODE_PRIVATE)
+                .getString(SpiSpeed.PREF_KEY, SpiSpeed.DEFAULT);
+        for (int i = 0; i < effectiveArgs.length - 1; i++) {
+            if ("-p".equals(effectiveArgs[i])) {
+                effectiveArgs[i + 1] = SpiSpeed.applyToProgrammer(effectiveArgs[i + 1], spiSpeed);
+                i++;
+            }
+        }
+
         String[] resolvedArgs = effectiveArgs;
         PtyBridge ptyBridge = usbController.getPtyBridge();
         if (ptyBridge != null && ptyBridge.isOpen()) {
@@ -1499,9 +1505,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_export_serprog) {
             exportSerprogFirmware();
-            return true;
-        } else if (id == R.id.action_language) {
-            showLanguageSelectionDialog();
             return true;
         }
 
@@ -2134,56 +2137,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         executeFlashromTask(newArgs.toArray(new String[0]));
-    }
-
-    private void showLanguageSelectionDialog() {
-        String[] options = {
-                getString(R.string.str_lang_system),
-                getString(R.string.str_lang_en),
-                getString(R.string.str_lang_es),
-                getString(R.string.str_lang_zh_cn),
-                getString(R.string.str_lang_zh_tw)
-        };
-
-        LocaleListCompat currentLocales = AppCompatDelegate.getApplicationLocales();
-        int checkedItem = 0;
-        if (!currentLocales.isEmpty()) {
-            String currentTag = currentLocales.get(0).toLanguageTag();
-            if (currentTag.startsWith("en")) {
-                checkedItem = 1;
-            } else if (currentTag.startsWith("es")) {
-                checkedItem = 2;
-            } else if (currentTag.contains("TW") || currentTag.contains("Hant")) {
-                checkedItem = 4;
-            } else if (currentTag.startsWith("zh")) {
-                checkedItem = 3;
-            }
-        }
-
-        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(R.string.str_select_language_title)
-                .setSingleChoiceItems(options, checkedItem, (dialog, which) -> {
-                    dialog.dismiss();
-                    switch (which) {
-                        case 0:
-                            AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList());
-                            break;
-                        case 1:
-                            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"));
-                            break;
-                        case 2:
-                            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("es"));
-                            break;
-                        case 3:
-                            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("zh-CN"));
-                            break;
-                        case 4:
-                            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("zh-TW"));
-                            break;
-                    }
-                })
-                .setNegativeButton(R.string.str_cancelar, null)
-                .show();
     }
 
     private void releaseWakeLockAndScreenOn() {

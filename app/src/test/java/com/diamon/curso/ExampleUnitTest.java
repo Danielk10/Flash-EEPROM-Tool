@@ -33,6 +33,13 @@ public class ExampleUnitTest {
         // CH347 SPI/I2C/UART
         assertEquals("ch347_spi", UsbController.USB_AUTO_MAP.get("1a86:5523"));
         assertEquals("ch347_spi", UsbController.USB_AUTO_MAP.get("1a86:55db"));
+        // CH347F SPI
+        assertEquals("ch347_spi", UsbController.USB_AUTO_MAP.get("1a86:55de"));
+        // Variantes FTDI compatibles con ft2232_spi
+        assertEquals("ft2232_spi", UsbController.USB_AUTO_MAP.get("0403:6041"));
+        assertEquals("ft2232_spi", UsbController.USB_AUTO_MAP.get("0403:8a98"));
+        assertEquals("ft2232_spi", UsbController.USB_AUTO_MAP.get("15ba:0003"));
+        assertEquals("ft2232_spi", UsbController.USB_AUTO_MAP.get("18d1:5001"));
         // Bus Pirate
         assertEquals("buspirate_spi", UsbController.USB_AUTO_MAP.get("0403:6001"));
         // Arduino Uno Serprog (VID:PID comunes de clones CH340 y oficiales)
