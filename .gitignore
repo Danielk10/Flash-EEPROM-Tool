@@ -47,3 +47,6 @@ buspirate_pty
 serprog_pty
 spidriver_pty
 mock_usb.bin
+
+__pycache__/
+*.pyc

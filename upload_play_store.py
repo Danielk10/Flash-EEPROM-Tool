@@ -12,6 +12,9 @@ def main():
     parser.add_argument('--track', default='production', help='The track to release on (e.g., production, beta, alpha, internal)')
     parser.add_argument('--release_notes', default='', help='Structured release notes for Spanish (es-419 and es-ES) using multiline bullet points (- Item)')
     parser.add_argument('--release_notes_en', default='', help='Structured release notes for English (en-US) using multiline bullet points (- Item)')
+    parser.add_argument('--release_notes_zh', default='', help='Structured release notes for Chinese Simplified (zh-CN) using multiline bullet points (- Item)')
+    parser.add_argument('--release_notes_zh_tw', default='', help='Structured release notes for Chinese Traditional (zh-TW) using multiline bullet points (- Item)')
+    parser.add_argument('--dry_run', action='store_true', help='Validate upload and track assignment without committing')
     
     args = parser.parse_args()
 
@@ -47,6 +50,11 @@ def main():
         if en_notes:
             release_notes_list.append({'language': 'en-US', 'text': en_notes})
 
+        if args.release_notes_zh:
+            release_notes_list.append({'language': 'zh-CN', 'text': args.release_notes_zh})
+            zh_tw = args.release_notes_zh_tw if args.release_notes_zh_tw else args.release_notes_zh
+            release_notes_list.append({'language': 'zh-TW', 'text': zh_tw})
+
         track_release = {
             'track': args.track,
             'releases': [{
@@ -63,6 +71,14 @@ def main():
             track=args.track,
             body=track_release
         ).execute()
+
+        if args.dry_run:
+            print("Validating the edit (dry-run mode)...")
+            service.edits().validate(editId=edit_id, packageName=args.package_name).execute()
+            print("Validation successful! Deleting edit to avoid committing.")
+            service.edits().delete(editId=edit_id, packageName=args.package_name).execute()
+            print("Dry-run completed successfully.")
+            return
 
         print("Committing the edit...")
         service.edits().commit(editId=edit_id, packageName=args.package_name).execute()
