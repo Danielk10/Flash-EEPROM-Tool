@@ -1,8 +1,10 @@
 package com.diamon.curso.billing;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -71,13 +73,14 @@ public class BillingManager implements PurchasesUpdatedListener {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final BillingClient billingClient;
     @Nullable
-    private BillingListener listener;
+    private volatile BillingListener listener;
     @Nullable
     private ProductDetails removeAdsDetails;
     private final Map<String, ProductDetails> availableProducts = new HashMap<>();
     private boolean isServiceConnected = false;
     private boolean isAdsRemovedCached = false;
     private long lastLaunchTimeMs = 0L;
+    private volatile boolean destroyed = false;
 
     public BillingManager(@NonNull Context context, @Nullable BillingListener listener) {
         this(context, listener, null);
@@ -122,6 +125,9 @@ public class BillingManager implements PurchasesUpdatedListener {
      * Inicia la conexión con el servicio de Google Play Billing.
      */
     public void startConnection() {
+        if (destroyed) {
+            return;
+        }
         if (billingClient.isReady()) {
             isServiceConnected = true;
             queryActivePurchases();
@@ -132,6 +138,10 @@ public class BillingManager implements PurchasesUpdatedListener {
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+                if (destroyed) {
+                    billingClient.endConnection();
+                    return;
+                }
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     isServiceConnected = true;
                     Log.d(TAG, "Billing client connected successfully.");
@@ -156,6 +166,9 @@ public class BillingManager implements PurchasesUpdatedListener {
      * Consulta los detalles de los productos in-app en Google Play.
      */
     public void queryProducts() {
+        if (destroyed) {
+            return;
+        }
         List<QueryProductDetailsParams.Product> productList = new ArrayList<>();
         productList.add(QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(PRODUCT_ID_REMOVE_ADS)
@@ -175,6 +188,9 @@ public class BillingManager implements PurchasesUpdatedListener {
                 .build();
 
         billingClient.queryProductDetailsAsync(params, (billingResult, queryResult) -> {
+            if (destroyed) {
+                return;
+            }
             if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                     && queryResult != null
                     && queryResult.getProductDetailsList() != null
@@ -194,8 +210,9 @@ public class BillingManager implements PurchasesUpdatedListener {
                     if (details.getOneTimePurchaseOfferDetails() != null) {
                         String formattedPrice = details.getOneTimePurchaseOfferDetails().getFormattedPrice();
                         mainHandler.post(() -> {
-                            if (listener != null) {
-                                listener.onProductReady(details.getProductId(), formattedPrice);
+                            BillingListener currentListener = listener;
+                            if (!destroyed && currentListener != null) {
+                                currentListener.onProductReady(details.getProductId(), formattedPrice);
                             }
                         });
                     }
@@ -210,8 +227,14 @@ public class BillingManager implements PurchasesUpdatedListener {
 
                 ProductDetails.OneTimePurchaseOfferDetails offerDetails =
                         removeAdsDetails.getOneTimePurchaseOfferDetails();
-                if (offerDetails != null && listener != null) {
-                    mainHandler.post(() -> listener.onPriceLoaded(offerDetails.getFormattedPrice()));
+                if (offerDetails != null) {
+                    final String formattedPrice = offerDetails.getFormattedPrice();
+                    mainHandler.post(() -> {
+                        BillingListener currentListener = listener;
+                        if (!destroyed && currentListener != null) {
+                            currentListener.onPriceLoaded(formattedPrice);
+                        }
+                    });
                 }
             } else {
                 Log.w(TAG, "Failed to load product details: " + billingResult.getDebugMessage()
@@ -235,6 +258,9 @@ public class BillingManager implements PurchasesUpdatedListener {
      * Lanza la compra del producto Pro principal "remove_ads_pro" (o disponible).
      */
     public boolean launchPurchaseFlow(@NonNull Activity activity) {
+        if (destroyed) {
+            return false;
+        }
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             Log.w(TAG, "Cannot launch purchase flow: Activity is null, finishing, or destroyed.");
             return false;
@@ -244,6 +270,15 @@ public class BillingManager implements PurchasesUpdatedListener {
             Log.w(TAG, "Skipping Play Billing launch flow inside Firebase Test Lab / Play Pre-launch environment.");
             if (listener != null) {
                 listener.onBillingError("In-app billing is disabled in automated test environments.");
+            }
+            return false;
+        }
+
+        if (!isBillingFlowCompatible()) {
+            String errorMsg = "In-app billing is not available on this OS build. Please update your device.";
+            Log.e(TAG, errorMsg);
+            if (listener != null) {
+                listener.onBillingError(errorMsg);
             }
             return false;
         }
@@ -312,6 +347,9 @@ public class BillingManager implements PurchasesUpdatedListener {
      * Sobrecarga retrocompatible para lanzar el flujo de compra indicando el ID del producto.
      */
     public void launchPurchaseFlow(@NonNull Activity activity, @NonNull String productId) {
+        if (destroyed) {
+            return;
+        }
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             Log.w(TAG, "Cannot launch purchase flow: Activity is null, finishing, or destroyed.");
             return;
@@ -321,6 +359,15 @@ public class BillingManager implements PurchasesUpdatedListener {
             Log.w(TAG, "Skipping Play Billing launch flow inside Firebase Test Lab / Play Pre-launch environment.");
             if (listener != null) {
                 listener.onPurchaseError("In-app billing is disabled in automated test environments.");
+            }
+            return;
+        }
+
+        if (!isBillingFlowCompatible()) {
+            String errorMsg = "In-app billing is not available on this OS build. Please update your device.";
+            Log.e(TAG, errorMsg);
+            if (listener != null) {
+                listener.onPurchaseError(errorMsg);
             }
             return;
         }
@@ -396,9 +443,35 @@ public class BillingManager implements PurchasesUpdatedListener {
         }
     }
 
+    /**
+     * Play Billing 9.1.0 llama sin comprobación adicional a
+     * {@code ActivityOptions.setPendingIntentBackgroundActivityStartMode} desde
+     * {@code ProxyBillingActivity.onCreate} en Android 14+. Algunas compilaciones de
+     * Android 14 no exponen ese método y el flujo de compra termina en
+     * {@code NoSuchMethodError} (issue Crashlytics a6e619dc...). Comprobamos la
+     * disponibilidad real del método antes de abrir el flujo para degradar a un
+     * error controlado en lugar de un crash.
+     */
+    private static boolean isBillingFlowCompatible() {
+        if (Build.VERSION.SDK_INT < 34) {
+            return true;
+        }
+        try {
+            return ActivityOptions.class
+                    .getMethod("setPendingIntentBackgroundActivityStartMode", int.class)
+                    .getReturnType() == ActivityOptions.class;
+        } catch (NoSuchMethodException | SecurityException | LinkageError e) {
+            Log.w(TAG, "ActivityOptions API unavailable for Play Billing: " + e.getMessage());
+            return false;
+        }
+    }
+
     @Override
     public void onPurchasesUpdated(@NonNull BillingResult billingResult,
                                    @Nullable List<Purchase> purchases) {
+        if (destroyed) {
+            return;
+        }
         lastLaunchTimeMs = 0L;
         int responseCode = billingResult.getResponseCode();
 
@@ -461,8 +534,9 @@ public class BillingManager implements PurchasesUpdatedListener {
                 setAdsRemoved(true);
                 String prodId = purchase.getProducts().isEmpty() ? PRODUCT_ID_REMOVE_ADS : purchase.getProducts().get(0);
                 mainHandler.post(() -> {
-                    if (listener != null) {
-                        listener.onPurchaseSuccess(prodId);
+                    BillingListener currentListener = listener;
+                    if (!destroyed && currentListener != null) {
+                        currentListener.onPurchaseSuccess(prodId);
                     }
                 });
             } else {
@@ -479,11 +553,17 @@ public class BillingManager implements PurchasesUpdatedListener {
      * Consulta las compras activas de la cuenta para restaurar compras previas al iniciar.
      */
     public void queryActivePurchases() {
+        if (destroyed) {
+            return;
+        }
         QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.INAPP)
                 .build();
 
         billingClient.queryPurchasesAsync(params, (billingResult, purchases) -> {
+            if (destroyed) {
+                return;
+            }
             if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                 boolean hasActivePurchase = false;
                 if (purchases != null) {
@@ -594,6 +674,8 @@ public class BillingManager implements PurchasesUpdatedListener {
      * Desconecta de forma segura el cliente de facturación.
      */
     public void destroy() {
+        destroyed = true;
+        mainHandler.removeCallbacksAndMessages(null);
         if (billingClient != null && billingClient.isReady()) {
             billingClient.endConnection();
         }

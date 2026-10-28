@@ -27,8 +27,11 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesResponseListener;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 
 import org.junit.After;
@@ -385,5 +388,88 @@ public class BillingManagerTest {
         verify(mockBillingClient).endConnection();
         assertNull(billingManager.getBillingListener());
         assertFalse(billingManager.isServiceConnected());
+    }
+
+    @Test
+    public void launchPurchaseFlow_afterDestroy_returnsFalse() {
+        when(mockBillingClient.isReady()).thenReturn(true);
+        billingManager.destroy();
+
+        Activity activity = mock(Activity.class);
+
+        assertFalse(billingManager.launchPurchaseFlow(activity));
+        verify(mockBillingClient, never()).launchBillingFlow(any(Activity.class), any(BillingFlowParams.class));
+    }
+
+    @Test
+    public void destroy_stalePurchasesUpdatedCallback_isIgnored() {
+        when(mockBillingClient.isReady()).thenReturn(true);
+        billingManager.destroy();
+
+        BillingResult okResult = mock(BillingResult.class);
+        when(okResult.getResponseCode()).thenReturn(BillingClient.BillingResponseCode.OK);
+
+        Purchase purchase = mock(Purchase.class);
+        when(purchase.getProducts()).thenReturn(Collections.singletonList(BillingManager.PRODUCT_ID_REMOVE_ADS));
+        when(purchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
+        when(purchase.isAcknowledged()).thenReturn(true);
+
+        billingManager.onPurchasesUpdated(okResult, Collections.singletonList(purchase));
+
+        assertFalse(billingManager.isAdsRemoved());
+        verify(mockListener, never()).onAdsRemovedChanged(anyBoolean());
+    }
+
+    @Test
+    public void destroy_staleQueryProductsCallback_isIgnored() {
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<ProductDetailsResponseListener> captor =
+                ArgumentCaptor.forClass(ProductDetailsResponseListener.class);
+
+        billingManager.queryProducts();
+        verify(mockBillingClient).queryProductDetailsAsync(any(QueryProductDetailsParams.class), captor.capture());
+
+        when(mockBillingClient.isReady()).thenReturn(true);
+        billingManager.destroy();
+
+        BillingResult okResult = mock(BillingResult.class);
+        when(okResult.getResponseCode()).thenReturn(BillingClient.BillingResponseCode.OK);
+
+        ProductDetails details = mock(ProductDetails.class);
+        when(details.getProductId()).thenReturn(BillingManager.PRODUCT_ID_REMOVE_ADS);
+        when(details.getOneTimePurchaseOfferDetails()).thenReturn(null);
+
+        QueryProductDetailsResult queryResult = mock(QueryProductDetailsResult.class);
+        when(queryResult.getProductDetailsList()).thenReturn(Collections.singletonList(details));
+
+        captor.getValue().onProductDetailsResponse(okResult, queryResult);
+
+        assertNull(billingManager.getRemoveAdsDetails());
+        verify(mockListener, never()).onPriceLoaded(anyString());
+    }
+
+    @Test
+    public void destroy_staleQueryPurchasesCallback_isIgnored() {
+        when(mockBillingClient.isReady()).thenReturn(true);
+
+        BillingResult okResult = mock(BillingResult.class);
+        when(okResult.getResponseCode()).thenReturn(BillingClient.BillingResponseCode.OK);
+
+        Purchase purchase = mock(Purchase.class);
+        when(purchase.getProducts()).thenReturn(Collections.singletonList(BillingManager.PRODUCT_ID_REMOVE_ADS));
+        when(purchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
+        when(purchase.isAcknowledged()).thenReturn(true);
+
+        doAnswer(invocation -> {
+            PurchasesResponseListener listener = invocation.getArgument(1);
+            billingManager.destroy();
+            listener.onQueryPurchasesResponse(okResult, Collections.singletonList(purchase));
+            return null;
+        }).when(mockBillingClient).queryPurchasesAsync(any(QueryPurchasesParams.class), any());
+
+        billingManager.queryActivePurchases();
+
+        assertFalse(billingManager.isAdsRemoved());
+        verify(mockListener, never()).onAdsRemovedChanged(anyBoolean());
     }
 }

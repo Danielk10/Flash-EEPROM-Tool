@@ -136,11 +136,12 @@ public class UsbController {
     public void registerReceiver() {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            activity.registerReceiver(usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            activity.registerReceiver(usbReceiver, filter);
-        }
+        androidx.core.content.ContextCompat.registerReceiver(
+                activity,
+                usbReceiver,
+                filter,
+                androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        );
     }
 
     public void unregisterReceiver() {
