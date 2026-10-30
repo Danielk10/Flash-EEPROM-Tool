@@ -396,7 +396,12 @@ public class PtyBridge {
      * @return true si se recibió beacon, false por timeout o error.
      */
     public boolean prepareForFlashromSession(long timeoutMs) {
-        if (usbPort == null) {
+        // Copia local: close() puede poner usbPort a null desde otro hilo
+        // (onDestroy, desconexión USB o reconexión) mientras se ejecuta este
+        // método. Usar el campo directamente entre la comprobación y setRTS()
+        // provocaba el NPE de Crashlytics 151f4af3f7a67cdbf6197cbec9d3db55.
+        final UsbSerialPort port = this.usbPort;
+        if (port == null) {
             bridgeLog("prepareForFlashromSession: puerto USB no disponible");
             return false;
         }
@@ -406,10 +411,12 @@ public class PtyBridge {
         }
 
         try {
-            usbPort.setDTR(true);
-            usbPort.setRTS(true);
+            port.setDTR(true);
+            port.setRTS(true);
             bridgeLog("DTR/RTS activados — esperando beacon 0xAA 0x55");
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // IOException si el puerto se cerró, o RuntimeException del driver
+            // si close() lo dejó en un estado inconsistente.
             bridgeLog("Error activando DTR/RTS: " + e.getMessage());
             return false;
         }
