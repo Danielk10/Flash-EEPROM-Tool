@@ -65,5 +65,5 @@ El script compila con `arduino-cli` y actualiza automáticamente:
 ## Notas
 
 - El firmware se actualiza manualmente; la app solo exporta el `.hex`.
-- El crash NPE de Crashlytics debe permanecer abierto hasta publicar esta
-  versión y verificar que deja de aparecer.
+- El NPE de Crashlytics `151f4af3f7a67cdbf6197cbec9d3db55` fue corregido en
+  1.9.10 y el issue quedó cerrado tras la validación en hardware real.

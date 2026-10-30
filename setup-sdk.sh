@@ -28,7 +28,7 @@ set -o pipefail
 
 sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" \
   "platform-tools" \
-  "platforms;android-23" \
+  "platforms;android-24" \
   "platforms;android-37.0" \
   "build-tools;37.0.0" \
   "cmake;4.1.2" \
