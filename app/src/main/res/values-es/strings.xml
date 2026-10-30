@@ -136,7 +136,6 @@
     <string name="str_log_usb_async_jni_pty">(USB Asíncrono + PTY JNI)</string>
     <string name="str_log_usb_sync_jni_pty">(USB Síncrono + PTY JNI)</string>
     <string name="str_log_usb_request_failed">Fallo en la cola UsbRequest.</string>
-    <string name="str_log_beacon_detected">¡Beacon de resincronización detectado! El Arduino se recuperó de un timeout.</string>
     <string name="str_log_pty_jni_write_error">ERROR DE ESCRITURA JNI USB→PTY.</string>
     <string name="str_log_usb_timeout_50">Thread B: 50 timeouts USB (¿El Arduino no responde?)</string>
     <string name="str_log_usb_read_error">ERROR DE LECTURA USB: %1$s</string>
@@ -215,7 +214,7 @@
     <string name="str_log_err_no_prog_selected">Error: No se ha seleccionado un programador. Por favor, configúralo en los ajustes.</string>
     <string name="str_log_err_no_usb_connected">Error: No hay dispositivo USB conectado. Conecta tu programador primero.</string>
     <string name="str_log_warn_pty_not_ready">[WARN] PtyBridge no está listo. Se intentará ejecutar flashrom sin sincronización previa.</string>
-    <string name="str_log_syncing_arduino">Sincronizando con Arduino... esperando beacon de arranque.</string>
+    <string name="str_log_syncing_arduino">Detectando firmware serprog...</string>
     <string name="str_log_pty_connection_lost">[ERROR] Conexión PTY perdida.</string>
     <string name="str_log_err_prepare_serial">[ERROR] No se pudo preparar sesión serial — abortando.</string>
     <string name="str_log_prog_modified_settings">Programador modificado vía Ajustes: %1$s</string>

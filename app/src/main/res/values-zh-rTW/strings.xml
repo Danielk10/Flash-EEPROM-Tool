@@ -164,7 +164,6 @@ flashrom -p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r rea
     <string name="str_log_usb_async_jni_pty">(非同步 USB + JNI PTY)</string>
     <string name="str_log_usb_sync_jni_pty">(同步 USB + JNI PTY)</string>
     <string name="str_log_usb_request_failed">UsbRequest 佇列排隊失敗。</string>
-    <string name="str_log_beacon_detected">檢測到重新同步訊號！Arduino 已從逾時中復原。</string>
     <string name="str_log_pty_jni_write_error">USB→PTY JNI 寫入錯誤。</string>
     <string name="str_log_usb_timeout_50">執行緒 B：50 次 USB 逾時（Arduino 無回應？）</string>
     <string name="str_log_usb_read_error">USB 讀取錯誤：%1$s</string>
@@ -245,7 +244,7 @@ flashrom -p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r rea
     <string name="str_log_err_no_prog_selected">錯誤：未選擇燒錄器。請在設定中進行設定。</string>
     <string name="str_log_err_no_usb_connected">錯誤：未連接 USB 裝置。請先連接您的燒錄器。</string>
     <string name="str_log_warn_pty_not_ready">[警告] PtyBridge 尚未就緒。正在嘗試在未預同步的情況下執行 flashrom。</string>
-    <string name="str_log_syncing_arduino">正在與 Arduino 同步... 等待啟動訊號。</string>
+    <string name="str_log_syncing_arduino">正在偵測 serprog 韌體...</string>
     <string name="str_log_pty_connection_lost">[錯誤] PTY 連線中斷。</string>
     <string name="str_log_err_prepare_serial">[錯誤] 無法準備串列埠工作階段 — 已中止。</string>
     <string name="str_log_prog_modified_settings">已透過設定修改燒錄器：%1$s</string>

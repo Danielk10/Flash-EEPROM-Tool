@@ -4,9 +4,20 @@
 #define S_ACK 0x06
 #define S_NAK 0x15
 
-// Beacon consumido por PtyBridge antes de habilitar forwarding
+// Beacon de arranque: solo se mantiene por compatibilidad con versiones
+// antiguas de la app (<= 1.9.9). La app nueva usa el handshake HELLO y no
+// escanea el flujo de datos SPI en busca de esta secuencia.
 #define BEACON_BYTE1 0xAA
 #define BEACON_BYTE2 0x55
+
+// Handshake solicitado por la app (>= 1.9.10).
+// Respuesta: ACK 'S' 'P' 'R' 'G' version caps xor
+#define CMD_HELLO 0xF0
+#define FW_VERSION 0x02
+#define FW_CAP_SPI 0x01
+#define FW_CAP_STARTUP_BEACON 0x02
+#define FW_CAP_NO_RUNTIME_BEACON 0x04
+#define FW_CAPS (FW_CAP_SPI | FW_CAP_STARTUP_BEACON | FW_CAP_NO_RUNTIME_BEACON)
 
 // Chip-select SPI (Arduino UNO)
 #define SPI_CS_PIN 10
@@ -34,7 +45,8 @@ void setup() {
   delay(2000);
   flush_serial_input();
 
-  // Beacon de arranque para el host Android (PtyBridge)
+  // Beacon de arranque para apps antiguas (<= 1.9.9). La app nueva lo drena
+  // y usa HELLO, de modo que este beacon nunca llega a flashrom.
   Serial.write(BEACON_BYTE1);
   Serial.write(BEACON_BYTE2);
   Serial.flush();
@@ -67,6 +79,21 @@ void loop() {
       Serial.write(S_ACK);
       Serial.flush();
       break;
+
+    case CMD_HELLO: { // Handshake solicitado (app >= 1.9.10)
+      uint8_t resp[8];
+      resp[0] = S_ACK;
+      resp[1] = 'S';
+      resp[2] = 'P';
+      resp[3] = 'R';
+      resp[4] = 'G';
+      resp[5] = FW_VERSION;
+      resp[6] = FW_CAPS;
+      resp[7] = resp[1] ^ resp[2] ^ resp[3] ^ resp[4] ^ resp[5] ^ resp[6];
+      Serial.write(resp, sizeof(resp));
+      Serial.flush();
+      break;
+    }
 
     case 0x01: { // Query Interface Version v1.0
       uint8_t resp[3] = {S_ACK, 0x01, 0x00};
@@ -178,9 +205,9 @@ void handle_spi_op() {
   uint32_t rlen = read_fixed_size(3);
 
   if (slen == 0xFFFFFFFF || rlen == 0xFFFFFFFF) {
+    // Sin beacon en runtime: cualquier byte extra se mezclaría con la
+    // respuesta serprog que flashrom está leyendo.
     Serial.write(S_NAK);
-    Serial.write(BEACON_BYTE1);
-    Serial.write(BEACON_BYTE2);
     Serial.flush();
     flush_serial_input();
     return;
@@ -193,9 +220,9 @@ void handle_spi_op() {
     while (Serial.available() == 0) {
       if (millis() - start > 1000) {
         digitalWrite(SPI_CS_PIN, HIGH);
+        // Sin beacon en runtime: solo NAK para que flashrom aborte la
+        // operación de forma limpia.
         Serial.write(S_NAK);
-        Serial.write(BEACON_BYTE1);
-        Serial.write(BEACON_BYTE2);
         Serial.flush();
         flush_serial_input();
         return;

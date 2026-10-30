@@ -37,8 +37,8 @@ import java.util.List;
  * Desde la migración a motor nativo (ver tag git "legacy-java-pty-bridge" para
  * la versión 100% Java), el forwarding lo realizan dos hilos C++ en
  * usb_bridge.cpp que hablan directamente con el endpoint bulk vía usbfs.
- * Java sólo abre/configura el puerto (baudios, DTR/RTS, beacon, purge) y luego
- * entrega los descriptores. Transportes disponibles hacia flashrom:
+ * Java sólo abre/configura el puerto (baudios, DTR/RTS, handshake, purge) y
+ * luego entrega los descriptores. Transportes disponibles hacia flashrom:
  *
  *   • Socket TCP local: flashrom -p serprog:ip=127.0.0.1:PUERTO (sólo serprog)
  *   • PTY clásico:      flashrom -p serprog:dev=/dev/pts/N:BAUD
@@ -51,8 +51,11 @@ public class PtyBridge {
     private static final String TAG = "PtyBridge";
     private static final int USB_TIMEOUT_MS = 50;
     private static final int BUFFER_SIZE = 4096;
-    private static final int BEACON_BYTE_1 = 0xAA;
-    private static final int BEACON_BYTE_2 = 0x55;
+    /** Fase HELLO: firmware nuevo con versión y capacidades. */
+    private static final int HELLO_PHASE_MS = 3000;
+    /** Reintento del handshake mientras el firmware arranca o se resetea. */
+    private static final int HANDSHAKE_RETRY_MS = 250;
+    private static final int HANDSHAKE_READ_TIMEOUT_MS = 50;
     /** Cuántos bytes iniciales loggear en hex para diagnóstico */
     private static final int DEBUG_HEX_LIMIT = 32;
 
@@ -93,8 +96,7 @@ public class PtyBridge {
     // JNI: arranca los hilos nativos. Exactamente uno de ptyFd/listenFd debe ser >= 0.
     // Retorna un handle opaco (> 0) o 0 si falla.
     private static native long nativeBridgeStart(int usbFd, int epIn, int epOut, int inPacket,
-                                                 int ptyFd, int listenFd,
-                                                 boolean ftdi, boolean beaconResync);
+                                                 int ptyFd, int listenFd, boolean ftdi);
 
     // JNI: detiene los hilos nativos (no cierra el FD USB ni el master PTY)
     private static native void nativeBridgeStop(long handle);
@@ -102,7 +104,7 @@ public class PtyBridge {
     // JNI: false si los hilos nativos terminaron (p. ej. desconexión USB)
     private static native boolean nativeBridgeIsRunning(long handle);
 
-    // JNI: [usbRx, usbTx, rxXfers, txXfers, usbErr, commErr, clients, resyncs, dropped, deviceGone]
+    // JNI: [usbRx, usbTx, rxXfers, txXfers, usbErr, commErr, clients, dropped, deviceGone]
     private static native long[] nativeBridgeStats(long handle);
 
     // JNI: último error registrado por el motor nativo
@@ -271,10 +273,10 @@ public class PtyBridge {
      * Si se llama antes, los hilos reenviarán basura del bootloader al PTY slave
      * y flashrom leerá esa basura como respuesta corrupta.
      *
-     * Equivale a {@code startForwarding(false, true)} (PTY + resync por beacon).
+     * Equivale a {@code startForwarding(false)} (PTY).
      */
     public boolean startForwarding() {
-        return startForwarding(false, true);
+        return startForwarding(false);
     }
 
     /**
@@ -283,11 +285,13 @@ public class PtyBridge {
      * 2) PTY con motor nativo,
      * 3) PTY con hilos Java (compatibilidad, si el motor nativo no arranca).
      *
-     * @param preferSocket  true para exponer serprog por 127.0.0.1 (sólo válido para serprog)
-     * @param beaconResync  true para responder SYNCNOP al beacon 0xAA55 del firmware serprog
+     * El forwarding es transparente: no interpreta ni inyecta bytes de control.
+     * El handshake serprog se hace antes, en {@link #prepareForFlashromSession(long)}.
+     *
+     * @param preferSocket true para exponer serprog por 127.0.0.1 (sólo válido para serprog)
      * @return true si el forwarding quedó activo por alguna de las vías
      */
-    public boolean startForwarding(boolean preferSocket, boolean beaconResync) {
+    public boolean startForwarding(boolean preferSocket) {
         if (running) {
             Log.w(TAG, "startForwarding() llamado pero ya está running — ignorando");
             return true;
@@ -295,7 +299,7 @@ public class PtyBridge {
 
         // 1) Socket TCP loopback + motor nativo
         if (preferSocket) {
-            if (startNativeEngine(true, beaconResync)) {
+            if (startNativeEngine(true)) {
                 running = true;
                 bridgeLog("Motor nativo C++ activo — transporte Socket TCP 127.0.0.1:" + socketPort);
                 return true;
@@ -304,7 +308,7 @@ public class PtyBridge {
         }
 
         // 2) PTY + motor nativo
-        if (startNativeEngine(false, beaconResync)) {
+        if (startNativeEngine(false)) {
             running = true;
             bridgeLog("Motor nativo C++ activo — transporte PTY " + slavePath);
             return true;
@@ -326,7 +330,7 @@ public class PtyBridge {
     }
 
     /** Arranca usb_bridge.cpp sobre el socket loopback (useSocket) o sobre el master PTY. */
-    private boolean startNativeEngine(boolean useSocket, boolean beaconResync) {
+    private boolean startNativeEngine(boolean useSocket) {
         final UsbDeviceConnection conn = this.usbConnection;
         if (conn == null || endpointIn == null || endpointOut == null) {
             bridgeLog("Motor nativo: endpoints/conexión USB no disponibles");
@@ -356,7 +360,7 @@ public class PtyBridge {
         try {
             handle = nativeBridgeStart(usbFd,
                     endpointIn.getAddress(), endpointOut.getAddress(), endpointIn.getMaxPacketSize(),
-                    useSocket ? -1 : masterFd, listenFd, isFtdi, beaconResync);
+                    useSocket ? -1 : masterFd, listenFd, isFtdi);
         } catch (Throwable t) {
             bridgeLog("nativeBridgeStart falló: " + t.getMessage());
             handle = 0;
@@ -389,11 +393,15 @@ public class PtyBridge {
 
     /**
      * Prepara la sesión serprog antes de lanzar flashrom:
-     * 1) activa DTR/RTS,
-     * 2) espera beacon 0xAA 0x55 directamente en USB (sin PTY forwarding),
-     * 3) purga buffers.
+     * 1) activa DTR/RTS y drena el arranque,
+     * 2) handshake HELLO (firmware nuevo, versionado),
+     * 3) fallback NOP/ACK (firmware estándar o legacy),
+     * 4) purga buffers.
      *
-     * @return true si se recibió beacon, false por timeout o error.
+     * El control es siempre solicitado: no se escanea el flujo de datos SPI,
+     * así que un dato que contenga 0xAA 0x55 no puede confundirse con un beacon.
+     *
+     * @return true si el programador respondió, false por timeout o error.
      */
     public boolean prepareForFlashromSession(long timeoutMs) {
         // Copia local: close() puede poner usbPort a null desde otro hilo
@@ -406,14 +414,14 @@ public class PtyBridge {
             return false;
         }
         if (running) {
-            bridgeLog("prepareForFlashromSession: forwarding ya activo, no se espera beacon");
+            bridgeLog("prepareForFlashromSession: forwarding ya activo");
             return true;
         }
 
         try {
             port.setDTR(true);
             port.setRTS(true);
-            bridgeLog("DTR/RTS activados — esperando beacon 0xAA 0x55");
+            bridgeLog("DTR/RTS activados — detectando firmware serprog");
         } catch (Exception e) {
             // IOException si el puerto se cerró, o RuntimeException del driver
             // si close() lo dejó en un estado inconsistente.
@@ -421,15 +429,30 @@ public class PtyBridge {
             return false;
         }
 
-        boolean beaconOk = waitForBeacon(timeoutMs);
-        if (!beaconOk) {
-            bridgeLog("Timeout esperando beacon de arranque");
-            return false;
+        final long now = System.currentTimeMillis();
+        final long budget = Math.max(2000L, timeoutMs);
+        final long deadline = now + budget;
+        final long helloDeadline = now + Math.min(HELLO_PHASE_MS, budget * 3 / 5);
+
+        // 1) HELLO: firmware nuevo (v1.9.10+) con versión y capacidades.
+        SerprogHandshake.HelloInfo hello = handshakeHello(port, helloDeadline);
+        if (hello != null) {
+            bridgeLog("Firmware serprog detectado: v" + hello.version
+                    + " caps=0x" + Integer.toHexString(hello.capabilities));
+            purge();
+            return true;
         }
 
-        bridgeLog("Beacon recibido — Arduino listo para serprog");
-        purge();
-        return true;
+        // 2) NOP/ACK: firmware estándar (frser-arduino, RP2040, STM32...) o
+        //    firmware custom antiguo que no conoce HELLO.
+        if (handshakeNop(port, deadline)) {
+            bridgeLog("Firmware serprog estándar detectado (NOP/ACK)");
+            purge();
+            return true;
+        }
+
+        bridgeLog("Handshake serprog fallido: el programador no responde");
+        return false;
     }
 
     /**
@@ -466,33 +489,93 @@ public class PtyBridge {
         return true;
     }
 
-    private boolean waitForBeacon(long timeoutMs) {
-        long deadlineMs = System.currentTimeMillis() + timeoutMs;
-        int state = 0;
-        byte[] buf = new byte[64];
+    /**
+     * Fase HELLO: envía el comando y busca una trama válida de 8 bytes.
+     * Reintenta mientras el firmware esté arrancando o se haya reseteado por DTR.
+     */
+    private SerprogHandshake.HelloInfo handshakeHello(UsbSerialPort port, long deadlineMs) {
+        byte[] readBuf = new byte[64];
+        byte[] frameBuf = new byte[128];
+        int frameLen = 0;
+        long nextSend = 0;
 
         while (System.currentTimeMillis() < deadlineMs) {
-            final UsbSerialPort port = this.usbPort;
-            if (port == null || !port.isOpen()) return false;
+            if (!port.isOpen()) return null;
+            final long now = System.currentTimeMillis();
+            if (now >= nextSend) {
+                try {
+                    port.write(SerprogHandshake.helloRequest(), 1, USB_TIMEOUT_MS);
+                } catch (Exception e) {
+                    diagLastError = "hello-write: " + e.getMessage();
+                    return null;
+                }
+                nextSend = now + HANDSHAKE_RETRY_MS;
+            }
+
+            int n;
             try {
-                int n = port.read(buf, 100);
-                if (n <= 0) {
-                    continue;
-                }
-                for (int i = 0; i < n; i++) {
-                    int b = buf[i] & 0xFF;
-                    if (state == 0) {
-                        state = (b == BEACON_BYTE_1) ? 1 : 0;
-                    } else {
-                        if (b == BEACON_BYTE_2) {
-                            return true;
-                        }
-                        state = (b == BEACON_BYTE_1) ? 1 : 0;
-                    }
-                }
+                n = port.read(readBuf, HANDSHAKE_READ_TIMEOUT_MS);
             } catch (Exception e) {
-                diagLastError = "beacon-read: " + e.getMessage();
-                break;
+                diagLastError = "hello-read: " + e.getMessage();
+                return null;
+            }
+            if (n <= 0) continue;
+
+            // Conservar solo los últimos bytes necesarios si el buffer se llena.
+            if (frameLen + n > frameBuf.length) {
+                int keep = Math.min(frameLen, SerprogHandshake.HELLO_FRAME_LEN - 1);
+                System.arraycopy(frameBuf, frameLen - keep, frameBuf, 0, keep);
+                frameLen = keep;
+            }
+            System.arraycopy(readBuf, 0, frameBuf, frameLen, n);
+            frameLen += n;
+
+            SerprogHandshake.HelloInfo[] out = new SerprogHandshake.HelloInfo[1];
+            if (SerprogHandshake.findHelloFrame(frameBuf, frameLen, out) >= 0) {
+                return out[0];
+            }
+
+            // Si el firmware responde NAK a HELLO, no insistir: es un firmware
+            // estándar o legacy. Se pasa directamente al fallback NOP/ACK.
+            if (SerprogHandshake.containsNak(frameBuf, frameLen)) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Fase NOP/ACK: confirma que el firmware está vivo y en el bucle de comandos.
+     * Sirve para frser-arduino, RP2040/STM32 y el firmware custom antiguo.
+     */
+    private boolean handshakeNop(UsbSerialPort port, long deadlineMs) {
+        byte[] buf = new byte[64];
+        long nextSend = 0;
+
+        while (System.currentTimeMillis() < deadlineMs) {
+            if (!port.isOpen()) return false;
+            final long now = System.currentTimeMillis();
+            if (now >= nextSend) {
+                try {
+                    port.write(SerprogHandshake.nopRequest(), 1, USB_TIMEOUT_MS);
+                } catch (Exception e) {
+                    diagLastError = "nop-write: " + e.getMessage();
+                    return false;
+                }
+                nextSend = now + HANDSHAKE_RETRY_MS;
+            }
+
+            int n;
+            try {
+                n = port.read(buf, HANDSHAKE_READ_TIMEOUT_MS);
+            } catch (Exception e) {
+                diagLastError = "nop-read: " + e.getMessage();
+                return false;
+            }
+            for (int i = 0; i < n; i++) {
+                if ((buf[i] & 0xFF) == SerprogHandshake.S_ACK) {
+                    return true;
+                }
             }
         }
         return false;
@@ -557,13 +640,13 @@ public class PtyBridge {
             if (h != 0) {
                 try {
                     long[] s = nativeBridgeStats(h);
-                    if (s != null && s.length >= 10) {
+                    if (s != null && s.length >= 9) {
                         return "engine=native-cpp transport=" + (socketMode ? "socket:127.0.0.1:" + socketPort : "pty:" + slavePath)
                                 + " usbRx=" + s[0] + "B usbTx=" + s[1] + "B"
                                 + " rxXfers=" + s[2] + " txXfers=" + s[3]
                                 + " usbErrors=" + s[4] + " commErrors=" + s[5]
-                                + " clients=" + s[6] + " resyncs=" + s[7]
-                                + " dropped=" + s[8] + "B deviceGone=" + (s[9] != 0)
+                                + " clients=" + s[6]
+                                + " dropped=" + s[7] + "B deviceGone=" + (s[8] != 0)
                                 + " alive=" + nativeBridgeIsRunning(h)
                                 + " lastError=" + nativeBridgeLastError(h);
                     }
@@ -874,20 +957,8 @@ public class PtyBridge {
                                 zeroReads = 0;
                                 diagUsbBytesReceived += n;
 
-                                // Detección de beacon de resincronización (0xAA 0x55)
-                                boolean beaconDetected = false;
-                                for (int i = 0; i < n - 1; i++) {
-                                    if ((buf[i] & 0xFF) == BEACON_BYTE_1 && (buf[i + 1] & 0xFF) == BEACON_BYTE_2) {
-                                        beaconDetected = true;
-                                        break;
-                                    }
-                                }
-                                if (beaconDetected) {
-                                    bridgeLog(getString(R.string.str_log_beacon_detected));
-                                    try {
-                                        port.write(new byte[]{0x10}, 1, USB_TIMEOUT_MS);
-                                    } catch (IOException ignored) {}
-                                }
+                                // Forwarding transparente: no se interpretan los
+                                // datos SPI. Cualquier 0xAA 0x55 es dato legítimo.
 
                                 // Loggear primeros bytes recibidos del Arduino
                                 if (totalReceived < DEBUG_HEX_LIMIT) {

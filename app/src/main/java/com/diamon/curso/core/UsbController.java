@@ -404,7 +404,7 @@ public class UsbController {
      */
     public boolean startBridgeForwarding(String prog) {
         if (ptyBridge == null) return false;
-        boolean ok = ptyBridge.startForwarding(shouldUseSocketTransport(prog), "serprog".equals(prog));
+        boolean ok = ptyBridge.startForwarding(shouldUseSocketTransport(prog));
         if (ok && "serprog".equals(prog) && ptyBridge.isSocketMode() != shouldUseSocketTransport(prog)) {
             callback.log("[INFO] Transporte activo: " + (ptyBridge.isSocketMode() ? "Socket TCP" : "PTY")
                     + " (el cambio de transporte se aplica al reconectar el programador)");

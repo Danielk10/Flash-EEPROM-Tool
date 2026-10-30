@@ -1034,8 +1034,9 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(() -> log(getString(R.string.str_log_pty_connection_lost)));
                     return;
                 }
-                // Serprog espera beacon 0xAA 0x55 del firmware Arduino;
-                // los demás (buspirate, spidriver) solo activan DTR/RTS + purge.
+                // Serprog usa un handshake solicitado (HELLO/NOP/ACK) y no
+                // escanea datos SPI; los demás (buspirate, spidriver) solo
+                // activan DTR/RTS + purge.
                 boolean ready = isSerprog
                         ? currentBridge.prepareForFlashromSession(8000)
                         : currentBridge.prepareForSerialSession();

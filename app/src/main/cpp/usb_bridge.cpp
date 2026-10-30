@@ -65,9 +65,6 @@ constexpr int kPollTimeoutMs = 200;     // poll() sobre commFd / socket de escuc
 constexpr int kCommWriteStallMs = 500;  // Máx. espera para escribir hacia flashrom antes de descartar
 constexpr int kMinPacket = 8;
 constexpr int kMaxPacket = 1024;
-constexpr uint8_t kBeacon1 = 0xAA;
-constexpr uint8_t kBeacon2 = 0x55;
-constexpr uint8_t kSyncNop = 0x10;
 
 struct Bridge {
     // Configuración (inmutable tras start)
@@ -78,7 +75,6 @@ struct Bridge {
     int ptyFd = -1;      // Modo PTY: master FD (propiedad de Java/ParcelFileDescriptor, NO se cierra aquí)
     int listenFd = -1;   // Modo Socket: socket de escucha (propiedad del bridge, se cierra en stop)
     bool ftdi = false;
-    bool beaconResync = false;
 
     int wakePipe[2] = {-1, -1};
     std::atomic<bool> running{false};
@@ -102,7 +98,6 @@ struct Bridge {
     std::atomic<uint64_t> usbErrors{0};
     std::atomic<uint64_t> commErrors{0};
     std::atomic<uint64_t> clients{0};
-    std::atomic<uint64_t> resyncs{0};
     std::atomic<uint64_t> droppedBytes{0};
     std::atomic<bool> deviceGone{false};
 
@@ -316,10 +311,9 @@ void *usbToCommThread(void *arg) {
     raiseThreadPriority();
     uint8_t pkt[kMaxPacket];
     const unsigned readLen = (unsigned) b->inPacket;
-    int prevByte = -1;
 
-    BR_LOGI("Hilo usb→comm iniciado (ep=0x%02X, paquete=%u B, ftdi=%d, resync=%d)",
-            b->epIn, readLen, b->ftdi ? 1 : 0, b->beaconResync ? 1 : 0);
+    BR_LOGI("Hilo usb→comm iniciado (ep=0x%02X, paquete=%u B, ftdi=%d)",
+            b->epIn, readLen, b->ftdi ? 1 : 0);
 
     while (b->running.load()) {
         int r = usbBulk(b->usbFd, b->epIn, pkt, readLen, kUsbInTimeoutMs);
@@ -349,24 +343,9 @@ void *usbToCommThread(void *arg) {
         if (n <= 0) continue;
         b->usbRxBytes += (uint64_t) n;
 
-        // Beacon de resincronización del firmware serprog (0xAA 0x55): mismo
-        // comportamiento que la versión Java (responder con SYNCNOP), pero
-        // detectando también beacons partidos entre dos paquetes USB.
-        if (b->beaconResync) {
-            bool beacon = false;
-            if (prevByte == kBeacon1 && data[0] == kBeacon2) beacon = true;
-            for (int i = 0; !beacon && i + 1 < n; i++) {
-                if (data[i] == kBeacon1 && data[i + 1] == kBeacon2) beacon = true;
-            }
-            if (beacon) {
-                b->resyncs++;
-                uint8_t sync = kSyncNop;
-                usbWriteAll(b, &sync, 1);
-                BR_LOGI("Beacon 0xAA55 detectado — SYNCNOP enviado (resync #%llu)",
-                        (unsigned long long) b->resyncs.load());
-            }
-        }
-        prevByte = data[n - 1];
+        // Forwarding transparente: los datos SPI pueden contener 0xAA 0x55
+        // legítimamente. El control serprog se negocia antes de arrancar los
+        // hilos (HELLO/NOP en PtyBridge), nunca se infiere del flujo de datos.
 
         std::lock_guard<std::mutex> lk(b->clientMutex);
         int fd = b->clientFd;
@@ -472,7 +451,7 @@ extern "C" JNIEXPORT jlong JNICALL
 Java_com_diamon_curso_core_PtyBridge_nativeBridgeStart(
         JNIEnv *, jclass,
         jint usbFd, jint epIn, jint epOut, jint inPacket,
-        jint ptyFd, jint listenFd, jboolean ftdi, jboolean beaconResync) {
+        jint ptyFd, jint listenFd, jboolean ftdi) {
 
     if (usbFd < 0 || (epIn & 0x80) == 0 || (epOut & 0x80) != 0) {
         BR_LOGE("nativeBridgeStart: parámetros USB inválidos (fd=%d in=0x%02X out=0x%02X)",
@@ -495,7 +474,6 @@ Java_com_diamon_curso_core_PtyBridge_nativeBridgeStart(
     b->inPacket = pk;
     b->ptyFd = ptyFd;
     b->ftdi = ftdi == JNI_TRUE;
-    b->beaconResync = beaconResync == JNI_TRUE;
 
     if (pipe2(b->wakePipe, O_CLOEXEC | O_NONBLOCK) != 0) {
         BR_LOGE("pipe2() falló: errno=%d", errno);
@@ -547,20 +525,20 @@ Java_com_diamon_curso_core_PtyBridge_nativeBridgeIsRunning(JNIEnv *, jclass, jlo
 
 /**
  * Estadísticas: [usbRxBytes, usbTxBytes, usbRxXfers, usbTxXfers, usbErrors,
- *                commErrors, clients, resyncs, droppedBytes, deviceGone]
+ *                commErrors, clients, droppedBytes, deviceGone]
  */
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_com_diamon_curso_core_PtyBridge_nativeBridgeStats(JNIEnv *env, jclass, jlong handle) {
     auto *b = reinterpret_cast<Bridge *>(handle);
     if (b == nullptr) return nullptr;
-    jlong v[10] = {
+    jlong v[9] = {
             (jlong) b->usbRxBytes.load(), (jlong) b->usbTxBytes.load(),
             (jlong) b->usbRxXfers.load(), (jlong) b->usbTxXfers.load(),
             (jlong) b->usbErrors.load(), (jlong) b->commErrors.load(),
-            (jlong) b->clients.load(), (jlong) b->resyncs.load(),
-            (jlong) b->droppedBytes.load(), (jlong) (b->deviceGone.load() ? 1 : 0)};
-    jlongArray arr = env->NewLongArray(10);
-    if (arr != nullptr) env->SetLongArrayRegion(arr, 0, 10, v);
+            (jlong) b->clients.load(), (jlong) b->droppedBytes.load(),
+            (jlong) (b->deviceGone.load() ? 1 : 0)};
+    jlongArray arr = env->NewLongArray(9);
+    if (arr != nullptr) env->SetLongArrayRegion(arr, 0, 9, v);
     return arr;
 }
 
