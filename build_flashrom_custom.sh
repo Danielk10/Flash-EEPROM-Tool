@@ -47,9 +47,9 @@ cd "$HOME/flashrom" || exit 1
 rm -rf builddir
 
 # ==========================================
-# 2.1 PARCHEO DE MESON PARA SOPORTE SERIE EN ANDROID
+# 2.1 PARCHEO DE MESON PARA SOPORTE COMPLETO EN ANDROID
 # ==========================================
-echo "Aplicando parches para habilitar programadores serie (serprog, buspirate_spi, spidriver) en Android..."
+echo "Aplicando parches para habilitar todos los programadores (serie, Linux kernel, PCI/hwaccess) en Android..."
 
 python3 - << 'EOF'
 import os
@@ -64,15 +64,22 @@ with open(meson_path, "r", encoding="utf-8") as f:
     content = f.read()
 
 # 1. Habilitar sistemas serie en Android agregando 'android' a systems_serial
-if "'android'" not in content:
-    content = re.sub(
-        r"(systems_serial\s*=\s*\[)([^\]]+)(\])",
-        r"\1\2, 'android'\3",
-        content
-    )
-    print("[PATCH] Añadido 'android' a systems_serial en meson.build")
+content = re.sub(
+    r"(systems_serial\s*=\s*\[)([^\]]+)(\])",
+    lambda m: m.group(1) + m.group(2) + (", 'android'" if "'android'" not in m.group(2) else "") + m.group(3),
+    content
+)
+print("[PATCH] Añadido 'android' a systems_serial en meson.build")
 
-# 2. Mapear custom_baud_linux en Android (Android usa el kernel Linux y soporta termios2 / BOTHER)
+# 2. Habilitar acceso a hardware y PCI en Android agregando 'android' a systems_hwaccess (asm106x, atavia, internal, etc.)
+content = re.sub(
+    r"(systems_hwaccess\s*=\s*\[)([^\]]+)(\])",
+    lambda m: m.group(1) + m.group(2) + (", 'android'" if "'android'" not in m.group(2) else "") + m.group(3),
+    content
+)
+print("[PATCH] Añadido 'android' a systems_hwaccess en meson.build")
+
+# 3. Mapear custom_baud_linux en Android (Android usa el kernel Linux y soporta termios2 / BOTHER)
 content = re.sub(
     r"host_machine\.system\(\)\s*==\s*'linux'",
     "host_machine.system() in ['linux', 'android']",
@@ -80,17 +87,28 @@ content = re.sub(
 )
 print("[PATCH] Mapeado host_machine.system() en Android para soporte custom baud")
 
-# 3. Habilitar systems_linux_spi y systems_linux_mtd en Android si están presentes
+# 4. Habilitar controladores del kernel Linux (linux_spi, linux_mtd, mediatek_i2c, mstarddc, parade_lspcon, etc.)
+content = re.sub(
+    r"('systems'\s*:\s*\[\s*'linux'\s*\])",
+    r"'systems' : [ 'linux', 'android' ]",
+    content
+)
 content = re.sub(
     r"(systems_linux_spi\s*=\s*\[)([^\]]+)(\])",
-    r"\1\2, 'android'\3",
+    lambda m: m.group(1) + m.group(2) + (", 'android'" if "'android'" not in m.group(2) else "") + m.group(3),
     content
 )
 content = re.sub(
     r"(systems_linux_mtd\s*=\s*\[)([^\]]+)(\])",
-    r"\1\2, 'android'\3",
+    lambda m: m.group(1) + m.group(2) + (", 'android'" if "'android'" not in m.group(2) else "") + m.group(3),
     content
 )
+content = re.sub(
+    r"(systems_pci\s*=\s*\[)([^\]]+)(\])",
+    lambda m: m.group(1) + m.group(2) + (", 'android'" if "'android'" not in m.group(2) else "") + m.group(3),
+    content
+)
+print("[PATCH] Habilitados controladores del kernel Linux y PCI para Android")
 
 with open(meson_path, "w", encoding="utf-8") as f:
     f.write(content)
@@ -154,7 +172,7 @@ if [ -n "$FLASHROM_BIN" ]; then
 
     echo
     echo "=== Verificación de Programadores Soportados en Binario y Librería ==="
-    PROG_LIST="ch341a_spi ch347_spi ft2232_spi usbblaster_spi serprog buspirate_spi spidriver dirtyjtag_spi stlinkv3_spi jlink_spi pickit2_spi dediprog digilent_spi raiden_debug_spi pony_spi"
+    PROG_LIST="ch341a_spi ch347_spi ft2232_spi usbblaster_spi serprog buspirate_spi spidriver dirtyjtag_spi stlinkv3_spi jlink_spi pickit2_spi dediprog digilent_spi raiden_debug_spi pony_spi nv_sma_spi asm106x atavia internal linux_mtd linux_spi mediatek_i2c_spi mstarddc_spi nicintel nicintel_eeprom nicintel_spi ogp_spi realtek_mst_i2c_spi satasii drkaiser gfxnvidia it8212"
 
     # Verificación en runtime mediante el listado nativo del CLI de flashrom
     CLI_PROGS=$(LD_LIBRARY_PATH="$FAKE_USR/lib:$TMX_PREFIX/lib" "$FLASHROM_BIN" -p __list_probe__ 2>&1 || true)
