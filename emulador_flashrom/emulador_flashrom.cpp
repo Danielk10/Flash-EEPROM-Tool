@@ -313,6 +313,18 @@ bool read_exactly(int fd, uint8_t* buf, size_t n) {
     return true;
 }
 
+// Escribir todos los bytes (evita writes parciales en tramas largas)
+bool write_all(int fd, const void* data, size_t n) {
+    const uint8_t* p = (const uint8_t*)data;
+    size_t total = 0;
+    while (total < n) {
+        ssize_t w = write(fd, p + total, n - total);
+        if (w <= 0) return false;
+        total += w;
+    }
+    return true;
+}
+
 // Hilo del emulador Serprog
 void serprog_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
     std::cout << "[SERPROG] Iniciando emulación en " << symlink << std::endl;
@@ -682,7 +694,10 @@ void handle_ch341a_client(SpiFlashGD25Q80* flash, int fd) {
                     resp_buf[i] = reverse_byte(miso);
                 }
                 std::cout << "[CH341A-DEBUG] Escribiendo respuesta SPI, longitud = " << spi_len << std::endl;
-                write(fd, resp_buf.data(), spi_len);
+                // Protocolo [4B longitud LE][datos] que espera el parche de io.c (bulk IN)
+                uint32_t resp_len = spi_len;
+                write_all(fd, &resp_len, 4);
+                write_all(fd, resp_buf.data(), spi_len);
             } else if (cmd == 0xAA) { // CH341A_CMD_I2C_STREAM
                 std::cout << "[CH341A-DEBUG] I2C_STREAM" << std::endl;
                 while (idx < packet_len) {
@@ -694,6 +709,159 @@ void handle_ch341a_client(SpiFlashGD25Q80* flash, int fd) {
     }
 exit_client:
     std::cout << "[CH341A] Cliente desconectado." << std::endl;
+}
+
+// ---------------------------------------------------------------------------
+// Emulación FTDI FT232H en modo SPI bitbang (libusb + libftdi + ft2232_spi)
+//
+// Protocolo por el socket (mismo FD para ambas direcciones, lo define
+// patch_libusb_local.py):
+//   - Primer lectura del hijo: descriptor USB de 18 bytes EN BRUTO (sin
+//     prefijo) via libusb_get_device_descriptor parcheado.
+//   - Todas las transferencias OUT del hijo (bulk MPSSE y control SIO):
+//     [4B longitud LE][datos]. Control sin datos => [4:0] (se ignora).
+//   - Todas las transferencias IN del hijo (bulk lectura de MISO):
+//     [4B longitud LE][datos] escritos por este emulador.
+//
+// Demangling de libftdi 1.6rc1 (ftdi_read_data, packet_size = 64):
+//   N <= 2          -> 0 bytes ("no more data")  [nunca usado en SPI]
+//   3 <= N <= 64    -> N - 2 bytes de datos
+//   N > 64          -> 62*(N/64) + max(0, N%64 - 2) bytes de datos
+//   Layout de cada bloque de 64B: 2 bytes estado + 62 bytes de datos.
+// ---------------------------------------------------------------------------
+// Construye la trama cruda del socket que hace que ftdi_read_data devuelva
+// exactamente D bytes de miso (miso[o..o+D)):
+static std::vector<uint8_t> build_ftdi_frame(const std::vector<uint8_t>& miso, size_t o, size_t D) {
+    std::vector<uint8_t> raw;
+    if (D <= 62) {
+        // N = D + 2 (una "paqueta" con 2 bytes de estado y D de datos)
+        raw.resize(D + 2, 0x00);
+        std::copy(miso.begin() + o, miso.begin() + o + D, raw.begin() + 2);
+    } else {
+        size_t k = D / 62, s = D % 62;
+        if (s == 0) {
+            // N = 64k: k paquetas completas [2 estado + 62 datos]
+            raw.resize(64 * k, 0x00);
+            for (size_t b = 0; b < k; b++)
+                std::copy(miso.begin() + o + 62 * b, miso.begin() + o + 62 * (b + 1),
+                          raw.begin() + 64 * b + 2);
+        } else {
+            // N = 64k + s + 2: k paquetas completas + cola [2 estado + s datos]
+            raw.resize(64 * k + s + 2, 0x00);
+            for (size_t b = 0; b < k; b++)
+                std::copy(miso.begin() + o + 62 * b, miso.begin() + o + 62 * (b + 1),
+                          raw.begin() + 64 * b + 2);
+            std::copy(miso.begin() + o + 62 * k, miso.begin() + o + D,
+                      raw.begin() + 64 * k + 2);
+        }
+    }
+    return raw;
+}
+
+// Lógica de emulación FTDI FT232H para un socket/FD determinado
+void handle_ftdi_client(SpiFlashGD25Q80* flash, int fd) {
+    std::cout << "[FTDI] Cliente conectado al descriptor de socket/archivo " << fd << std::endl;
+
+    // Descriptor USB de 18 bytes para FT232H (0403:6014), EN BRUTO (sin prefijo).
+    // bcdDevice = 0x0900 => libftdi tipo TYPE_232H (alta velocidad, clock 60 MHz).
+    uint8_t ftdi_descriptor[18] = {
+        18, 1, 0x00, 0x02, 0, 0, 0, 64,
+        0x03, 0x04, 0x14, 0x60, 0x00, 0x09,
+        0, 0, 0, 1
+    };
+    if (!write_all(fd, ftdi_descriptor, 18)) {
+        std::cerr << "[FTDI] Error al escribir descriptor" << std::endl;
+        return;
+    }
+
+    while (true) {
+        uint32_t packet_len = 0;
+        if (!read_exactly(fd, (uint8_t*)&packet_len, 4)) {
+            std::cout << "[FTDI] EOF leyendo packet_len" << std::endl;
+            break;
+        }
+
+        if (packet_len == 0) {
+            // Control SIO (reset, baudrate, latency, bitmode) sin datos.
+            std::cout << "[FTDI] Transferencia de control ignorada" << std::endl;
+            continue;
+        }
+
+        std::cout << "[FTDI] Recibido packet_len = " << packet_len << std::endl;
+        std::vector<uint8_t> buf(packet_len);
+        if (!read_exactly(fd, buf.data(), packet_len)) {
+            std::cout << "[FTDI] EOF leyendo datos de longitud " << packet_len << std::endl;
+            break;
+        }
+
+        if (packet_len == 8 && buf[0] == 0x40) {
+            // Control transfer setup packet (Vendor OUT)
+            std::cout << "[FTDI] Setup packet de control transfer ignorado" << std::endl;
+            continue;
+        }
+
+        std::vector<uint8_t> miso;
+        uint32_t idx = 0;
+        while (idx < packet_len) {
+            uint8_t op = buf[idx++];
+            if (op == 0x80) { // SET_BITS_LOW: [value, direction] -> CS# (bit 0x08)
+                uint8_t value = buf[idx], pindir = buf[idx + 1];
+                idx += 2;
+                if (value & 0x08)
+                    flash->csDeassert();
+                else
+                    flash->csAssert();
+                std::cout << "[FTDI] SET_BITS_LOW value=0x" << std::hex << (int)value
+                          << " dir=0x" << (int)pindir << std::dec << std::endl;
+            } else if (op == 0x82 || op == 0x86) { // SET_BITS_HIGH / TCK_DIVISOR: [x, y]
+                idx += 2;
+            } else if (op == 0x85 || op == 0x8A) { // LOOPBACK_END / DIS_DIV_5: sin args
+                // nada que hacer
+            } else if (op == 0x11) { // MPSSE_DO_WRITE|WRITE_NEG: [len16 LE][MOSI...]
+                uint16_t cnt = buf[idx] | (buf[idx + 1] << 8); // = writecnt - 1
+                idx += 2;
+                for (uint32_t b = 0; b <= cnt; b++) {
+                    (void)flash->transfer(buf[idx + b]); // rellena MOSI, se descarta MISO
+                }
+                idx += cnt + 1;
+                std::cout << "[FTDI] DO_WRITE " << cnt + 1 << " bytes" << std::endl;
+            } else if (op == 0x20) { // MPSSE_DO_READ: [len16 LE] -> MISO
+                uint16_t cnt = buf[idx] | (buf[idx + 1] << 8); // = readcnt - 1
+                idx += 2;
+                for (uint32_t b = 0; b <= cnt; b++)
+                    miso.push_back(flash->transfer(0x00));
+                std::cout << "[FTDI] DO_READ " << cnt + 1 << " bytes" << std::endl;
+            } else {
+                std::cerr << "[FTDI] Operacion MPSSE desconocida: 0x" << std::hex << (int)op
+                          << std::dec << " en indice " << idx - 1 << std::endl;
+                break;
+            }
+        }
+
+        // Emitir TODA la MISO pendiente de una vez: libftdi no alterna
+        // OUT/IN durante ftdi_read_data, asi que no hay riesgo de deadlock
+        // pre-escribiendo todas las tramas antes de que el hijo siga.
+        // Max por trama: 3968 bytes de datos (N = 4096 = readbuffer_chunksize).
+        size_t pos = 0;
+        while (miso.size() - pos > 3968) {
+            std::vector<uint8_t> raw = build_ftdi_frame(miso, pos, 3968);
+            uint32_t raw_len = raw.size();
+            if (!write_all(fd, (uint8_t*)&raw_len, 4) || !write_all(fd, &raw[0], raw.size())) {
+                std::cerr << "[FTDI] Error escribiendo trama MISO" << std::endl;
+                return;
+            }
+            pos += 3968;
+        }
+        if (pos < miso.size()) {
+            std::vector<uint8_t> raw = build_ftdi_frame(miso, pos, miso.size() - pos);
+            uint32_t raw_len = raw.size();
+            if (!write_all(fd, (uint8_t*)&raw_len, 4) || !write_all(fd, &raw[0], raw.size())) {
+                std::cerr << "[FTDI] Error escribiendo trama MISO" << std::endl;
+                return;
+            }
+        }
+    }
+    std::cout << "[FTDI] Cliente desconectado." << std::endl;
 }
 
 // Servidor CH341A en UNIX Socket para modo background
@@ -734,8 +902,46 @@ void ch341a_socket_server(SpiFlashGD25Q80* flash, const std::string& path) {
     close(server_fd);
 }
 
+// Servidor FTDI en UNIX Socket para modo background (misma lógica que CH341A)
+void ftdi_socket_server(SpiFlashGD25Q80* flash, const std::string& path) {
+    unlink(path.c_str());
+    int server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (server_fd < 0) {
+        std::cerr << "[FTDI] Error socket UNIX" << std::endl;
+        return;
+    }
+
+    struct sockaddr_un addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path)-1);
+
+    if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        std::cerr << "[FTDI] Error bind UNIX socket" << std::endl;
+        close(server_fd);
+        return;
+    }
+
+    if (listen(server_fd, 5) < 0) {
+        std::cerr << "[FTDI] Error listen UNIX socket" << std::endl;
+        close(server_fd);
+        return;
+    }
+
+    std::cout << "[FTDI] Servidor UNIX escuchando en " << path << std::endl;
+
+    while (true) {
+        int client_fd = accept(server_fd, nullptr, nullptr);
+        if (client_fd >= 0) {
+            handle_ftdi_client(flash, client_fd);
+            close(client_fd);
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     bool run_ch341a = false;
+    bool run_ftdi = false;
     bool run_serprog = false;
     bool run_buspirate = false;
     bool run_spidriver = false;
@@ -748,6 +954,7 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--ch341a") run_ch341a = true;
+        else if (arg == "--ftdi") run_ftdi = true;
         else if (arg == "--serprog") run_serprog = true;
         else if (arg == "--buspirate") run_buspirate = true;
         else if (arg == "--spidriver") run_spidriver = true;
@@ -758,6 +965,7 @@ int main(int argc, char* argv[]) {
         else if (arg == "-h" || arg == "--help") {
             std::cout << "Uso: emulador_flashrom [OPCIONES]\n"
                       << "  --ch341a         Emula programador CH341A USB SPI\n"
+                      << "  --ftdi           Emula programador FTDI FT232H USB SPI\n"
                       << "  --serprog        Emula Serprog Arduino via PTY\n"
                       << "  --buspirate      Emula Bus Pirate v3 SPI via PTY\n"
                       << "  --spidriver      Emula SPIDriver SPI via PTY\n"
@@ -770,7 +978,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Por defecto si no se especifica modo, ejecutar todos
-    if (!run_ch341a && !run_serprog && !run_buspirate && !run_spidriver && !run_all) {
+    if (!run_ch341a && !run_ftdi && !run_serprog && !run_buspirate && !run_spidriver && !run_all) {
         run_all = true;
     }
 
@@ -848,6 +1056,53 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (run_ftdi && flashrom_arg_idx != -1) {
+        std::cout << "[FTDI] Modo auto-contenido detectado. Lanzando subproceso..." << std::endl;
+        int sv[2];
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+            std::cerr << "Error socketpair: " << strerror(errno) << std::endl;
+            return 1;
+        }
+
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Proceso hijo (ejecutará flashrom con -p ft2232_spi:type=232H)
+            close(sv[0]);
+            dup2(sv[1], 99); // Duplicar socket a FD 99
+            close(sv[1]);
+
+            setenv("ANDROID_USB_FD", "99", 1);
+
+            // Construir argv para execvp
+            std::vector<char*> child_argv;
+            for (int i = flashrom_arg_idx; i < argc; i++) {
+                child_argv.push_back(argv[i]);
+            }
+            child_argv.push_back(nullptr);
+
+            execvp(child_argv[0], child_argv.data());
+            std::cerr << "Error en execvp: " << strerror(errno) << std::endl;
+            exit(1);
+        } else if (pid > 0) {
+            // Proceso padre (corre emulador FTDI)
+            close(sv[1]);
+            handle_ftdi_client(&flash, sv[0]);
+            close(sv[0]);
+
+            int status;
+            waitpid(pid, &status, 0);
+            std::cout << "[FTDI] Subproceso flashrom finalizado." << std::endl;
+
+            if (!save_file.empty()) {
+                flash.save(save_file);
+            }
+            if (WIFEXITED(status)) {
+                return WEXITSTATUS(status);
+            }
+            return 1;
+        }
+    }
+
     // Modo normal de background / hilos
     std::vector<std::thread> threads;
 
@@ -862,6 +1117,9 @@ int main(int argc, char* argv[]) {
     }
     if (run_all || run_ch341a) {
         threads.push_back(std::thread(ch341a_socket_server, &flash, "./ch341a_socket"));
+    }
+    if (run_all || run_ftdi) {
+        threads.push_back(std::thread(ftdi_socket_server, &flash, "./ftdi_socket"));
     }
 
     std::cout << "Emuladores iniciados. Presiona Ctrl+C para salir." << std::endl;

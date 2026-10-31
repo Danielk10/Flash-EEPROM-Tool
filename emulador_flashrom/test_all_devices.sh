@@ -63,5 +63,11 @@ echo "--- Probando CH341A (USB Socket) ---"
 $EMULATOR --ch341a $FLASHROM -p ch341a_spi > ch341a_test.log 2>&1 || true
 check_probe ch341a_test.log
 
+# --- 5. PROBAR FTDI FT232H (USB Directo / libftdi) ---
+echo ""
+echo "--- Probando FTDI FT232H (USB Socket) ---"
+$EMULATOR --ftdi $FLASHROM -p ft2232_spi:type=232H > ftdi_test.log 2>&1 || true
+check_probe ftdi_test.log
+
 echo ""
 echo "=== FIN DE LAS PRUEBAS ==="

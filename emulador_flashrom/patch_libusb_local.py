@@ -58,6 +58,16 @@ def run_patch():
                         break
                 break
 
+        # ftdi_usb_open_dev (libftdi) llama a libusb_get_configuration(); sin este
+        # bypass haria un control IN por el socket y el emulador nunca responderia.
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_configuration(' in line:
+                for j in range(i, i + 5):
+                    if lines[j].strip() == '{':
+                        lines.insert(j + 1, '\tif (getenv("ANDROID_USB_FD")) {\n\t\tif (config) *config = 1;\n\t\treturn 0;\n\t}\n')
+                        break
+                break
+
         with open(core_path, 'w') as f:
             f.writelines(lines)
 
@@ -112,9 +122,57 @@ def run_patch():
                             '\t\tdesc->iProduct = buf[15];\n',
                             '\t\tdesc->iSerialNumber = buf[16];\n',
                             '\t\tdesc->bNumConfigurations = buf[17];\n',
+                            '\t\tif (dev) memcpy(&dev->device_descriptor, desc, sizeof(struct libusb_device_descriptor));\n',
                             '\t\tfprintf(stderr, "[LIBUSB-HACK] EXITO! VID=%04x PID=%04x\\n", desc->idVendor, desc->idProduct);\n',
                             '\t\treturn 0;\n',
                             '\t}\n'
+                        ]
+                        break
+                break
+
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_config_descriptor(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines[j+1:j+1] = [
+                            '\n\tchar *f_fd = getenv("ANDROID_USB_FD");\n',
+                            '\tif (f_fd) {\n',
+                            '\t\tstatic const unsigned char ftdi_raw_config[32] = {\n',
+                            '\t\t\t0x09, 0x02, 0x20, 0x00, 0x01, 0x01, 0x00, 0x80, 0xfa,\n',
+                            '\t\t\t0x09, 0x04, 0x00, 0x00, 0x02, 0xff, 0xff, 0xff, 0x00,\n',
+                            '\t\t\t0x07, 0x05, 0x81, 0x02, 0x00, 0x02, 0x00,\n',
+                            '\t\t\t0x07, 0x05, 0x02, 0x02, 0x00, 0x02, 0x00\n',
+                            '\t\t};\n',
+                            '\t\tstatic const unsigned char ch341a_raw_config[32] = {\n',
+                            '\t\t\t0x09, 0x02, 0x20, 0x00, 0x01, 0x01, 0x00, 0x80, 0x32,\n',
+                            '\t\t\t0x09, 0x04, 0x00, 0x00, 0x02, 0xff, 0x00, 0x00, 0x00,\n',
+                            '\t\t\t0x07, 0x05, 0x02, 0x02, 0x20, 0x00, 0x00,\n',
+                            '\t\t\t0x07, 0x05, 0x82, 0x02, 0x20, 0x00, 0x00\n',
+                            '\t\t};\n',
+                            '\t\tconst unsigned char *cfg_buf = (dev && dev->device_descriptor.idVendor == 0x0403) ? ftdi_raw_config : ch341a_raw_config;\n',
+                            '\t\tfprintf(stderr, "[LIBUSB-HACK] libusb_get_config_descriptor interceptado para VID=%04x\\n", dev ? dev->device_descriptor.idVendor : 0);\n',
+                            '\t\treturn raw_desc_to_config(usbi_device_ctx(dev), cfg_buf, 32, config);\n',
+                            '\t}\n'
+                        ]
+                        break
+                break
+
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_active_config_descriptor(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines[j+1:j+1] = [
+                            '\n\tif (getenv("ANDROID_USB_FD")) return libusb_get_config_descriptor(dev, 0, config);\n'
+                        ]
+                        break
+                break
+
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_config_descriptor_by_value(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines[j+1:j+1] = [
+                            '\n\tif (getenv("ANDROID_USB_FD")) return libusb_get_config_descriptor(dev, 0, config);\n'
                         ]
                         break
                 break
@@ -137,7 +195,7 @@ def run_patch():
 
         for i, line in enumerate(lines):
             if '/* cache descriptors in memory */' in line:
-                lines.insert(i, '\tif (getenv("ANDROID_USB_FD")) {\n\t\tdev->speed = LIBUSB_SPEED_FULL;\n\t\tpriv->descriptors = malloc(50);\n\t\tunsigned char mock_desc[50] = {\n\t\t\t18, 1, 0x00, 0x02, 0xff, 0, 0, 64, 0x86, 0x1a, 0x12, 0x55, 0, 1, 0, 0, 0, 1,\n\t\t\t9, 2, 32, 0, 1, 1, 0, 0x80, 50,\n\t\t\t9, 4, 0, 0, 2, 0xff, 0, 0, 0,\n\t\t\t7, 5, 0x02, 2, 64, 0, 0,\n\t\t\t7, 5, 0x82, 2, 64, 0, 0\n\t\t};\n\t\tmemcpy(priv->descriptors, mock_desc, 50);\n\t\tpriv->descriptors_len = 50;\n\t\tr = parse_config_descriptors(dev);\n\t\tif (r >= 0) {\n\t\t\tmemcpy(&dev->device_descriptor, priv->descriptors, LIBUSB_DT_DEVICE_SIZE);\n\t\t}\n\t\treturn r;\n\t}\n\n')
+                lines.insert(i, '\tif (getenv("ANDROID_USB_FD")) {\n\t\tunsigned char mock_desc_ftdi[50] = {\n\t\t\t18, 1, 0x00, 0x02, 0, 0, 0, 64, 0x03, 0x04, 0x14, 0x60, 0, 9, 0, 0, 0, 1,\n\t\t\t9, 2, 32, 0, 1, 1, 0, 0x80, 50,\n\t\t\t9, 4, 0, 0, 2, 0xff, 0xff, 0xff, 0,\n\t\t\t7, 5, 0x81, 2, 0, 2, 0,\n\t\t\t7, 5, 0x02, 2, 0, 2, 0\n\t\t};\n\t\tunsigned char mock_desc_ch341a[50] = {\n\t\t\t18, 1, 0x00, 0x02, 0xff, 0, 0, 64, 0x86, 0x1a, 0x12, 0x55, 0, 1, 0, 0, 0, 1,\n\t\t\t9, 2, 32, 0, 1, 1, 0, 0x80, 50,\n\t\t\t9, 4, 0, 0, 2, 0xff, 0, 0, 0,\n\t\t\t7, 5, 0x02, 2, 64, 0, 0,\n\t\t\t7, 5, 0x82, 2, 64, 0, 0\n\t\t};\n\t\tunsigned char *sel = (dev->device_descriptor.idVendor == 0x0403) ? mock_desc_ftdi : mock_desc_ch341a;\n\t\tdev->speed = (dev->device_descriptor.idVendor == 0x0403) ? LIBUSB_SPEED_HIGH : LIBUSB_SPEED_FULL;\n\t\tpriv->descriptors = malloc(50);\n\t\tmemcpy(priv->descriptors, sel, 50);\n\t\tpriv->descriptors_len = 50;\n\t\tr = parse_config_descriptors(dev);\n\t\tif (r >= 0) {\n\t\t\tmemcpy(&dev->device_descriptor, priv->descriptors, LIBUSB_DT_DEVICE_SIZE);\n\t\t}\n\t\treturn r;\n\t}\n\n')
                 break
 
         for i, line in enumerate(lines):
@@ -218,18 +276,31 @@ def run_patch():
                             '\t\ttransfer->actual_length = transfer->length;\n',
                             '\t\ttransfer->status = LIBUSB_TRANSFER_COMPLETED;\n',
                             '\t\tif ((transfer->endpoint & 0x80) == 0x80) {\n',
-                            '\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] Leyendo %d bytes del FD %d...\\n", transfer->length, fd);\n',
+                            '\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] Bulk IN: esperando respuesta [4B longitud LE][datos] del FD %d...\\n", fd);\n',
+                            '\t\t\tuint32_t resp_len = 0;\n',
                             '\t\t\tint total_read = 0;\n',
-                            '\t\t\twhile (total_read < transfer->length) {\n',
-                            '\t\t\t\tint r = read(fd, transfer->buffer + total_read, transfer->length - total_read);\n',
+                            '\t\t\twhile (total_read < 4) {\n',
+                            '\t\t\t\tint r = read(fd, ((unsigned char *)&resp_len) + total_read, 4 - total_read);\n',
                             '\t\t\t\tif (r <= 0) {\n',
-                            '\t\t\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] r=%d, fallo al leer del FD %d: %s\\n", r, fd, strerror(errno));\n',
+                            '\t\t\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] fallo leyendo prefijo del FD %d: %s\\n", fd, strerror(errno));\n',
                             '\t\t\t\t\ttransfer->status = LIBUSB_TRANSFER_ERROR;\n',
                             '\t\t\t\t\tbreak;\n',
                             '\t\t\t\t}\n',
                             '\t\t\t\ttotal_read += r;\n',
                             '\t\t\t}\n',
-                            '\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] Leidos %d bytes del FD %d\\n", total_read, fd);\n',
+                            '\t\t\tif (resp_len > (uint32_t)transfer->length) resp_len = (uint32_t)transfer->length;\n',
+                            '\t\t\ttotal_read = 0;\n',
+                            '\t\t\twhile (transfer->status == LIBUSB_TRANSFER_COMPLETED && total_read < (int)resp_len) {\n',
+                            '\t\t\t\tint r = read(fd, transfer->buffer + total_read, resp_len - total_read);\n',
+                            '\t\t\t\tif (r <= 0) {\n',
+                            '\t\t\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] fallo leyendo datos del FD %d: %s\\n", fd, strerror(errno));\n',
+                            '\t\t\t\t\ttransfer->status = LIBUSB_TRANSFER_ERROR;\n',
+                            '\t\t\t\t\tbreak;\n',
+                            '\t\t\t\t}\n',
+                            '\t\t\t\ttotal_read += r;\n',
+                            '\t\t\t}\n',
+                            '\t\t\tif (transfer->status == LIBUSB_TRANSFER_ERROR) total_read = 0;\n',
+                            '\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] Respuesta IN: %d bytes del FD %d\\n", total_read, fd);\n',
                             '\t\t\ttransfer->actual_length = total_read;\n',
                             '\t\t} else {\n',
                             '\t\t\tfprintf(stderr, "[LIBUSB-DEBUG] Escribiendo %d bytes al FD %d...\\n", transfer->length, fd);\n',

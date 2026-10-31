@@ -57,6 +57,14 @@ def run_patch():
                         break
                 break
 
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_configuration(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines.insert(j + 1, '\tif (getenv("ANDROID_USB_FD")) {\n\t\tif (config) *config = 1;\n\t\treturn 0;\n\t}\n')
+                        break
+                break
+
         with open(core_path, 'w') as f:
             f.writelines(lines)
 
@@ -113,9 +121,78 @@ def run_patch():
                             '\t\tdesc->iProduct = buf[15];\n',
                             '\t\tdesc->iSerialNumber = buf[16];\n',
                             '\t\tdesc->bNumConfigurations = buf[17];\n',
+                            '\t\tif (dev) memcpy(&dev->device_descriptor, desc, sizeof(struct libusb_device_descriptor));\n',
                             '\t\tfprintf(stderr, "[LIBUSB-HACK] EXITO (Desde Caché)! VID=%04x PID=%04x\\n", desc->idVendor, desc->idProduct);\n',
                             '\t\treturn 0;\n',
                             '\t}\n'
+                        ]
+                        break
+                break
+
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_config_descriptor(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines[j+1:j+1] = [
+                            '\n\tchar *f_fd = getenv("ANDROID_USB_FD");\n',
+                            '\tif (f_fd) {\n',
+                            '\t\tstatic unsigned char cached_config[1024];\n',
+                            '\t\tstatic int cached_config_len = 0;\n',
+                            '\t\tint fd = atoi(f_fd);\n',
+                            '\t\tif (cached_config_len == 0) {\n',
+                            '\t\t\tfprintf(stderr, "[LIBUSB-HACK] Obteniendo Config Descriptor por ioctl (FD %d)... ", fd);\n',
+                            '\t\t\tunsigned char header[9];\n',
+                            '\t\t\tstruct usbdevfs_ctrltransfer ctrl;\n',
+                            '\t\t\tmemset(&ctrl, 0, sizeof(ctrl));\n',
+                            '\t\t\tctrl.bRequestType = 0x80;\n',
+                            '\t\t\tctrl.bRequest = 0x06;\n',
+                            '\t\t\tctrl.wValue = (uint16_t)((0x02 << 8) | config_index);\n',
+                            '\t\t\tctrl.wIndex = 0;\n',
+                            '\t\t\tctrl.wLength = 9;\n',
+                            '\t\t\tctrl.timeout = 1000;\n',
+                            '\t\t\tctrl.data = header;\n',
+                            '\t\t\tint res = ioctl(fd, 0xC0185500, &ctrl); // USBDEVFS_CONTROL\n',
+                            '\t\t\tif (res >= 4) {\n',
+                            '\t\t\t\tuint16_t total_len = (uint16_t)(header[2] | (header[3] << 8));\n',
+                            '\t\t\t\tif (total_len > sizeof(cached_config)) total_len = sizeof(cached_config);\n',
+                            '\t\t\t\tctrl.wLength = total_len;\n',
+                            '\t\t\t\tctrl.data = cached_config;\n',
+                            '\t\t\t\tres = ioctl(fd, 0xC0185500, &ctrl);\n',
+                            '\t\t\t\tif (res >= 9) {\n',
+                            '\t\t\t\t\tcached_config_len = res;\n',
+                            '\t\t\t\t\tfprintf(stderr, "EXITO! (%d bytes)\\n", res);\n',
+                            '\t\t\t\t} else {\n',
+                            '\t\t\t\t\tfprintf(stderr, "FALLO leyendo config completo (res=%d, errno=%d)\\n", res, errno);\n',
+                            '\t\t\t\t\treturn -1;\n',
+                            '\t\t\t\t}\n',
+                            '\t\t\t} else {\n',
+                            '\t\t\t\tfprintf(stderr, "FALLO leyendo cabecera config (res=%d, errno=%d)\\n", res, errno);\n',
+                            '\t\t\t\treturn -1;\n',
+                            '\t\t\t}\n',
+                            '\t\t}\n',
+                            '\t\tfprintf(stderr, "[LIBUSB-HACK] Config Descriptor entregado (%d bytes)\\n", cached_config_len);\n',
+                            '\t\treturn raw_desc_to_config(usbi_device_ctx(dev), cached_config, cached_config_len, config);\n',
+                            '\t}\n'
+                        ]
+                        break
+                break
+
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_active_config_descriptor(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines[j+1:j+1] = [
+                            '\n\tif (getenv("ANDROID_USB_FD")) return libusb_get_config_descriptor(dev, 0, config);\n'
+                        ]
+                        break
+                break
+
+        for i, line in enumerate(lines):
+            if 'int API_EXPORTED libusb_get_config_descriptor_by_value(' in line:
+                for j in range(i, i + 10):
+                    if '{' in lines[j]:
+                        lines[j+1:j+1] = [
+                            '\n\tif (getenv("ANDROID_USB_FD")) return libusb_get_config_descriptor(dev, 0, config);\n'
                         ]
                         break
                 break
