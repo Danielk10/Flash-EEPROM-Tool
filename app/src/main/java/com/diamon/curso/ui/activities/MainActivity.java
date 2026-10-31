@@ -1014,6 +1014,11 @@ public class MainActivity extends AppCompatActivity {
         }
         // ── Programadores seriales (serprog, buspirate_spi, spidriver): iniciar PTY ──
         if (UsbController.needsPtyBridge(selectedProgrammer)) {
+            if (!usbController.ensurePtyBridge(selectedProgrammer)) {
+                log(getString(R.string.str_log_warn_pty_not_ready));
+                action.run();
+                return;
+            }
             PtyBridge ptyBridge = usbController.getPtyBridge();
             if (ptyBridge == null || !ptyBridge.isOpen()) {
                 log(getString(R.string.str_log_warn_pty_not_ready));
@@ -1060,7 +1065,9 @@ public class MainActivity extends AppCompatActivity {
                 });
             });
         } else {
-            // CH341A y otros programadores con parche libusb son instantáneos
+            // Programadores USB directos (CH341A, CH347, FT2232, etc.): cerrar puente PTY
+            // para liberar las interfaces USB y evitar conflictos con ANDROID_USB_FD / libusb.
+            usbController.closePtyBridge();
             action.run();
         }
     }

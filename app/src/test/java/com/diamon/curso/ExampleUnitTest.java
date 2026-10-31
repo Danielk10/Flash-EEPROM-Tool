@@ -13,12 +13,22 @@ public class ExampleUnitTest {
         assertTrue(UsbController.needsPtyBridge("serprog"));
         assertTrue(UsbController.needsPtyBridge("buspirate_spi"));
         assertTrue(UsbController.needsPtyBridge("spidriver"));
+        assertTrue(UsbController.needsPtyBridge("serprog:spispeed=2M"));
+        assertTrue(UsbController.needsPtyBridge("buspirate_spi:dev=/dev/pts/1"));
+        assertTrue(UsbController.needsPtyBridge("spidriver:dev=/dev/pts/2"));
 
         // Programadores por USB directo o emuladores (no requieren PTY)
         assertFalse(UsbController.needsPtyBridge("ch341a_spi"));
         assertFalse(UsbController.needsPtyBridge("ch347_spi"));
         assertFalse(UsbController.needsPtyBridge("ft2232_spi"));
         assertFalse(UsbController.needsPtyBridge("ft2232_spi:type=232H"));
+        assertFalse(UsbController.needsPtyBridge("usbblaster_spi"));
+        assertFalse(UsbController.needsPtyBridge("dirtyjtag_spi"));
+        assertFalse(UsbController.needsPtyBridge("developerbox"));
+        assertFalse(UsbController.needsPtyBridge("jlink_spi"));
+        assertFalse(UsbController.needsPtyBridge("stlinkv3_spi"));
+        assertFalse(UsbController.needsPtyBridge("dediprog"));
+        assertFalse(UsbController.needsPtyBridge("pickit2_spi"));
         assertFalse(UsbController.needsPtyBridge("dummy"));
         assertFalse(UsbController.needsPtyBridge(""));
         assertFalse(UsbController.needsPtyBridge(null));
@@ -71,9 +81,42 @@ public class ExampleUnitTest {
         assertEquals("dediprog", UsbController.USB_AUTO_MAP.get("0483:dada"));
         assertNull(UsbController.USB_AUTO_MAP.get("0483:dae0"));
 
-        // NVIDIA SMA y Arduino Uno Serprog
+        // NVIDIA SMA y DirtyJTAG
         assertEquals("nv_sma_spi", UsbController.USB_AUTO_MAP.get("0955:cf11"));
-        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:0043"));
+        assertEquals("dirtyjtag_spi", UsbController.USB_AUTO_MAP.get("1209:c0ca"));
+        assertEquals("dirtyjtag_spi", UsbController.USB_AUTO_MAP.get("1209:c0cb"));
+
+        // CP210x
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("10c4:ea60"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("10c4:ea61"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("10c4:ea70"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("10c4:ea71"));
+
+        // CH34x / CH9102
         assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1a86:7523"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1a86:55d4"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1a86:55d3"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1a86:55d2"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1a86:e523"));
+
+        // Espressif ESP32 CDC
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("303a:1001"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("303a:0002"));
+
+        // Arduino / SparkFun / Pico / STM32
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:0043"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:0001"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:0042"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:0010"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:8036"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:8037"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2341:003e"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1b4f:9205"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("1b4f:9206"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2e8a:0005"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2e8a:000a"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2e8a:0003"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("2e8a:0009"));
+        assertEquals("serprog", UsbController.USB_AUTO_MAP.get("0483:5740"));
     }
 }

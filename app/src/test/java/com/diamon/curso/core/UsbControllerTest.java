@@ -76,5 +76,68 @@ public class UsbControllerTest {
                 UsbController.resolveAutoProgrammer(0x1a86, 0x5512, "CH341A", false));
         assertEquals("ch347_spi",
                 UsbController.resolveAutoProgrammer(0x1a86, 0x55db, "CH347T", false));
+        assertEquals("dirtyjtag_spi",
+                UsbController.resolveAutoProgrammer(0x1209, 0xc0cb, "DirtyJTAG 2", false));
+    }
+
+    @Test
+    public void clonesUsbBlasterYDispositivosFtdiDisambiguacion() {
+        // Clones de USB-Blaster basados en FTDI FT245/FT232 (0x0403:0x6001)
+        assertEquals("usbblaster_spi",
+                UsbController.resolveAutoProgrammer(0x0403, 0x6001, "USB-Blaster", false));
+        assertEquals("usbblaster_spi",
+                UsbController.resolveAutoProgrammer(0x0403, 0x6001, "Altera USB Blaster", false));
+
+        // FT230X / FT231X (0x0403:0x6015): SPIDriver si el nombre lo indica, serprog si es UART genérico
+        assertEquals("spidriver",
+                UsbController.resolveAutoProgrammer(0x0403, 0x6015, "SPIDriver", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x0403, 0x6015, "FT231X USB UART", false));
+
+        // FT232R genérico sin nombre conocido no se fuerza para evitar conflicto
+        assertNull(UsbController.resolveAutoProgrammer(0x0403, 0x6001, "FT232R USB UART", false));
+    }
+
+    @Test
+    public void nuevosDispositivosSerprogSeMapeanCorrectamente() {
+        // CP2104
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x10c4, 0xea61, "CP2104 USB to UART", false));
+
+        // CH343, CH342, CH340 alt
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x1a86, 0x55d3, "CH343 USB Serial", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x1a86, 0x55d2, "CH342 Dual Serial", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x1a86, 0xe523, "CH340 Alt", false));
+
+        // Espressif ESP32 CDC
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x303a, 0x1001, "ESP32-S3 USB JTAG/serial debug unit", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x303a, 0x0002, "ESP32-S2 USB CDC", false));
+
+        // Arduino CDC y SparkFun Pro Micro
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2341, 0x8036, "Arduino Leonardo", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2341, 0x8037, "Arduino Micro", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2341, 0x0042, "Arduino Mega 2560 R3", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2341, 0x0010, "Arduino Mega 2560", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2341, 0x003e, "Arduino Due Native", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x1b4f, 0x9205, "SparkFun Pro Micro 3.3V", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x1b4f, 0x9206, "SparkFun Pro Micro 5V", false));
+
+        // Raspberry Pi Pico stdio / debug probe
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2e8a, 0x0003, "Pico CDC", false));
+        assertEquals("serprog",
+                UsbController.resolveAutoProgrammer(0x2e8a, 0x0009, "Raspberry Pi Debug Probe", false));
     }
 }

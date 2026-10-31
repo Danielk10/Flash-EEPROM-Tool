@@ -68,6 +68,9 @@
         product-id="60000" /> <!-- 0xea60: CP2102 and other CP210x single port devices -->
     <usb-device
         vendor-id="4292"
+        product-id="60001" /> <!-- 0xea61: CP2104 -->
+    <usb-device
+        vendor-id="4292"
         product-id="60016" /> <!-- 0xea70: CP2105 -->
     <usb-device
         vendor-id="4292"
@@ -103,7 +106,7 @@
         product-id="8964" />
 
 
-    <!-- 0x1a86: Qinheng CH341A / CH347 / CH340 / CH9102 -->
+    <!-- 0x1a86: Qinheng CH341A / CH347 / CH340 / CH342 / CH343 / CH9102 -->
     <usb-device
         vendor-id="6790"
         product-id="21778" /> <!-- 0x5512: CH341A (SPI/I2C Programmer) -->
@@ -118,10 +121,31 @@
         product-id="21972" /> <!-- 0x55d4: CH9102F -->
     <usb-device
         vendor-id="6790"
+        product-id="21971" /> <!-- 0x55d3: CH343 -->
+    <usb-device
+        vendor-id="6790"
+        product-id="21970" /> <!-- 0x55d2: CH342 -->
+    <usb-device
+        vendor-id="6790"
         product-id="29987" /> <!-- 0x7523: CH340 -->
+    <usb-device
+        vendor-id="6790"
+        product-id="58659" /> <!-- 0xe523: CH340 clone PID -->
 
     <!-- CDC driver -->
     <usb-device vendor-id="9025" /> <!-- 0x2341 / ......: Arduino -->
+    <usb-device
+        vendor-id="6991"
+        product-id="37381" /> <!-- 0x1b4f / 0x9205: SparkFun Pro Micro 3.3V -->
+    <usb-device
+        vendor-id="6991"
+        product-id="37382" /> <!-- 0x1b4f / 0x9206: SparkFun Pro Micro 5V -->
+    <usb-device
+        vendor-id="12346"
+        product-id="4097" /> <!-- 0x303a / 0x1001: ESP32-S3 / C3 / C6 USB-JTAG/Serial -->
+    <usb-device
+        vendor-id="12346"
+        product-id="2" /> <!-- 0x303a / 0x0002: ESP32-S2 USB CDC -->
     <usb-device
         vendor-id="5824"
         product-id="1155" /> <!-- 0x16C0 / 0x0483: Teensyduino -->
@@ -143,6 +167,12 @@
     <usb-device
         vendor-id="11914"
         product-id="10" /> <!-- 0x2E8A / 0x000A: Raspberry Pi Pico SDK -->
+    <usb-device
+        vendor-id="11914"
+        product-id="3" /> <!-- 0x2e8a / 0x0003: Raspberry Pi Pico stdio USB -->
+    <usb-device
+        vendor-id="11914"
+        product-id="9" /> <!-- 0x2e8a / 0x0009: Raspberry Pi Debug Probe CDC -->
 
     <!-- ST-LINK V3 con bridge SPI (0x0483).
          Solo estos tres PID están soportados por stlinkv3_spi. Los ST-LINK/V2
@@ -168,6 +198,7 @@
     <!-- Digilent & DirtyJTAG -->
     <usb-device vendor-id="5187" product-id="7" />     <!-- 0x1443 / 0x0007: Digilent SPI -->
     <usb-device vendor-id="4617" product-id="49354" /> <!-- 0x1209 / 0xc0ca: DirtyJTAG -->
+    <usb-device vendor-id="4617" product-id="49355" /> <!-- 0x1209 / 0xc0cb: DirtyJTAG 2 -->
 
     <!-- NVIDIA SMA USB-to-SPI -->
     <usb-device vendor-id="2389" product-id="53009" /> <!-- 0x0955 / 0xcf11: NVIDIA SMA -->

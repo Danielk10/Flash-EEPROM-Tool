@@ -37,11 +37,16 @@ Flash SPI Tool implementa una arquitectura de comunicación dual de alta fidelid
 
 | Programador | Modo de Conexión | Identificador USB (VID:PID) | Descripción Técnica y Características |
 |---|---|---|---|
-| **CH341A / CH347T / CH347F** | TCP Bridge Socket / USB Directo | `1a86:5512` (CH341A)<br>`1a86:55db` (CH347T)<br>`1a86:55de` (CH347F) | Programadores SPI/I2C de bajo costo. CH347T/F aceptan la frecuencia SPI seleccionable en la app (`spispeed=15M/30M/60M`). Usa un bridge nativo con sockets TCP locales y descriptores `libusb` inyectados vía `ANDROID_USB_FD` con herencia despojada de `O_CLOEXEC`. |
-| **Serprog (RP2040, Arduino, STM32)** | Pseudo-Terminal PTY / Socket TCP | `2341:0043` / `0001` (Arduino)<br>`1a86:7523` (CH340)<br>`10c4:ea60` (CP2102)<br>`067b:2303` (PL2303) | Protocolo serie estándar configurado de forma fija y transparente a **115.200 baudios**. Handshake solicitado `HELLO` (versionado) con fallback `NOP/ACK`, compatible con el firmware Arduino oficial (`frser-arduino`), Raspberry Pi Pico, STM32 y el firmware custom. El forwarding es transparente: no escanea los datos SPI en busca de beacons, por lo que `0xAA 0x55` en una lectura nunca se confunde con control. |
-| **Bus Pirate (v3 / v4)** | PTY Serial Bridge | `0403:6001` (FTDI) | Dispositivo multiprotocolo. Conmutación automática a modo binario `BBIO` y control directo de líneas SPI mediante pseudo-terminales dedicados. |
-| **SPIDriver** | PTY Serial Bridge | `0403:6001` / `0403:6015` (FTDI Serial) | Herramienta de desarrollo SPI a 460.800 baudios con soporte de protocolo binario/ASCII, validación de eco `e` y control granular de Chip Select. |
-| **Programadores USB Directos Adicionales** | libusb Nativa Parcheada | FTDI FT2232H/FT4232H/FT232H/FT4233H, TIAO TUMPA, Olimex ARM-USB, GOEPEL PicoTAP, ST-Link v3, Segger J-Link (cualquier PID), Dediprog SF100/SF200/SF600, Pickit2, USB-Blaster, NVIDIA SMA (`0955:cf11`), Google Raiden/Servo | Operación directa mediante invocación nativa y bypass de permisos de kernel. |
+| **CH341A / CH347T / CH347F** | USB Directo (`ANDROID_USB_FD`) | `1a86:5512` (CH341A SPI)<br>`1a86:55db` (CH347T Modo 3)<br>`1a86:55de` (CH347F SPI) | Programadores SPI/I2C de alta velocidad. CH347T/F aceptan frecuencia SPI seleccionable en la app (`spispeed=15M/30M/60M`). El descriptor USB se pasa directamente a `libusb` parcheada sin intermediación de drivers de kernel. |
+| **Serprog (Arduino, ESP32, RP2040, STM32, Adaptadores UART)** | Pseudo-Terminal PTY / Socket TCP Loopback (`127.0.0.1`) | `2341:0043`/`0001` (Arduino Uno)<br>`2341:0042`/`0010` (Arduino Mega)<br>`2341:8036` (Arduino Leonardo)<br>`2341:8037` (Arduino Micro)<br>`2341:003e` (Arduino Due)<br>`1b4f:9205`/`9206` (SparkFun Pro Micro)<br>`303a:1001` (ESP32-S3/C3/C6 CDC)<br>`303a:0002` (ESP32-S2 CDC)<br>`2e8a:0005`/`000a`/`0003`/`0009` (RPi Pico & Debug Probe)<br>`1a86:7523`/`e523` (CH340)<br>`1a86:55d4` (CH9102F)<br>`1a86:55d3` (CH343)<br>`1a86:55d2` (CH342)<br>`10c4:ea60`/`ea61`/`ea70`/`ea71` (CP2102/04/05/08)<br>`067b:2303`/`23a3`..`23f3` (PL2303)<br>`0403:6015` (FTDI FT230X/FT231X)<br>`0483:5740` (STM32 VCP)<br>`16c0:0483` (Teensyduino)<br>`03eb:2044` (Atmel LUFA) | Protocolo serie estándar configurado de forma transparente a **115.200 baudios** (o configurable). Handshake solicitado `HELLO` con fallback `NOP/ACK`, compatible con el firmware `frser-arduino`, `pico-serprog`, firmwares ESP32 y bridges serie dedicados. El forwarding es transparente: no corrompe secuencias binarias `0xAA 0x55` ni `0x11`/`0x13`. |
+| **Bus Pirate (v3 / v3.6 / v4)** | PTY Serial Bridge | `0403:6001` (FTDI FT232R) | Dispositivo multiprotocolo. Conmutación automática a modo binario `BBIO` y control granular de líneas SPI mediante pseudo-terminal maestro/esclavo `/dev/pts/N`. |
+| **SPIDriver** | PTY Serial Bridge | `0403:6001` / `0403:6015` (FTDI FT232R / FT230X) | Herramienta de desarrollo SPI a 460.800 baudios con protocolo nativo binario/ASCII, validación de eco `e` y control de Chip Select. |
+| **FTDI High-Speed SPI (`ft2232_spi`)** | USB Directo (`ANDROID_USB_FD`) | `0403:6010` (FT2232H)<br>`0403:6011` (FT4232H)<br>`0403:6014` (FT232H)<br>`0403:6041` (FT4233H)<br>`0403:8a98`/`8a99` (TIAO TUMPA/Lite)<br>`0403:bbe2` (KT-LINK)<br>`0403:cff8` (Amontec JTAGkey)<br>`15ba:0003`/`0004`/`002a`/`002b` (Olimex)<br>`1457:5118` (OpenMoko)<br>`096c:1449` (PicoTAP)<br>`18d1:5001`..`5003` (Google Servo) | Soporte completo de hardware MPSSE FTDI de alta velocidad. Resolución inteligente de tipo (`type=232H`, `type=2232H`, `type=busblaster`, `type=flyswatter`) para evitar fallos de inicialización. |
+| **Altera USB-Blaster & Clones** | USB Directo (`ANDROID_USB_FD`) | `09fb:6001` (Altera original)<br>`0403:6001` (Clones FTDI FT245/FT232) | Dispositivos JTAG/SPI compatibles con Altera. Detección automática por descriptor de producto para evitar conflictos con adaptadores serie en el mismo VID:PID. |
+| **DirtyJTAG (v1 & v2)** | USB Directo (`ANDROID_USB_FD`) | `1209:c0ca` (DirtyJTAG 1)<br>`1209:c0cb` (DirtyJTAG 2) | Firmware abierto para depuración y flasheo SPI sobre microcontroladores STM32 y RP2040. |
+| **ST-LINK V3 con SPI Bridge** | USB Directo (`ANDROID_USB_FD`) | `0483:374f` (STLINK-V3S)<br>`0483:3753` (V3 dual VCP)<br>`0483:3754` (V3 no MSD) | Programador de silicio oficial de STMicroelectronics con bridge SPI activo. Excluye variantes V2 o V3E sin bridge. |
+| **SEGGER J-Link & OpenSDA** | USB Directo (`ANDROID_USB_FD`) | `1366:*` (SEGGER J-Link)<br>`1fc9:000c` (J-Link OpenSDA) | Compatible con todos los modelos SEGGER mediante `libjaylink` y pasaje directo de descriptor. |
+| **Otros Programadores USB Directos** | USB Directo (`ANDROID_USB_FD`) | `0483:dada` (Dediprog SF100/200/600)<br>`04d8:0033` (PICkit 2)<br>`1443:0007` (Digilent SPI)<br>`0955:cf11` (NVIDIA SMA SPI)<br>`10c4:ea60` (Developerbox)<br>`18d1:*` (Google Raiden Debug) | Operación nativa directa en espacio de usuario mediante `dup()` sin flag `FD_CLOEXEC` y `libusb` modificada. |
 
 ```
                                ┌─────────────────────────┐
@@ -77,6 +82,15 @@ Flash SPI Tool implementa una arquitectura de comunicación dual de alta fidelid
                                │  (SOIC-8, DIP-8, WSON)  │
                                └─────────────────────────┘
 ```
+
+> [!NOTE]
+> **Coexistencia y Aislamiento Seguro entre Dispositivos Seriales y USB Directos:**
+> 1. **Detección Dinámica y Desambiguación (`resolveAutoProgrammer`):**
+>    - Para identificadores compartidos como `0403:6001` (usado indistintamente por Bus Pirate, SPIDriver, clones de USB-Blaster y adaptadores UART FT232R), el sistema inspecciona las cadenas descriptoras del producto USB. Si el dispositivo indica `"bus pirate"`, se asocia a `buspirate_spi`; si indica `"spidriver"`, se asocia a `spidriver`; si indica `"usb-blaster"`, se asocia a `usbblaster_spi`; si es genérico, solicita selección manual guiada sin forzar un protocolo incorrecto.
+>    - De igual modo, en `0403:6015` (FT230X/FT231X), si el nombre no contiene `"spidriver"`, se vincula automáticamente como puente `serprog`.
+> 2. **Prevención de Conflictos de Descriptor (`closePtyBridge` / `ensurePtyBridge`):**
+>    - Si el usuario selecciona o conmuta hacia un programador USB directo (`ch341a_spi`, `ft2232_spi`, `usbblaster_spi`, `dediprog`, etc.), el puente serie PTY/TCP se destruye inmediatamente y libera todas las interfaces USB en Android, garantizando que el descriptor inyectado (`ANDROID_USB_FD`) sea reclamado limpiamente por `libusb` sin colisiones `LIBUSB_ERROR_BUSY` (`-6`) o `LIBUSB_ERROR_ACCESS` (`-3`).
+>    - Al seleccionar un programador serie (`serprog`, `buspirate_spi`, `spidriver`), `FlashromExecutor` pasa `fd = -1` (inhibiendo `ANDROID_USB_FD`) y canaliza el tráfico exclusivamente a través del pseudo-terminal `/dev/pts/N` o del socket TCP loopback local.
 
 ---
 
@@ -238,7 +252,7 @@ El repositorio incluye un **emulador local de silicio y hardware multiprotocolo*
      kill %1
      ```
 
-Para un desglose paso a paso de las opciones de emulación y validación de protocolos, consulta la [Guía de Uso del Emulador](file:///home/danielpdiamon/Flash-EEPROM-Tool/GUIA_USO_EMULADOR.md).
+Para un desglose paso a paso de las opciones de emulación y validación de protocolos, consulta la [Guía de Uso del Emulador](./GUIA_USO_EMULADOR.md).
 
 ---
 

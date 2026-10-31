@@ -104,21 +104,37 @@ public class UsbController {
         map.put("0483:dada", "dediprog");
         map.put("1443:0007", "digilent_spi");
         map.put("1209:c0ca", "dirtyjtag_spi");
+        map.put("1209:c0cb", "dirtyjtag_spi"); // DirtyJTAG 2
         map.put("0955:cf11", "nv_sma_spi");
 
         // Serprog sobre adaptadores USB-serie (el firmware debe implementar serprog).
-        map.put("2341:0043", "serprog"); // Arduino Uno
-        map.put("2341:0001", "serprog"); // Arduino
+        map.put("2341:0043", "serprog"); // Arduino Uno R3
+        map.put("2341:0001", "serprog"); // Arduino Uno
+        map.put("2341:0042", "serprog"); // Arduino Mega 2560 R3
+        map.put("2341:0010", "serprog"); // Arduino Mega 2560
+        map.put("2341:8036", "serprog"); // Arduino Leonardo
+        map.put("2341:8037", "serprog"); // Arduino Micro
+        map.put("2341:003e", "serprog"); // Arduino Due Native USB
+        map.put("1b4f:9205", "serprog"); // SparkFun Pro Micro 3.3V
+        map.put("1b4f:9206", "serprog"); // SparkFun Pro Micro 5V
         map.put("16c0:0483", "serprog"); // Teensy
         map.put("03eb:2044", "serprog"); // Atmel LUFA
         map.put("1eaf:0004", "serprog"); // LeafLabs Maple
         map.put("0d28:0204", "serprog"); // ARM mbed
         map.put("0483:5740", "serprog"); // STM32 virtual COM port
         map.put("2e8a:0005", "serprog"); // Raspberry Pi Pico (MicroPython)
-        map.put("2e8a:000a", "serprog"); // Raspberry Pi Pico SDK
+        map.put("2e8a:000a", "serprog"); // Raspberry Pi Pico SDK / Picoprobe
+        map.put("2e8a:0003", "serprog"); // Raspberry Pi Pico stdio USB
+        map.put("2e8a:0009", "serprog"); // Raspberry Pi Debug Probe CDC
+        map.put("303a:1001", "serprog"); // Espressif ESP32-S3 / C3 / C6 USB-JTAG/Serial CDC
+        map.put("303a:0002", "serprog"); // Espressif ESP32-S2 USB CDC
         map.put("1a86:7523", "serprog"); // CH340
         map.put("1a86:55d4", "serprog"); // CH9102F
-        map.put("10c4:ea60", "serprog"); // CP2102
+        map.put("1a86:55d3", "serprog"); // CH343
+        map.put("1a86:55d2", "serprog"); // CH342 dual UART
+        map.put("1a86:e523", "serprog"); // CH340 alternate PID
+        map.put("10c4:ea60", "serprog"); // CP2102 / CP2103
+        map.put("10c4:ea61", "serprog"); // CP2104
         map.put("10c4:ea70", "serprog"); // CP2105
         map.put("10c4:ea71", "serprog"); // CP2108
         map.put("067b:2303", "serprog"); // PL2303
@@ -341,6 +357,22 @@ public class UsbController {
             return "ft2232_spi:type=flyswatter";
         }
 
+        // Clones de Altera USB-Blaster basados en chips FTDI FT245/FT232 (VID 0x0403, PID 0x6001)
+        if (name.contains("usb-blaster") || name.contains("usb blaster")) {
+            return "usbblaster_spi";
+        }
+
+        // Firmwares serprog explícitos en adaptadores serie FTDI
+        if (name.contains("serprog")) {
+            return "serprog";
+        }
+
+        // FT230X / FT231X / FT234XD (0x0403:0x6015): adaptadores serie genéricos FTDI.
+        // Si el nombre no coincidió con spidriver (evaluado arriba), opera como serprog.
+        if (vendorId == 0x0403 && productId == 0x6015) {
+            return "serprog";
+        }
+
         // raiden_debug_spi no usa una tabla de PID: coincide con cualquier
         // dispositivo Google que exponga la interfaz vendor-specific 0xff/0x51.
         if (vendorId == 0x18d1 && hasRaidenInterface) {
@@ -431,9 +463,45 @@ public class UsbController {
     }
 
     public static boolean needsPtyBridge(String prog) {
-        return "serprog".equals(prog)
-                || "buspirate_spi".equals(prog)
-                || "spidriver".equals(prog);
+        if (prog == null) return false;
+        String baseProg = prog.trim();
+        int colon = baseProg.indexOf(':');
+        if (colon > 0) {
+            baseProg = baseProg.substring(0, colon);
+        }
+        return "serprog".equals(baseProg)
+                || "buspirate_spi".equals(baseProg)
+                || "spidriver".equals(baseProg);
+    }
+
+    /**
+     * Asegura que el puente PTY / Socket esté activo si el programador lo requiere,
+     * o cerrado si se trata de un programador USB directo. Evita conflictos de acceso
+     * al dispositivo USB entre la emulación serie y libusb / ANDROID_USB_FD.
+     */
+    public boolean ensurePtyBridge(String prog) {
+        if (!needsPtyBridge(prog)) {
+            closePtyBridge();
+            return true;
+        }
+        if (ptyBridge != null && ptyBridge.isOpen()) {
+            return true;
+        }
+        if (currentDevice == null || currentConnection == null || usbManager == null) {
+            return false;
+        }
+        closePtyBridge();
+        callback.log(activity.getString(R.string.str_serial_programmer_detected));
+        PtyBridge bridge = new PtyBridge();
+        bridge.setLogCallback(msg -> callback.log(msg));
+        if (bridge.open(activity, currentDevice, usbManager, currentConnection, serprogBaud)) {
+            ptyBridge = bridge;
+            callback.log(activity.getString(R.string.str_pty_bridge_active_format, ptyBridge.getSlavePath(), serprogBaud));
+            return true;
+        } else {
+            callback.log(activity.getString(R.string.str_warn_pty_start_failed));
+            return false;
+        }
     }
 
     // ── Transporte serprog (Socket TCP local vs PTY) ──
