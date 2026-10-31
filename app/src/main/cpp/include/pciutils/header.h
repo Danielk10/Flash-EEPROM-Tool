@@ -1295,6 +1295,7 @@
 /* Address Translation Service */
 #define PCI_ATS_CAP		0x04	/* ATS Capability Register */
 #define  PCI_ATS_CAP_IQD(x)	((x) & 0x1f) /* Invalidate Queue Depth */
+#define  PCI_ATS_CAP_PAGE_ALIGNED	0x0020	/* Page Aligned Request */
 #define PCI_ATS_CTRL		0x06	/* ATS Control Register */
 #define  PCI_ATS_CTRL_STU(x)	((x) & 0x1f) /* Smallest Translation Unit */
 #define  PCI_ATS_CTRL_ENABLE	0x8000	/* ATS Enable */
@@ -1534,6 +1535,7 @@
 #define  PCI_DEV3_DEVCAP3_RETIMER_L0P_EXIT(x)	(((x) >> 7) & 0x7) /* Retimer L0p Exit Latency */
 #define  PCI_DEV3_DEVCAP3_UIO_MEM_RDWR_COMP	0x0400	/* UIO Mem RdWr Completer Supported */
 #define  PCI_DEV3_DEVCAP3_UIO_MEM_RDWR_REQ	0x0800	/* UIO Mem RdWr Requester Supported */
+#define  PCI_DEV3_DEVCAP3_OHC_E_SUPP(x)	(((x) >> 12) & 0x7) /* OHC-E Support */
 
 #define PCI_DEV3_DEVCTL3		0x08	/* Device Control 3 */
 #define  PCI_DEV3_DEVCTL3_DMWR_REQ_EN	0x0001	/* DMWr Requester Enable */
