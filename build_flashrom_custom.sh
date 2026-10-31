@@ -133,24 +133,43 @@ elif [ -f "$FAKE_USR/bin/flashrom" ]; then
     FLASHROM_BIN="$FAKE_USR/bin/flashrom"
 fi
 
+LIBFLASHROM="$FAKE_USR/lib/libflashrom.so"
+
 if [ -n "$FLASHROM_BIN" ]; then
     ls -lh "$FLASHROM_BIN"
+    [ -f "$LIBFLASHROM" ] && ls -lh "$LIBFLASHROM"
 
     echo
     echo "=== Dependencias dinámicas de flashrom ==="
     readelf -d "$FLASHROM_BIN" 2>/dev/null | grep NEEDED || true
 
     echo
-    echo "=== Alineación 16KB en ejecutable flashrom ==="
+    echo "=== Alineación 16KB en ejecutable y librería ==="
+    echo "[$FLASHROM_BIN]:"
     readelf -l "$FLASHROM_BIN" 2>/dev/null | grep LOAD || true
+    if [ -f "$LIBFLASHROM" ]; then
+        echo "[$LIBFLASHROM]:"
+        readelf -l "$LIBFLASHROM" 2>/dev/null | grep LOAD || true
+    fi
 
     echo
-    echo "=== Verificación de Programadores Soportados en el Binario ==="
-    for prog in ch341a_spi ch347_spi ft2232_spi usbblaster_spi serprog buspirate_spi spidriver dirtyjtag_spi stlinkv3_spi jlink_spi; do
-        if strings "$FLASHROM_BIN" 2>/dev/null | grep -q "$prog"; then
-            echo "  [OK] $prog: Incluido"
+    echo "=== Verificación de Programadores Soportados en Binario y Librería ==="
+    PROG_LIST="ch341a_spi ch347_spi ft2232_spi usbblaster_spi serprog buspirate_spi spidriver dirtyjtag_spi stlinkv3_spi jlink_spi pickit2_spi dediprog digilent_spi raiden_debug_spi pony_spi"
+
+    # Verificación en runtime mediante el listado nativo del CLI de flashrom
+    CLI_PROGS=$(LD_LIBRARY_PATH="$FAKE_USR/lib:$TMX_PREFIX/lib" "$FLASHROM_BIN" -p __list_probe__ 2>&1 || true)
+
+    for prog in $PROG_LIST; do
+        if echo "$CLI_PROGS" | grep -qw "$prog" 2>/dev/null; then
+            echo "  [OK] $prog: Incluido (verificado en runtime CLI)"
+        elif [ -f "$LIBFLASHROM" ] && readelf -s "$LIBFLASHROM" 2>/dev/null | grep -Eq "programmer_$prog\b|devs_$prog\b"; then
+            echo "  [OK] $prog: Incluido (símbolo en libflashrom)"
+        elif readelf -s "$FLASHROM_BIN" 2>/dev/null | grep -Eq "programmer_$prog\b|devs_$prog\b"; then
+            echo "  [OK] $prog: Incluido (símbolo en flashrom bin)"
+        elif strings "$LIBFLASHROM" "$FLASHROM_BIN" 2>/dev/null | grep -q "$prog"; then
+            echo "  [OK] $prog: Incluido (cadena de driver detectada)"
         else
-            echo "  [AVISO] $prog: No detectado en cadenas"
+            echo "  [AVISO] $prog: No detectado"
         fi
     done
 else
