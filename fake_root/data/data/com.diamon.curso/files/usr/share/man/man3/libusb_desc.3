@@ -1,4 +1,4 @@
-.TH "libusb_desc" 3 "Thu Aug 6 2026 22:36:04" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_desc" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -936,7 +936,7 @@ Free a platform descriptor obtained from \fBlibusb_get_platform_descriptor()\fP\
 .SS "int libusb_get_string_descriptor_ascii (\fBlibusb_device_handle\fP * dev_handle, uint8_t desc_index, unsigned char * data, int length)"
 
 .PP
-Retrieve a string descriptor in C style ASCII\&. Wrapper around \fBlibusb_get_string_descriptor()\fP\&. Uses the first language supported by the device\&.
+Retrieve a string descriptor in C style ASCII\&. Wrapper around libusb_get_string_descriptor()\&. Uses the first language supported by the device\&.
 
 .PP
 \fBParameters\fP
@@ -1054,7 +1054,7 @@ a negative error code or the actual string length in bytes including the null te
 .PP
 \fBSee also\fP
 .RS 4
-\fBlibusb_get_string_descriptor()\fP 
+libusb_get_string_descriptor() 
 
 .PP
 \fBlibusb_get_string_descriptor_ascii()\fP
@@ -1120,7 +1120,7 @@ Platform notes:
 .IP "\(bu" 2
 Windows and macOS fetch the string by its descriptor index and can serve any configuration, active or not\&.
 .IP "\(bu" 2
-Linux reads the string from sysfs, which only exposes the string of the active configuration\&. A non-active configuration can only be served when it shares its string descriptor (iConfiguration index) with the active one; otherwise \fBLIBUSB_ERROR_NOT_SUPPORTED\fP is returned even though the requested configuration is valid\&. In that case the string can still be read by opening the device and calling \fBlibusb_get_string_descriptor()\fP with the iConfiguration index\&.
+Linux reads the string from sysfs, which only exposes the string of the active configuration\&. A non-active configuration can only be served when it shares its string descriptor (iConfiguration index) with the active one; otherwise \fBLIBUSB_ERROR_NOT_SUPPORTED\fP is returned even though the requested configuration is valid\&. In that case the string can still be read by opening the device and calling \fBlibusb_get_string_descriptor\fP with the iConfiguration index\&.
 .IP "\(bu" 2
 Backends that do not implement this function always return \fBLIBUSB_ERROR_NOT_SUPPORTED\fP\&. 
 .PP
@@ -1169,7 +1169,7 @@ Platform notes:
 .IP "\(bu" 2
 Windows and macOS fetch the string by its descriptor index and can serve any configuration and alternate setting, current or not\&.
 .IP "\(bu" 2
-Linux reads the string from sysfs, which only exposes the string of the currently selected alternate setting in the active configuration\&. A valid but non-current alternate setting (or non-active configuration) can only be served when it shares its string descriptor (iInterface index) with the current one; otherwise \fBLIBUSB_ERROR_NOT_SUPPORTED\fP is returned even though the requested combination is valid\&. In that case the string can still be read by opening the device and calling \fBlibusb_get_string_descriptor()\fP with the iInterface index\&.
+Linux reads the string from sysfs, which only exposes the string of the currently selected alternate setting in the active configuration\&. A valid but non-current alternate setting (or non-active configuration) can only be served when it shares its string descriptor (iInterface index) with the current one; otherwise \fBLIBUSB_ERROR_NOT_SUPPORTED\fP is returned even though the requested combination is valid\&. In that case the string can still be read by opening the device and calling \fBlibusb_get_string_descriptor\fP with the iInterface index\&.
 .IP "\(bu" 2
 Backends that do not implement this function always return \fBLIBUSB_ERROR_NOT_SUPPORTED\fP\&. 
 .PP

@@ -1,4 +1,4 @@
-.TH "libusb_poll" 3 "Thu Aug 6 2026 22:36:04" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_poll" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -21,11 +21,11 @@ libusb_poll \- Polling and timing
 
 .in +1c
 .ti -1c
-.RI "typedef void(* \fBlibusb_pollfd_added_cb\fP) (int fd, short events, void *user_data)"
+.RI "typedef void(*) \fBlibusb_pollfd_added_cb\fP(int fd, short events, void *user_data)"
 .br
 .RI "Callback function, invoked when a new file descriptor should be added to the set of file descriptors monitored for events\&. "
 .ti -1c
-.RI "typedef void(* \fBlibusb_pollfd_removed_cb\fP) (int fd, void *user_data)"
+.RI "typedef void(*) \fBlibusb_pollfd_removed_cb\fP(int fd, void *user_data)"
 .br
 .RI "Callback function, invoked when a file descriptor should be removed from the set of file descriptors being monitored for events\&. "
 .in -1c
@@ -33,19 +33,19 @@ libusb_poll \- Polling and timing
 
 .in +1c
 .ti -1c
-.RI "int \fBlibusb_try_lock_events\fP (\fBlibusb_context\fP *ctx) TRY_ACQUIRE(0"
+.RI "int \fBlibusb_try_lock_events\fP (\fBlibusb_context\fP *ctx)"
 .br
 .RI "Attempt to acquire the event handling lock\&. "
 .ti -1c
-.RI "void \fBlibusb_lock_events\fP (\fBlibusb_context\fP *ctx) ACQUIRE(ctx \-> events_lock)"
+.RI "void \fBlibusb_lock_events\fP (\fBlibusb_context\fP *ctx)"
 .br
 .RI "Acquire the event handling lock, blocking until successful acquisition if it is contended\&. "
 .ti -1c
-.RI "void \fBlibusb_unlock_events\fP (\fBlibusb_context\fP *ctx) RELEASE(ctx \-> events_lock)"
+.RI "void \fBlibusb_unlock_events\fP (\fBlibusb_context\fP *ctx)"
 .br
 .RI "Release the lock previously acquired with \fBlibusb_try_lock_events()\fP or \fBlibusb_lock_events()\fP\&. "
 .ti -1c
-.RI "int \fBlibusb_event_handling_ok\fP (\fBlibusb_context\fP *ctx) REQUIRES(ctx \-> events_lock)"
+.RI "int \fBlibusb_event_handling_ok\fP (\fBlibusb_context\fP *ctx)"
 .br
 .RI "Determine if it is still OK for this thread to be doing event handling\&. "
 .ti -1c
@@ -57,15 +57,15 @@ libusb_poll \- Polling and timing
 .br
 .RI "Interrupt any active thread that is handling events\&. "
 .ti -1c
-.RI "void \fBlibusb_lock_event_waiters\fP (\fBlibusb_context\fP *ctx) ACQUIRE(ctx \-> event_waiters_lock)"
+.RI "void \fBlibusb_lock_event_waiters\fP (\fBlibusb_context\fP *ctx)"
 .br
 .RI "Acquire the event waiters lock\&. "
 .ti -1c
-.RI "void \fBlibusb_unlock_event_waiters\fP (\fBlibusb_context\fP *ctx) RELEASE(ctx \-> event_waiters_lock)"
+.RI "void \fBlibusb_unlock_event_waiters\fP (\fBlibusb_context\fP *ctx)"
 .br
 .RI "Release the event waiters lock\&. "
 .ti -1c
-.RI "int \fBlibusb_wait_for_event\fP (\fBlibusb_context\fP *ctx, struct timeval *tv) REQUIRES(ctx \-> event_waiters_lock)"
+.RI "int \fBlibusb_wait_for_event\fP (\fBlibusb_context\fP *ctx, struct timeval *tv)"
 .br
 .RI "Wait for another thread to signal completion of an event\&. "
 .ti -1c
@@ -85,7 +85,7 @@ libusb_poll \- Polling and timing
 .br
 .RI "Handle any pending events in blocking mode\&. "
 .ti -1c
-.RI "int \fBlibusb_handle_events_locked\fP (\fBlibusb_context\fP *ctx, struct timeval *tv) REQUIRES(ctx \-> events_lock)"
+.RI "int \fBlibusb_handle_events_locked\fP (\fBlibusb_context\fP *ctx, struct timeval *tv)"
 .br
 .RI "Handle any pending events by polling file descriptors, without checking if any other threads are already doing so\&. "
 .ti -1c
@@ -247,7 +247,7 @@ The events lock, event waiters lock, and \fBlibusb_handle_events_locked()\fP ent
 See the extra documentation: \fBMulti-threaded applications and asynchronous I/O\fP 
 .SH "Typedef Documentation"
 .PP 
-.SS "typedef void(* libusb_pollfd_added_cb) (int fd, short events, void *user_data)"
+.SS "typedef void(*) libusb_pollfd_added_cb(int fd, short events, void *user_data)"
 
 .PP
 Callback function, invoked when a new file descriptor should be added to the set of file descriptors monitored for events\&. 
@@ -267,7 +267,7 @@ Callback function, invoked when a new file descriptor should be added to the set
 .RE
 .PP
 
-.SS "typedef void(* libusb_pollfd_removed_cb) (int fd, void *user_data)"
+.SS "typedef void(*) libusb_pollfd_removed_cb(int fd, void *user_data)"
 
 .PP
 Callback function, invoked when a file descriptor should be removed from the set of file descriptors being monitored for events\&. After returning from this callback, do not use that file descriptor again\&. 
@@ -313,7 +313,7 @@ While holding this lock, you are trusted to actually be handling events\&. If yo
 .RE
 .PP
 
-.SS "void libusb_lock_events (\fBlibusb_context\fP * ctx) \-> events_lock)"
+.SS "void libusb_lock_events (\fBlibusb_context\fP * ctx)"
 
 .PP
 Acquire the event handling lock, blocking until successful acquisition if it is contended\&. This lock is used to ensure that only one thread is monitoring libusb event sources at any one time\&.
@@ -331,7 +331,7 @@ While holding this lock, you are trusted to actually be handling events\&. If yo
 .RE
 .PP
 
-.SS "void libusb_unlock_events (\fBlibusb_context\fP * ctx) \-> events_lock)"
+.SS "void libusb_unlock_events (\fBlibusb_context\fP * ctx)"
 
 .PP
 Release the lock previously acquired with \fBlibusb_try_lock_events()\fP or \fBlibusb_lock_events()\fP\&. Releasing this lock will wake up any threads blocked on \fBlibusb_wait_for_event()\fP\&.
@@ -343,7 +343,7 @@ Release the lock previously acquired with \fBlibusb_try_lock_events()\fP or \fBl
 .RE
 .PP
 
-.SS "int libusb_event_handling_ok (\fBlibusb_context\fP * ctx) \-> events_lock)"
+.SS "int libusb_event_handling_ok (\fBlibusb_context\fP * ctx)"
 
 .PP
 Determine if it is still OK for this thread to be doing event handling\&. Sometimes, libusb needs to temporarily pause all event handlers, and this is the function you should use before polling file descriptors to see if this is the case\&.
@@ -404,7 +404,7 @@ Since version 1\&.0\&.21, \fBLIBUSB_API_VERSION\fP >= 0x01000105
 .RE
 .PP
 
-.SS "void libusb_lock_event_waiters (\fBlibusb_context\fP * ctx) \-> event_waiters_lock)"
+.SS "void libusb_lock_event_waiters (\fBlibusb_context\fP * ctx)"
 
 .PP
 Acquire the event waiters lock\&. This lock is designed to be obtained under the situation where you want to be aware when events are completed, but some other thread is event handling so calling \fBlibusb_handle_events()\fP is not allowed\&.
@@ -422,7 +422,7 @@ You only need to use this lock if you are developing an application which calls 
 .RE
 .PP
 
-.SS "void libusb_unlock_event_waiters (\fBlibusb_context\fP * ctx) \-> event_waiters_lock)"
+.SS "void libusb_unlock_event_waiters (\fBlibusb_context\fP * ctx)"
 
 .PP
 Release the event waiters lock\&. 
@@ -433,7 +433,7 @@ Release the event waiters lock\&.
 .RE
 .PP
 
-.SS "int libusb_wait_for_event (\fBlibusb_context\fP * ctx, struct timeval * tv) \-> event_waiters_lock)"
+.SS "int libusb_wait_for_event (\fBlibusb_context\fP * ctx, struct timeval * tv)"
 
 .PP
 Wait for another thread to signal completion of an event\&. Must be called with the event waiters lock held, see \fBlibusb_lock_event_waiters()\fP\&.
@@ -574,7 +574,7 @@ See \fBlibusb_handle_events_timeout_completed()\fP for details on the completed 
 .RE
 .PP
 
-.SS "int libusb_handle_events_locked (\fBlibusb_context\fP * ctx, struct timeval * tv) \-> events_lock)"
+.SS "int libusb_handle_events_locked (\fBlibusb_context\fP * ctx, struct timeval * tv)"
 
 .PP
 Handle any pending events by polling file descriptors, without checking if any other threads are already doing so\&. Must be called with the event lock held, see \fBlibusb_lock_events()\fP\&.

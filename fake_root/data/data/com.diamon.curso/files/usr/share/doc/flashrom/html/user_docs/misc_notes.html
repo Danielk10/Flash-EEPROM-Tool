@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Misc notes and advice &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>Misc notes and advice &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
@@ -65,6 +65,10 @@
 <li><p>If you run flashrom on Linux and see messages about <code class="docutils literal notranslate"><span class="pre">/dev/mem</span></code>, see next section.</p></li>
 <li><p>If you run flashrom on OpenBSD, you might need to obtain raw access permission by setting
 <code class="docutils literal notranslate"><span class="pre">securelevel</span> <span class="pre">=</span> <span class="pre">-1</span></code> in <code class="docutils literal notranslate"><span class="pre">/etc/rc.securelevel</span></code> and rebooting, or rebooting into single user mode.</p></li>
+<li><p>If you run flashrom on FreeBSD, <code class="docutils literal notranslate"><span class="pre">/dev/io</span></code> and write access to <code class="docutils literal notranslate"><span class="pre">/dev/mem</span></code> are refused once
+<code class="docutils literal notranslate"><span class="pre">kern.securelevel</span></code> is above 0. Set <code class="docutils literal notranslate"><span class="pre">kern_securelevel_enable=&quot;NO&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">/etc/rc.conf</span></code> and
+reboot, or reboot into single user mode. MSR access, needed for a few boards, requires the
+<code class="docutils literal notranslate"><span class="pre">cpuctl</span></code> kernel module (<code class="docutils literal notranslate"><span class="pre">kldload</span> <span class="pre">cpuctl</span></code>).</p></li>
 </ul>
 </section>
 <section id="what-can-i-do-about-dev-mem-errors">
@@ -269,7 +273,7 @@ you have access to a system which has flashrom.</p></li>
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

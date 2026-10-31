@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>How to mark chip as tested &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>How to mark chip as tested &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
@@ -48,8 +48,9 @@ are welcome to send test results to the mailing list, see <a class="reference in
 <p>Instructions below assume you went through Development guide, and set up environment and repository locally.</p>
 <p>To begin with, make sure you have full logs from all the operations that you have run successfully and want to
 mark as tested. <strong>Providing full logs which indicate successful run is required to mark chip as tested.</strong></p>
-<p>Information about tested status of the chip is stored in <code class="docutils literal notranslate"><span class="pre">flashchips.c</span></code>, specifically in the <code class="docutils literal notranslate"><span class="pre">.tested</span></code> member
-of <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">flashchip</span></code>.</p>
+<p>Information about tested status of the chip is stored in its definition.
+All flashchip definitions are in <code class="docutils literal notranslate"><span class="pre">/flashchips</span></code> directory. You need to find and look into the file which corresponds
+to the manufacturer of your chip. Test status is in the <code class="docutils literal notranslate"><span class="pre">.tested</span></code> member of <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">flashchip</span></code>.</p>
 <p>Relevant definitions and available options are in <code class="docutils literal notranslate"><span class="pre">include/flash.h</span></code>, specifically see the definition of:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">test_state</span></code></p></li>
@@ -58,7 +59,7 @@ of <code class="docutils literal notranslate"><span class="pre">struct</span> <s
 </ul>
 <p>Choose the correct value depending on the operations that you have tested successfully. And then:</p>
 <ol class="arabic simple">
-<li><p>Open <code class="docutils literal notranslate"><span class="pre">flashchips.c</span></code> and find the definition of your chip.</p></li>
+<li><p>Open <code class="docutils literal notranslate"><span class="pre">/flashchips</span></code> directory and find the definition of your chip.</p></li>
 <li><p>Check the tested status of the chip. If you tested <em>not</em> on the latest HEAD (perhaps on the latest released version,
 or on flashrom built a month ago, etc), it is possible that tested status has been updated already. If the status
 has not been updated,</p></li>
@@ -66,13 +67,12 @@ has not been updated,</p></li>
 tested at once: maybe you tested only probe and read, then mark just that.</p></li>
 <li><p>Make sure flashrom builds successfully, and all the unit tests pass.</p></li>
 <li><p>For commit title, use the string <code class="docutils literal notranslate"><span class="pre">flashchips:</span> <span class="pre">Mark</span> <span class="pre">&lt;chip</span> <span class="pre">name&gt;</span> <span class="pre">as</span> <span class="pre">tested</span> <span class="pre">for</span> <span class="pre">&lt;operations&gt;</span></code>.</p></li>
-<li><p>Provide the logs in commit message, you can use flashrom paste service at <a class="reference external" href="https://paste.flashrom.org">paste.flashrom.org</a>
-or any other paste service. As a plan B, you can post message on the <a class="reference internal" href="../contact.html#mailing-list"><span class="std std-ref">Mailing List</span></a>, attach the logs to the post,
-and then add the link to the post to the commit message.</p></li>
+<li><p>Provide the logs in commit message, you can use flashrom paste service at <a class="reference external" href="https://paste.flashrom.org">paste.flashrom.org</a>,
+if it doesn't work you can use any other paste service. As a plan B, you can add logs as a Gerrit comment after you push your patch.</p></li>
 <li><p>Follow <a class="reference internal" href="../dev_guide/development_guide.html"><span class="doc">Development Guide</span></a> and send your patch for review.</p></li>
 <li><p>Go through review process until your patch gets approved (see Development guide for more details on this).</p></li>
 </ol>
-<p>To see the examples of such patches, have a look at commit history of <code class="docutils literal notranslate"><span class="pre">flashchips.c</span></code>.</p>
+<p>To see the examples of such patches, have a look at commit history of <code class="docutils literal notranslate"><span class="pre">/flashchips</span></code> directory.</p>
 </section>
 
 
@@ -151,7 +151,7 @@ and then add the link to the post to the commit message.</p></li>
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

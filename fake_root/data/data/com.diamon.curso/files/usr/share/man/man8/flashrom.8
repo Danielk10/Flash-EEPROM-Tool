@@ -1,6 +1,6 @@
 '\" t
 .\" Man page generated from reStructuredText
-.\" by the Docutils 0.22.4 manpage writer.
+.\" by the Docutils 0.23 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -29,7 +29,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "FLASHROM" "8" "Aug 07, 2026" "" "flashrom"
+.TH "FLASHROM" "8" "Oct 31, 2026" "" "flashrom"
 .SH NAME
 .sp
 \fBflashrom\fP \- detect, read, write, verify and erase flash chips
@@ -450,25 +450,9 @@ Currently supported are:
 .IP \(bu 2
 \fBnicrealtek\fP          (for flash ROMs on Realtek and SMC 1211 network cards)
 .IP \(bu 2
-\fBnicnatsemi\fP          (for flash ROMs on National Semiconductor DP838* network cards)
-.IP \(bu 2
 \fBnicintel\fP            (for parallel flash ROMs on Intel 10/100Mbit network cards)
 .IP \(bu 2
-\fBgfxnvidia\fP           (for flash ROMs on NVIDIA graphics cards)
-.IP \(bu 2
-\fBdrkaiser\fP            (for flash ROMs on Dr. Kaiser PC\-Waechter PCI cards)
-.IP \(bu 2
-\fBsatasii\fP             (for flash ROMs on Silicon Image SATA/IDE controllers)
-.IP \(bu 2
-\fBsatamv\fP              (for flash ROMs on Marvell SATA controllers)
-.IP \(bu 2
-\fBatahpt\fP              (for flash ROMs on Highpoint ATA/RAID controllers)
-.IP \(bu 2
 \fBatavia\fP              (for flash ROMs on VIA VT6421A SATA controllers)
-.IP \(bu 2
-\fBatapromise\fP          (for flash ROMs on Promise PDC2026x ATA/RAID controllers)
-.IP \(bu 2
-\fBit8212\fP              (for flash ROMs on ITE IT8212F ATA/RAID controller)
 .IP \(bu 2
 \fBft2232_spi\fP          (for SPI flash ROMs attached to an FT2232/FT4232H/FT232H family based USB SPI programmer)
 .IP \(bu 2
@@ -477,8 +461,6 @@ Currently supported are:
 \fBbuspirate_spi\fP       (for SPI flash ROMs attached to a Bus Pirate)
 .IP \(bu 2
 \fBdediprog\fP            (for SPI flash ROMs attached to a Dediprog SF100)
-.IP \(bu 2
-\fBrayer_spi\fP           (for SPI flash ROMs attached to a parallel port by one of various cable types)
 .IP \(bu 2
 \fBraiden_debug_spi\fP    (For Chrome EC based debug tools \- SuzyQable, Servo V4, C2D2 & uServo)
 .IP \(bu 2
@@ -507,8 +489,6 @@ Currently supported are:
 \fBdigilent_spi\fP        (for SPI flash ROMs attached to iCEblink40 development boards)
 .IP \(bu 2
 \fBjlink_spi\fP           (for SPI flash ROMs attached to SEGGER J\-Link and compatible devices)
-.IP \(bu 2
-\fBni845x_spi\fP          (for SPI flash ROMs attached to National Instruments USB\-8451 or USB\-8452)
 .IP \(bu 2
 \fBstlinkv3_spi\fP        (for SPI flash ROMs attached to STMicroelectronics STLINK V3 devices)
 .IP \(bu 2
@@ -770,6 +750,26 @@ like a USB drive or a network share. If you needed to run the board enable code 
 If reading succeeds and the contents of the read file look legit you can try to write the new image.
 You should enable the board enable code in any case now, as it has been written because it is known that writing/erasing
 without the board enable is going to fail. In any case (success or failure), please report to the \fBflashrom\fP mailing list, see below.
+.TP
+\fBLinux MTD\fP
+On Intel platforms the kernel\(aqs \fBspi\-intel\fP driver claims the PCH flash controller and exposes the flash
+as an MTD device. The internal programmer uses that device when it is present instead of talking to the
+chipset itself, and reports doing so.
+.sp
+This path is more restricted than chipset access. Regions taken from the flash descriptor, protected range
+handling and chip write protection are unavailable, and ranges the controller refuses to read fail the whole
+operation unless \fBlinux_mtd:ignore_read_errors=yes\fP is used. To get the chipset path instead, unbind the
+driver from the controller, which is at \fB00:1f.5\fP on current chipsets:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.EX
+echo 0000:00:1f.5 > /sys/bus/pci/drivers/intel\-spi/unbind
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Note that doing so gives up the protections the kernel driver enforces.
 .TP
 \fBCoreboot\fP
 On systems running coreboot, \fBflashrom\fP checks whether the desired image matches your mainboard.
@@ -1273,7 +1273,7 @@ flashrom \-p fault:backend=dummy,...,write_lie_prob=0.2 \-w image.bin
 .EE
 .UNINDENT
 .UNINDENT
-.SS nic3com, nicrealtek, nicnatsemi, nicintel, nicintel_eeprom, nicintel_spi, gfxnvidia, ogp_spi, drkaiser, satasii, satamv, atahpt, atavia, atapromise, it8212 programmers
+.SS nic3com, nicrealtek, nicintel, nicintel_eeprom, nicintel_spi, ogp_spi, atavia programmers
 .sp
 These programmers have an option to specify the PCI address of the card your want to use, which must be specified if
 more than one card supported by the selected programmer is installed in your system. The syntax is:
@@ -1440,11 +1440,6 @@ T}
 The revision consists of two characters that are printed below the \(dqVT6421A\(dq string on the chip
 prefixed by 4 numbers that encode the production year and week.
 The country is noted right of the revision.
-.SS atapromise programmer
-.sp
-This programmer is currently limited to 32 kB, regardless of the actual size of the flash chip. This stems from the
-fact that, on the tested device (a Promise Ultra100), not all of the chip\(aqs address lines were actually connected.
-You may use this programmer to flash firmware updates, since these are only 16 kB in size (padding to 32 kB is required).
 .SS nic3com programmer
 .sp
 flashrom supports some 3Com network cards to reflash the (parallel) flash attached to these cards,
@@ -1462,15 +1457,6 @@ themselves to be identified, the controller relies on correct size values writte
 \fBFlashrom\fP follows this scheme but assumes the minimum size of 16 kB (128 kb) if an unprogrammed EEPROM/card is detected.
 Intel specifies following EEPROMs to be compatible:
 Atmel AT25128, AT25256, Micron (ST) M95128, M95256 and OnSemi (Catalyst) CAT25CS128.
-.SS gfxnvidia programmer
-.sp
-Flashrom supports some Nvidia graphic cards to reflash the (parallel) flash attached to these cards,
-but it is also possible to use these cards to reflash other chips which fit in there electrically.
-.SS satasii programmer
-.sp
-Flashrom supports some SiI ATA/SATA controllers to reflash the flash attached to these controller cards,
-but it is also possible to use these cards to reflash other chips which fit in there electrically.
-Please note that the small number of address lines connected to the chip may make accessing large chips impossible.
 .SS ft2232_spi programmer
 .sp
 This module supports various programmers based on FTDI FT2232/FT4232H/FT232H chips including the DLP Design DLP\-USB1232H,
@@ -1494,18 +1480,36 @@ syntax where \fBmodel\fP can be \fB2232H\fP, \fB4232H\fP, \fB232H\fP, \fBjtagkey
 \fBinterface\fP can be \fBA\fP, \fBB\fP, \fBC\fP, or \fBD\fP\&. The default model is \fB4232H\fP, the default interface is \fBA\fP and
 GPIO is not used by default.
 .sp
-If there is more than one ft2232_spi\-compatible device connected, you can select which one should be used by specifying
-its serial number with the:
+If there is more than one ft2232_spi\-compatible device connected, you can select which one should be used either by specifying
+its USB port path or serial number/description.
+.sp
+USB port path syntax:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .EX
-flashrom \-p ft2232_spi:serial=number
+flashrom \-p ft2232_spi:usbpath=bus\-port(.port.port... etc)
 .EE
 .UNINDENT
 .UNINDENT
 .sp
-syntax where \fBnumber\fP is the serial number of the device (which can be found for example in the output of lsusb \-v).
+Where \fBbus\fP is a number between 0 and 255 and \fBport(s)\fP are numbers between 0 and 255.
+Bus and port numbers can be found for example in the output of lsusb \-t.
+The maximum depth of USB port path including bus number is 7.
+USB port path will take precedence over any specified serial/description.
+.sp
+Serial/Description syntax:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+flashrom \-p ft2232_spi:serial=number,description=product
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Where \fBnumber\fP is the serial number of the device and \fBproduct\fP is the product description of the device (both can be found for example in the output of lsusb \-v).
+Either serial or description or both may be provided.
 .sp
 All models supported by the \fBft2232_spi\fP driver can configure the SPI clock rate by setting a divisor. The expressible
 divisors are all \fBeven\fP numbers between 2 and 2^17 (=131072) resulting in SPI clock frequencies of 6 MHz down to about
@@ -1773,40 +1777,6 @@ flashrom \-p dediprog:target=value
 .UNINDENT
 .sp
 where \fBvalue\fP can be \fB1\fP, \fB2\fP, or \fB3\fP to select target chip 1, 2, or socket (3) respectively. The default is target chip 1.
-.SS rayer_spi programmer
-.sp
-The default I/O base address used for the parallel port is 0x378 and you can use the optional \fBiobase\fP parameter to
-specify an alternate base I/O address with the:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p rayer_spi:iobase=baseaddr
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-syntax where \fBbaseaddr\fP is base I/O port address of the parallel port, which must be a multiple of four.
-Make sure to not forget the \(dq0x\(dq prefix for hexadecimal port addresses.
-.sp
-The default cable type is the RayeR cable. You can use the optional \fBtype\fP parameter to specify the cable type with the:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p rayer_spi:type=model
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-syntax where \fBmodel\fP can be \fBrayer\fP for the RayeR cable, \fBbyteblastermv\fP for the Altera ByteBlasterMV,
-\fBstk200\fP for the Atmel, \fBSTK200/300\fP, \fBwiggler\fP for the Macraigor Wiggler, \fBxilinx\fP for the Xilinx Parallel Cable III (DLC 5),
-or \fBspi_tt\fP for SPI Tiny Tools\-compatible hardware.
-.sp
-More information about the RayeR hardware is available at RayeR\(aqs website \%<http://\:rayer\:.g6\:.cz/\:elektro/\:spipgm\:.htm>\&.
-The Altera ByteBlasterMV datasheet can be obtained from Altera \%<http://\:www\:.altera\:.co\:.jp/\:literature/\:ds/\:dsbytemv\:.pdf>\&.
-For more information about the Macraigor Wiggler see their company homepage \%<http://\:www\:.macraigor\:.com/\:wiggler\:.htm>\&.
-The schematic of the Xilinx DLC 5 was published in a Xilinx guide \%<http://\:www\:.xilinx\:.com/\:support/\:documentation/\:user_guides/\:xtp029\:.pdf>\&.
 .SS raiden_debug_spi programmer
 .sp
 Some devices such as the GSC knows how it is wired to AP and EC flash chips, and can be told which specific device to talk to using the \fBtarget\fP parameter:
@@ -2028,71 +1998,6 @@ flashrom \-p ch347_spi:spispeed=value
 .UNINDENT
 .sp
 where \fBvalue\fP can be \fB60M\fP, \fB30M\fP, \fB15M\fP, \fB7.5M\fP, \fB3.75M\fP, \fB1.875M\fP, \fB937.5K\fP, \fB468.75K\fP\&.
-.SS ni845x_spi programmer
-.sp
-An optional \fBvoltage\fP parameter could be used to specify the IO voltage. This parameter is available for the NI USB\-8452 device.
-The default unit is Volt if no unit is specified. You can use \fBmV\fP, \fBmilliVolt\fP, \fBV\fP or \fBVolt\fP as unit specifier.
-Syntax is:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p ni845x_spi:voltage=value
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-where \fBvalue\fP can be \fB1.2V\fP, \fB1.5V\fP, \fB1.8V\fP, \fB2.5V\fP, \fB3.3V\fP or the equivalent in mV.
-.sp
-In the case if none of the programmer\(aqs supported IO voltage is within the supported voltage range of the detected flash
-chip the \fBflashrom\fP will abort the operation (to prevent damaging the flash chip).
-You can override this behaviour by passing \fByes\fP to the \fBignore_io_voltage_limits\fP parameter
-(for e.g. if you are using an external voltage translator circuit). Syntax is:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p ni845x_spi:ignore_io_voltage_limits=yes
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-You can use the \fBserial\fP parameter to explicitly specify which connected NI USB\-845x device should be used. You should
-use your device\(aqs 7 digit hexadecimal serial number. Usage example to select the device with 1230A12 serial number:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p ni845x_spi:serial=1230A12
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-An optional \fBspispeed\fP parameter specifies the frequency of the SPI bus. Syntax is:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p ni845x_spi:spispeed=frequency
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-where \fBfrequency\fP should a number corresponding to the desired frequency in kHz.
-The maximum \fBfrequency\fP is 12 MHz (12000 kHz) for the USB\-8451 and 50 MHz (50000 kHz) for the USB\-8452.
-The default is a frequency of 1 MHz (1000 kHz).
-.sp
-An optional \fBcs\fP parameter specifies which target chip select line should be used. Syntax is:
-.INDENT 0.0
-.INDENT 3.5
-.sp
-.EX
-flashrom \-p ni845x_spi:csnumber=value
-.EE
-.UNINDENT
-.UNINDENT
-.sp
-where \fBvalue\fP should be between \fB0\fP and \fB7\fP\&. By default the CS0 is used.
 .SS digilent_spi programmer
 .sp
 An optional \fBspispeed\fP parameter specifies the frequency of the SPI bus. Syntax is:
@@ -2401,6 +2306,14 @@ flashrom \-p internal \-w backup.rom \-o restorelog.txt
 .sp
 If you encounter any problems, please contact us and supply backuplog.txt, writelog.txt and restorelog.txt.
 See section \fBBUGS\fP for contact info.
+.SH ENVIRONMENT
+.INDENT 0.0
+.TP
+\fBNO_COLOR\fP
+Error messages are printed in red and warnings in yellow when the output is a terminal and \fBTERM\fP is not
+\fBdumb\fP\&. Setting \fBNO_COLOR\fP to a non\-empty value disables this. The log file written by \fB\-o\fP is never
+colored. Color output is not implemented on Windows.
+.UNINDENT
 .SH EXIT STATUS
 .sp
 \fBflashrom\fP exits with 0 on success, 1 on most failures but with 3 if a call to mmap() fails.
@@ -2435,7 +2348,7 @@ needs PCI configuration space access
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-nic3com, nicrealtek, nicnatsemi
+nic3com, nicrealtek
 .INDENT 2.0
 .INDENT 3.5
 .INDENT 0.0
@@ -2443,40 +2356,6 @@ nic3com, nicrealtek, nicnatsemi
 need PCI configuration space read access
 .IP \(bu 2
 raw I/O port access
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.IP \(bu 2
-atahpt
-.INDENT 2.0
-.INDENT 3.5
-.INDENT 0.0
-.IP \(bu 2
-needs PCI configuration space access
-.IP \(bu 2
-raw I/O port access
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.IP \(bu 2
-gfxnvidia, drkaiser, it8212
-.INDENT 2.0
-.INDENT 3.5
-.INDENT 0.0
-.IP \(bu 2
-need PCI configuration space access
-.IP \(bu 2
-raw memory access
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.IP \(bu 2
-rayer_spi
-.INDENT 2.0
-.INDENT 3.5
-.INDENT 0.0
-.IP \(bu 2
-needs raw I/O port access
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -2491,26 +2370,12 @@ needs access to the respective USB device via libusb API version 1.0
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-satasii, nicintel, nicintel_eeprom, nicintel_spi
+nicintel, nicintel_eeprom, nicintel_spi
 .INDENT 2.0
 .INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
 need PCI configuration space read access
-.IP \(bu 2
-raw memory access
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.IP \(bu 2
-satamv, atapromise
-.INDENT 2.0
-.INDENT 3.5
-.INDENT 0.0
-.IP \(bu 2
-need PCI configuration space read access
-.IP \(bu 2
-raw I/O port access
 .IP \(bu 2
 raw memory access
 .UNINDENT
@@ -2567,7 +2432,7 @@ needs no access permissions at all
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-internal, nic3com, nicrealtek, nicnatsemi, gfxnvidia, drkaiser, satasii, satamv, atahpt, atavia, atapromise, asm106x
+internal, nic3com, nicrealtek, atavia, asm106x
 .INDENT 2.0
 .INDENT 3.5
 .INDENT 0.0
@@ -2617,6 +2482,10 @@ securelevel=\-1
 .UNINDENT
 .sp
 in \fB/etc/rc.securelevel\fP and rebooting, or rebooting into single user mode.
+.sp
+On FreeBSD, raw memory and I/O port access are refused once \fBkern.securelevel\fP
+is above 0. Set \fBkern_securelevel_enable=\(dqNO\(dq\fP in \fB/etc/rc.conf\fP and reboot,
+or reboot into single user mode. MSR access requires the \fBcpuctl\fP kernel module.
 .SH BUGS
 .sp
 You can report bugs, ask us questions or send success reports via our communication channels listed here:

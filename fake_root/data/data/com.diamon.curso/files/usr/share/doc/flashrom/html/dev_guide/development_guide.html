@@ -5,18 +5,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Development Guide &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>Development Guide &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Release process" href="release_process.html" />
-    <link rel="prev" title="Building from source" href="building_from_source.html" />
+    <link rel="prev" title="GitHub binary builds" href="github_binary_builds.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -81,7 +81,7 @@ on the commit (<code class="docutils literal notranslate"><span class="pre">git<
 This is a long description. Max width of each line in the description
 is 72 characters. It is separated from the summary by a blank line. You
 may skip the long description if the short description is sufficient,
-for example &quot;flashchips: Add FOO25Q128&quot; to add FOO25Q128 chip support.
+for example "flashchips: Add FOO25Q128" to add FOO25Q128 chip support.
 
 You may have multiple paragraphs in the long description, but please
 do not write a novel here. For non-trivial changes you must explain
@@ -313,13 +313,21 @@ and all unit tests pass.</p></li>
 <li><p>Commit message should have Signed-off-by line, see <a class="reference internal" href="#sign-off"><span class="std std-ref">Sign-off procedure</span></a> and align with the rest
 of the rules for <a class="reference internal" href="#commit-message"><span class="std std-ref">Commit message</span></a></p></li>
 <li><p>All the comments need to be addressed, especially if there was a negative vote in the process of review (-1 or -2).</p></li>
-<li><p>flashrom developers are people from literally all around the planet, and various timezones. We usually wait
-for 3 days (3 * 24hours) after the patch is fully approved just in case of last minute concerns from all timezones.</p></li>
+<li><p>flashrom developers are people from everywhere. We usually wait for 2 days (48 hours) after the patch is fully approved
+just in case of last minute concerns. Exceptions which can be merged faster after verification by a reviewer:</p>
+<ol class="loweralpha simple">
+<li><p>trivial changes such as typo fixes or small documentation updates.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/</span></code>-only changes.</p></li>
+<li><p>commits which do not change the compiled code, such as introducing macros or named constants, or renaming.
+The object files must be byte-identical before and after the change, built with <code class="docutils literal notranslate"><span class="pre">-Dprogrammer=all</span> <span class="pre">-Duse_git_version=disabled</span></code>.
+The commit message has to state this, and the reviewer should confirm it.</p></li>
+</ol>
+</li>
 <li><p>In the case of emergency, merging should not take place within less than 24 hours after the review
 started (i.e. the first message by a reviewer on Gerrit).</p></li>
 </ol>
 <p>To help search for patches which are potential candidates for merging, you can try using this search in Gerrit:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">status</span><span class="p">:</span><span class="nb">open</span> <span class="n">project</span><span class="p">:</span><span class="n">flashrom</span> <span class="o">-</span><span class="ow">is</span><span class="p">:</span><span class="n">wip</span> <span class="o">-</span><span class="n">label</span><span class="p">:</span><span class="n">Verified</span><span class="o">-</span><span class="mi">1</span> <span class="n">label</span><span class="p">:</span><span class="n">Verified</span><span class="o">+</span><span class="mi">1</span> <span class="o">-</span><span class="n">label</span><span class="p">:</span><span class="n">Code</span><span class="o">-</span><span class="n">Review</span><span class="o">&lt;</span><span class="mi">0</span> <span class="n">age</span><span class="p">:</span><span class="mi">3</span><span class="n">d</span> <span class="ow">is</span><span class="p">:</span><span class="n">mergeable</span> <span class="ow">is</span><span class="p">:</span><span class="n">submittable</span> <span class="o">-</span><span class="n">has</span><span class="p">:</span><span class="n">unresolved</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">status</span><span class="p">:</span><span class="nb">open</span> <span class="n">project</span><span class="p">:</span><span class="n">flashrom</span> <span class="o">-</span><span class="ow">is</span><span class="p">:</span><span class="n">wip</span> <span class="o">-</span><span class="n">label</span><span class="p">:</span><span class="n">Verified</span><span class="o">-</span><span class="mi">1</span> <span class="n">label</span><span class="p">:</span><span class="n">Verified</span><span class="o">+</span><span class="mi">1</span> <span class="o">-</span><span class="n">label</span><span class="p">:</span><span class="n">Code</span><span class="o">-</span><span class="n">Review</span><span class="o">&lt;</span><span class="mi">0</span> <span class="n">age</span><span class="p">:</span><span class="mi">2</span><span class="n">d</span> <span class="ow">is</span><span class="p">:</span><span class="n">mergeable</span> <span class="ow">is</span><span class="p">:</span><span class="n">submittable</span> <span class="o">-</span><span class="n">has</span><span class="p">:</span><span class="n">unresolved</span>
 </pre></div>
 </div>
 <p>Note the search is not a replacement for Merge checklist, but it can help find candidates for merging.</p>
@@ -372,6 +380,7 @@ Google account as an OAuth2 <a class="reference external" href="https://review.c
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Developers documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="building_from_source.html">Building from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="github_binary_builds.html">GitHub binary builds</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Development Guide</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#set-up-the-git-repository-and-dev-environment">Set up the git repository and dev environment</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#creating-your-patch">Creating your patch</a><ul>
@@ -421,7 +430,7 @@ Google account as an OAuth2 <a class="reference external" href="https://review.c
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Developers documentation</a><ul>
-      <li>Previous: <a href="building_from_source.html" title="previous chapter">Building from source</a></li>
+      <li>Previous: <a href="github_binary_builds.html" title="previous chapter">GitHub binary builds</a></li>
       <li>Next: <a href="release_process.html" title="next chapter">Release process</a></li>
   </ul></li>
   </ul></li>
@@ -443,7 +452,7 @@ Google account as an OAuth2 <a class="reference external" href="https://review.c
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

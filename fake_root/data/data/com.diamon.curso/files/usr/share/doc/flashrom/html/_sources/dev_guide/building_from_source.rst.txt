@@ -22,13 +22,11 @@ And the following dependencies:
 * libusb1 [#b2]_
 * libftdi1 [#b2]_
 * libjaylink [#b2]_
-* NI-845x driver & library package [#b3]_
-* libcrypto [#b4]_
+* libcrypto [#b3]_
 
 .. [#b1] | optional, for building unit testing
 .. [#b2] | optional, depending on the selected programmer
-.. [#b3] | optional, proprietary and Windows only. (See Windows build instructions)
-.. [#b4] | optional, to enable RPMC commands
+.. [#b3] | optional, to enable RPMC commands
 
 If you are cross compiling, install the dependencies for your target.
 
@@ -107,9 +105,6 @@ Windows
   Install `MSYS2 <https://www.msys2.org/>`_ and ensure it is `fully updated <https://www.msys2.org/docs/updating/>`_.
 
   * ``libpci`` is not available through the package manager and pci based programmer are not supported on Windows.
-  * ``ni845x_spi`` is only available with the proprietary library from National Instruments. Download and install the driver
-    from `ni.com <https://www.ni.com/en-us/support/downloads/drivers/download.ni-845x-driver-software.html>`_ and build flashrom
-    for **32-bit**. Add ``-Dprogrammer=ni845x_spi`` to your meson configuration.
 
   In the MSYS2 UCRT64 shell run::
 
@@ -182,33 +177,6 @@ OpenIndiana (Illumos, Solaris, SunOS)
 ::
 
      pkg install build-essential meson ninja cmocka libusb-1
-
-DJGPP-DOS
-"""""""""
-
-* Get `DJGPP <https://www.delorie.com/djgpp/>`_
-* A great build script can be found `here <https://github.com/andrewwutw/build-djgpp>`_
-* Download the `pciutils <https://mj.ucw.cz/sw/pciutils/>`_ sources
-
-| Run the following commands in the the pciutils directory to build libpci for DOS.
-| Replace ``<DOS_INSTALL_ROOT>`` with your cross-compile install root.
-
-::
-
-    make install-lib \
-        ZLIB=no \
-        DNS=no \
-        HOST=i386-djgpp-djgpp \
-        CROSS_COMPILE=i586-pc-msdosdjgpp- \
-        STRIP="--strip-program=i586-pc-msdosdjgpp-strip -s" \
-        PREFIX=<DOS_INSTALL_ROOT>
-
-Point pkg-config to the ``<DOS_INSTALL_ROOT>`` ::
-
-    export PKG_CONFIG_SYSROOT=<DOS_INSTALL_ROOT>
-
-* To compile flashrom use the ``meson_cross/i586_djgpp_dos.txt`` cross-file
-* You will need `CWSDPMI.EXE <https://sandmann.dotster.com/cwsdpmi/>`_ to run flashrom
 
 libpayload
 """"""""""

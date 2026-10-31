@@ -1,4 +1,4 @@
-.TH "libusb_hotplug" 3 "Thu Aug 6 2026 22:36:04" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_hotplug" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -29,7 +29,7 @@ libusb_hotplug \- Device hotplug event notification
 .br
 .RI "Callback handle\&. "
 .ti -1c
-.RI "typedef int(* \fBlibusb_hotplug_callback_fn\fP) (\fBlibusb_context\fP *ctx, \fBlibusb_device\fP *device, \fBlibusb_hotplug_event\fP event, void *user_data)"
+.RI "typedef int(*) \fBlibusb_hotplug_callback_fn\fP(\fBlibusb_context\fP *ctx, \fBlibusb_device\fP *device, \fBlibusb_hotplug_event\fP event, void *user_data)"
 .br
 .RI "Hotplug callback function type\&. "
 .in -1c
@@ -78,7 +78,7 @@ Since version 1\&.0\&.16, \fBLIBUSB_API_VERSION\fP >= 0x01000102
 
 .PP
 For more information, see \fBDevice hotplug event notification\fP\&. 
-.SS "typedef int(* libusb_hotplug_callback_fn) (\fBlibusb_context\fP *ctx, \fBlibusb_device\fP *device, \fBlibusb_hotplug_event\fP event, void *user_data)"
+.SS "typedef int(*) libusb_hotplug_callback_fn(\fBlibusb_context\fP *ctx, \fBlibusb_device\fP *device, \fBlibusb_hotplug_event\fP event, void *user_data)"
 
 .PP
 Hotplug callback function type\&. When requesting hotplug event notifications, you pass a pointer to a callback function of this type\&.
@@ -127,7 +127,7 @@ Since version 1\&.0\&.16, \fBLIBUSB_API_VERSION\fP >= 0x01000102\&. Hotplug even
 A device has been plugged in and is ready to use\&. 
 .TP
 \f(BILIBUSB_HOTPLUG_EVENT_DEVICE_LEFT \fP
-A device has left and is no longer available\&. It is the user's responsibility to call libusb_close on any handle associated with a disconnected device\&. It is safe to call libusb_get_device_descriptor on a device that has left 
+A device has left and is no longer available\&. It is the user's responsibility to call libusb_close on any handle associated with a disconnected device\&. See \fBDevice hotplug event notification\fP for the set of libusb functions that are safe to call from within a LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT callback\&. 
 .SS "enum \fBlibusb_hotplug_flag\fP"
 
 .PP

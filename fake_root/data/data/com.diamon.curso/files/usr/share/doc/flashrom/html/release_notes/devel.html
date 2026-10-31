@@ -5,17 +5,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Recent development (unreleased) &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>Recent development (unreleased) &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="v1.7 (Feb 2026)" href="v_1_7.html" />
+    <link rel="next" title="v1.8 (Aug 2026)" href="v_1_8.html" />
     <link rel="prev" title="Release notes" href="index.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -40,210 +40,99 @@
 the next release of flashrom and which are currently only available by source
 code checkout (see <a class="reference internal" href="../dev_guide/building_from_source.html"><span class="doc">Building from source</span></a>). These changes
 may be further revised before the next release.</p>
-<section id="new-features">
-<h2>New features<a class="headerlink" href="#new-features" title="Link to this heading">¶</a></h2>
-<section id="multi-die-flash-chip-support">
-<h3>Multi-die flash chip support<a class="headerlink" href="#multi-die-flash-chip-support" title="Link to this heading">¶</a></h3>
-<p>Support is added for some of the multi-die flash chips.</p>
-<p>Two new fields are added in the <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">flashchip</span></code> definition:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">.die_size</span></code> - Size of a single die in kilobytes. Set for multi-die chips.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.die_select</span></code> - callback for die selection. Different vendors can use
-different opcodes and methods to select active dies.</p></li>
-</ul>
-<p>This enables future support for multi-die flash chips without affecting existing single-die
-chip support.</p>
-<p>New feature flag <code class="docutils literal notranslate"><span class="pre">FEATURE_STATUS_PER_DIE</span></code> supports multi-die chips which have status register per die.
-This flag need to be used together with new fields <code class="docutils literal notranslate"><span class="pre">die_size</span></code> and <code class="docutils literal notranslate"><span class="pre">die_select</span></code>.</p>
-<p>Feature currently enabled for models <code class="docutils literal notranslate"><span class="pre">W77Q128NW</span></code> and <code class="docutils literal notranslate"><span class="pre">W77T128NW</span></code>.</p>
+<section id="cli-updates">
+<h2>CLI updates<a class="headerlink" href="#cli-updates" title="Link to this heading">¶</a></h2>
+<section id="colored-errors-and-warnings">
+<h3>Colored errors and warnings<a class="headerlink" href="#colored-errors-and-warnings" title="Link to this heading">¶</a></h3>
+<p>The classic CLI prints error messages in red and warnings in yellow when the
+output is a terminal. Set the <code class="docutils literal notranslate"><span class="pre">NO_COLOR</span></code> environment variable to a non-empty
+value to disable it. The log file written by <code class="docutils literal notranslate"><span class="pre">-o</span></code> is never colored. Color
+output is not implemented on Windows.</p>
 </section>
-<section id="byte-addressing">
-<h3>2-byte addressing<a class="headerlink" href="#byte-addressing" title="Link to this heading">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">FEATURE_ADDR_2BYTE</span></code> marks a chip that uses a 16-bit (2-byte) address in its read and program instructions
-rather than the default 24-bit (3-byte) address. This is used by small SPI EEPROMs such as
-<code class="docutils literal notranslate"><span class="pre">ST</span> <span class="pre">M95320</span></code> (parts up to 64 KiB in the M95xxx family).
-When set, <code class="docutils literal notranslate"><span class="pre">spi_prepare_address()</span></code> emits only two address bytes.</p>
 </section>
-<section id="repeated-reads">
-<h3>Repeated reads<a class="headerlink" href="#repeated-reads" title="Link to this heading">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">--read-repeated[=&lt;count&gt;]</span> <span class="pre">[&lt;file&gt;]</span></code>: Read the flash chip multiple times
-(default: 3, minimum: 3) and use majority voting to detect unstable
-connections. Deduplicates read results to minimise memory usage. If a file
-is given and a strict majority is found, saves the majority content to it.
-Useful for diagnosing flaky SPI wiring or unreliable programmers.</p>
+<section id="platform-updates">
+<h2>Platform updates<a class="headerlink" href="#platform-updates" title="Link to this heading">¶</a></h2>
+<section id="freebsd">
+<h3>FreeBSD<a class="headerlink" href="#freebsd" title="Link to this heading">¶</a></h3>
+<p>The internal programmer now finds the SMBIOS tables on UEFI systems by asking
+the loader for the entry point, so board matching and laptop detection work
+there. MSR access uses <code class="docutils literal notranslate"><span class="pre">cpuctl(4)</span></code> from the base system instead of the
+retired <code class="docutils literal notranslate"><span class="pre">devcpu</span></code> port. The <code class="docutils literal notranslate"><span class="pre">internal</span></code> programmer is offered on non-x86
+FreeBSD hosts, matching Linux.</p>
 </section>
 </section>
 <section id="programmers-updates">
 <h2>Programmers updates<a class="headerlink" href="#programmers-updates" title="Link to this heading">¶</a></h2>
-<section id="new-fault-injection-for-testing">
-<h3>New: fault injection for testing<a class="headerlink" href="#new-fault-injection-for-testing" title="Link to this heading">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">fault</span></code> -- A fault injection programmer that wraps an existing backend
-(e.g. <code class="docutils literal notranslate"><span class="pre">dummy</span></code>) and injects deterministic, reproducible faults. Supports
-bit corruption, short reads, write failures, write lies (silent no-ops),
-and partial writes. Uses a seeded PRNG for reproducibility. Intended for
-testing verification logic and retry mechanisms under realistic failure
-conditions.</p>
-</section>
-<section id="linux-mtd-ignore-read-errors-parameter">
-<h3>linux_mtd: ignore_read_errors parameter<a class="headerlink" href="#linux-mtd-ignore-read-errors-parameter" title="Link to this heading">¶</a></h3>
-<p>Some controllers refuse to read firmware-protected ranges (e.g. Intel PCH protected range registers) and fail the
-whole read. With the optional <code class="docutils literal notranslate"><span class="pre">ignore_read_errors=yes</span></code> parameter unreadable blocks are replaced by the erased
-value (usually <code class="docutils literal notranslate"><span class="pre">0xff</span></code>) and a warning is printed, allowing the accessible remainder of the flash to be dumped:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">linux_mtd</span><span class="p">:</span><span class="n">dev</span><span class="o">=</span><span class="n">N</span><span class="p">,</span><span class="n">ignore_read_errors</span><span class="o">=</span><span class="n">yes</span> <span class="o">-</span><span class="n">r</span> <span class="n">dump</span><span class="o">.</span><span class="n">bin</span>
-</pre></div>
-</div>
-<p>Note that this suppresses every read error reported by the kernel, not only refusals caused by firmware-protected
-ranges. Any block that cannot be read, for whatever reason, is replaced by the erased value, so the resulting dump
-may differ from the actual flash contents.</p>
-</section>
-<section id="dediprog-support-target-3-socket">
-<h3>dediprog: Support target 3 (socket)<a class="headerlink" href="#dediprog-support-target-3-socket" title="Link to this heading">¶</a></h3>
-<p>Example to read W25R256JW with SF600:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">dediprog</span><span class="p">:</span><span class="n">voltage</span><span class="o">=</span><span class="mf">1.8</span><span class="n">V</span><span class="p">,</span><span class="n">target</span><span class="o">=</span><span class="mi">3</span> <span class="o">-</span><span class="n">c</span> <span class="n">W25R256JW</span> <span class="o">-</span><span class="n">r</span> <span class="n">dump</span><span class="o">.</span><span class="n">bin</span>
+<section id="ft2232-spi-specify-device-by-usb-port-path">
+<h3>ft2232_spi: specify device by USB port path<a class="headerlink" href="#ft2232-spi-specify-device-by-usb-port-path" title="Link to this heading">¶</a></h3>
+<p>It was previously not possible to specify a device in case of collision in serial/description,
+for example between multiples of the same device with blank EEPROM. now it is possible to select
+by USB bus &amp; port path.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ft2232_spi</span><span class="p">:</span><span class="nb">type</span><span class="o">=</span><span class="mi">4232</span><span class="n">H</span><span class="p">,</span><span class="n">usbpath</span><span class="o">=</span><span class="mi">1</span><span class="o">-</span><span class="mf">1.4.2</span> <span class="o">-</span><span class="n">r</span> <span class="o">-</span><span class="n">c</span> <span class="n">W25Q80BV</span><span class="o">/</span><span class="n">W25Q80DV</span> <span class="o">-</span><span class="n">r</span> <span class="n">dump</span><span class="o">.</span><span class="n">bin</span>
 </pre></div>
 </div>
 </section>
+<section id="ni845x-spi-programmer-is-deleted">
+<h3>ni845x_spi programmer is deleted<a class="headerlink" href="#ni845x-spi-programmer-is-deleted" title="Link to this heading">¶</a></h3>
+<p>The driver was gated to 32-bit Windows and linked against a proprietary
+National Instruments library that ships for no other platform, so the
+hardware has never been usable anywhere else.</p>
+<p>It has been disabled by default all the time and was not built or
+tested by CI scripts.</p>
 </section>
-<section id="libflashrom">
-<h2>libflashrom<a class="headerlink" href="#libflashrom" title="Link to this heading">¶</a></h2>
-<p>The error code <code class="docutils literal notranslate"><span class="pre">ERROR_FLASHROM_PREPARE_FLASH_ACCESS</span></code> (<code class="docutils literal notranslate"><span class="pre">-3</span></code>) is now returned
-for all operations in case when <code class="docutils literal notranslate"><span class="pre">prepare_flash_access</span></code> failed and the operation itself has not started.</p>
-<p><code class="docutils literal notranslate"><span class="pre">libflashrom.h</span></code> updated to document the error code for:</p>
-<p><code class="docutils literal notranslate"><span class="pre">flashrom_flash_erase</span></code></p>
-<p><code class="docutils literal notranslate"><span class="pre">flashrom_image_read</span></code></p>
-<p><code class="docutils literal notranslate"><span class="pre">flashrom_image_write</span></code></p>
-<p><code class="docutils literal notranslate"><span class="pre">flashrom_image_verify</span></code></p>
-</section>
-<section id="added-support">
-<h2>Added support<a class="headerlink" href="#added-support" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>Nova Lake SoC</p></li>
-<li><p>Sophos XG 230r2 board</p></li>
-<li><p>BY25D20/40</p></li>
-<li><p>IS25LP032</p></li>
-<li><p>IS25LQ032</p></li>
-<li><p>MX25L3236D</p></li>
-<li><p>MX25LM51245G</p></li>
-<li><p>P25D32SH</p></li>
-<li><p>S25FL512S -&gt; marked as tested</p></li>
-<li><p>W25Q01JV</p></li>
-<li><p>W77{Q,T}128NW -&gt; marked tested</p></li>
-<li><p>XM25RH128C</p></li>
-<li><p>XM25RU256C -&gt; added WP support and mark tested</p></li>
-</ul>
-<p>Special cases:</p>
-<section id="fudan-fm25w128">
-<h3>Fudan FM25W128<a class="headerlink" href="#fudan-fm25w128" title="Link to this heading">¶</a></h3>
-<p>Added support for the Fudan <code class="docutils literal notranslate"><span class="pre">FM25W128</span></code> SPI flash chip.</p>
-<p>This also added a new decoder function <code class="docutils literal notranslate"><span class="pre">decode_range_spi25_bp3_to_1_16</span></code> which adds
-protection range calculation for SPI chips where BP values below 3 mean no protection
-and BP=3 starts at 1/16 of the chip.</p>
-</section>
-<section id="st-m9532">
-<h3>ST M9532<a class="headerlink" href="#st-m9532" title="Link to this heading">¶</a></h3>
-<p>This chip has to be used in a slightly different way than most SPI flash chips,
-for two reasons:</p>
-<ul>
-<li><p><strong>No probing / auto-detection.</strong> The M95320 has no <code class="docutils literal notranslate"><span class="pre">RDID</span></code> instruction and
-therefore no electronic signature to read back, so flashrom cannot identify
-it automatically. The chip must be selected explicitly on the command line
-and forced, for example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="o">&lt;</span><span class="n">programmer</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">c</span> <span class="n">M95320</span> <span class="o">--</span><span class="n">force</span> <span class="o">-</span><span class="n">r</span> <span class="n">backup</span><span class="o">.</span><span class="n">bin</span>
-</pre></div>
-</div>
-<p>Because the chip cannot be probed, running a plain probe (for instance while
-probing every known chip) will report:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Probing for ST M95320, 4 kB: failed! flashrom has no probe function for this flash chip.
-</pre></div>
-</div>
-<p>This message is expected and simply means the chip cannot be detected on its
-own; it does not indicate a hardware or connection problem. Use
-<code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">M95320</span> <span class="pre">--force</span></code> to talk to the chip.</p>
-</li>
-<li><p><strong>2-byte addressing.</strong> The M95320 uses a 16-bit (2-byte) address for its
-read and program instructions instead of the usual 24-bit (3-byte) address.</p></li>
-</ul>
-<p>Note that on this chip only reading has been verified on real hardware so far while
-write and erase are implemented but untested.</p>
-</section>
-<section id="zb25vq16">
-<h3>ZB25VQ16<a class="headerlink" href="#zb25vq16" title="Link to this heading">¶</a></h3>
-<p>This added support for a model, but also a new manufacturer Zbit Semiconductor
-and the corresponding new file <code class="docutils literal notranslate"><span class="pre">flashchips/zbit.c</span></code></p>
+<section id="removed-programmers">
+<h3>Removed programmers<a class="headerlink" href="#removed-programmers" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">rayer_spi</span></code> programmer has been removed. It bit-banged SPI over a PC
+parallel port (RayeR cable, Altera ByteBlasterMV, Atmel STK200/300, Macraigor
+Wiggler, Xilinx Parallel Cable III, and SPI Tiny Tools hardware). Parallel
+ports are absent from modern hardware, and the driver required raw x86 I/O port
+access, restricting it to legacy x86 hosts.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">atapromise</span></code> programmer has been removed. It reflashed the option ROM
+on Promise PDC2026x ATA/RAID PCI cards via raw x86 port I/O and was capped at
+32 kB by the tested card wiring. The hardware is obsolete and legacy hosts
+already ship a flashrom that supports it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">gfxnvidia</span></code> programmer has been removed. It reflashed the parallel
+flash on old NVIDIA graphics cards through a memory-mapped PCI BAR. The
+hardware is obsolete and legacy hosts already ship a flashrom that supports
+it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">satasii</span></code> programmer has been removed. It reflashed the parallel flash
+on Silicon Image SATA/IDE PCI controllers through a memory-mapped PCI BAR.
+The hardware is obsolete and legacy hosts already ship a flashrom that
+supports it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">nicnatsemi</span></code> programmer has been removed. It reflashed the socketed
+parallel boot ROM on National Semiconductor DP838* PCI network cards through
+raw x86 port I/O. The hardware is obsolete and legacy hosts already ship a
+flashrom that supports it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">drkaiser</span></code> programmer has been removed. It reflashed the parallel
+flash on Dr. Kaiser PC-Waechter PCI cards through a memory-mapped PCI BAR.
+The hardware is obsolete and legacy hosts already ship a flashrom that
+supports it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">satamv</span></code> programmer has been removed. It reflashed the parallel flash
+on Marvell 88SX70xx/88SX60xx SATA PCI controllers through raw x86 port I/O.
+The hardware is obsolete and legacy hosts already ship a flashrom that
+supports it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">atahpt</span></code> programmer has been removed. It reflashed the option ROM on
+HighPoint ATA/RAID PCI controllers through raw x86 port I/O. The hardware is
+obsolete and legacy hosts already ship a flashrom that supports it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">it8212</span></code> programmer has been removed. It reflashed the flash on ITE
+IT8212F ATA/RAID PCI controllers through a memory-mapped PCI BAR. The
+hardware is obsolete and legacy hosts already ship a flashrom that supports
+it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">developerbox_spi</span></code> programmer has been removed. It drove the on-board
+SPI flash of the Socionext SynQuacer DeveloperBox for recovery. The board is
+end-of-life with a negligible install base, so nothing in current use depends
+on it.</p>
 </section>
 </section>
-<section id="util-flashrom-tester-deleted">
-<h2>util/flashrom_tester deleted<a class="headerlink" href="#util-flashrom-tester-deleted" title="Link to this heading">¶</a></h2>
-<p>This util has not been maintained in the upstream tree for 2+ years,
-and its status in the upstream tree was unknown.</p>
-<p>It is actively maintained in the chromium flashrom fork, and used by the dev team there.
-There were no users of this util outside of chromium flashrom fork.</p>
+<section id="platform-support">
+<h2>Platform support<a class="headerlink" href="#platform-support" title="Link to this heading">¶</a></h2>
+<section id="dos-support-is-removed">
+<h3>DOS support is removed<a class="headerlink" href="#dos-support-is-removed" title="Link to this heading">¶</a></h3>
+<p>flashrom no longer builds for DOS. The DJGPP target needed its own
+DPMI physical memory mapping, port I/O wrappers and delay loop, none of
+which was shared with any other platform or covered by CI.</p>
 </section>
-<section id="misc-updates">
-<h2>Misc updates<a class="headerlink" href="#misc-updates" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>platform: Use a single liner for flashrom endianness defines in meson</p></li>
-<li><p>platform: Remove intermediate variable in meson</p></li>
-<li><p>delay: Remove imprecise internal_sleep function</p></li>
-<li><p>progress bar: Improve the warning text when current exceeds total</p></li>
-<li><p>cli_classic: Initialize time_start and time_end to zero</p></li>
-<li><p>libflashrom: Fix print format specifiers</p></li>
-<li><p>helpers.h: Extract helper declarations to a separate header</p></li>
-<li><p>platform/endian: Rename+move platform.h to platform/endian.h</p></li>
-<li><p>Move all comments about struct flashchip from flashchips.c to flash.h</p></li>
-<li><p>dmi: Avoid redefinition of _POSIX_C_SOURCE</p></li>
-<li><p>subprojects/cmocka: Update to fix compilation in gcc 15.2.1</p></li>
-<li><p>platform/udelay: Extract windows implementation to a separate file</p></li>
-<li><p>tests: Replace deprecated assertions with backward compatible ones</p></li>
-<li><p>include/platform/: Unify header guards style</p></li>
-<li><p>platform/i2c: Move platform dependent code to the platform folder</p></li>
-<li><p>custom_baud.h: Unify header guards style</p></li>
-<li><p>serial.h: Unify header guards style</p></li>
-<li><p>tests: Add basic chip test for chip with FEATURE_STATUS_PER_DIE</p></li>
-<li><p>libflashrom: fix build on big-endian targets</p></li>
-<li><p>platform/udelay: Extract libpayload implementation to a separate file</p></li>
-<li><p>meson_cross: Add a libpayload cross compiling example</p></li>
-<li><p>platform/string: Move platform dependent code to a separate file</p></li>
-<li><p>gitignore: Ignore meson .wraplock</p></li>
-<li><p>ich_descriptors: Guess Wildcat Lake from descriptor content</p></li>
-<li><p>cli_classic: Extract alloc_flashsize_buf() helper</p></li>
-<li><p>MAINTAINERS: Update programmers file paths in programmers/ directory</p></li>
-<li><p>platform/string: Use meson to detect string functions availability</p></li>
-<li><p>ch347_spi: Fix misleading error when spispeed is not specified</p></li>
-<li><p>platform/meson: Move platform PCI detection to platform/meson.build</p></li>
-<li><p>doc: Add includes ordering guidelines</p></li>
-<li><p>Use platform/string.h instead of string.h</p></li>
-<li><p>serprog: change requested mapping... warning to debug only for spi</p></li>
-<li><p>log.h: Extract log declarations to a separate header</p></li>
-<li><p>parallel: Avoid performing read/write twice on the same data</p></li>
-<li><p>ft2232_spi: Factor out find_ft2232_dev() lookup</p></li>
-<li><p>raiden_debug_spi: Extract shared transfer error reporters</p></li>
-<li><p>helpers: Add shared parse_voltage() helper</p></li>
-<li><p>tests: Add initial set of tests for parse_voltage() function</p></li>
-<li><p>i2c_helper: Add shared i2c_write_buffer()/i2c_read_buffer()</p></li>
-<li><p>i2c_helper: Add shared i2c_require_allow_brick() helper</p></li>
-<li><p>tests: Add unit tests for i2c_require_allow_brick()</p></li>
-<li><p>Reorder imports to comply with coding style guidelines</p></li>
-<li><p>platform/i2c: Use meson declare dependency to expose platform code</p></li>
-<li><p>jedec: Factor out chip reset sequence in probe_jedec</p></li>
-<li><p>jedec: Replace magic command bytes with named JEDEC defines</p></li>
-<li><p>usb_device: Factor out device revision logging</p></li>
-<li><p>helpers_fileio: Factor out file metadata retrieval</p></li>
-<li><p>print: Factor out wrapped multiline name token printing</p></li>
-<li><p>platform/i2c: Add CONFIG_I2C_HELPER to gate i2c helper code</p></li>
-<li><p>programmer: Factor out master shutdown registration</p></li>
-<li><p>tests: Tests for invalid input for parse_voltage()</p></li>
-<li><p>tests: Add ch347_spi lifecycle and probe tests</p></li>
-<li><p>tests: Exercise ch341a and ch347 through the fault programmer</p></li>
-<li><p>nicintel: Rename bar fields to match other par_master drivers</p></li>
-<li><p>tests: Remove unnecessary mocking for dummyflasher tests</p></li>
-<li><p>usb_device: Factor out USB interface claim and revision logging</p></li>
-<li><p>par_mmio: Add shared MMIO accessors for parallel PCI drivers</p></li>
-<li><p>tests/chip.c: Refactor to use default_layout from flash context</p></li>
-<li><p>94507: raiden: Remove accidental debug print</p></li>
-<li><p>linux_mtd: Fix out-of-bounds write in read_sysfs_string()</p></li>
-<li><p>linux_mtd: Simplify setup and drop dead code</p></li>
-</ul>
 </section>
 </section>
 
@@ -282,29 +171,27 @@ There were no users of this util outside of chromium flashrom fork.</p>
 <li class="toctree-l1"><a class="reference internal" href="../contact.html">Contact</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Release notes</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Recent development (unreleased)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#new-features">New features</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#multi-die-flash-chip-support">Multi-die flash chip support</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#byte-addressing">2-byte addressing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#repeated-reads">Repeated reads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-updates">CLI updates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#colored-errors-and-warnings">Colored errors and warnings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#platform-updates">Platform updates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#freebsd">FreeBSD</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#programmers-updates">Programmers updates</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#new-fault-injection-for-testing">New: fault injection for testing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#linux-mtd-ignore-read-errors-parameter">linux_mtd: ignore_read_errors parameter</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#dediprog-support-target-3-socket">dediprog: Support target 3 (socket)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ft2232-spi-specify-device-by-usb-port-path">ft2232_spi: specify device by USB port path</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ni845x-spi-programmer-is-deleted">ni845x_spi programmer is deleted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#removed-programmers">Removed programmers</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#libflashrom">libflashrom</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#added-support">Added support</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#fudan-fm25w128">Fudan FM25W128</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#st-m9532">ST M9532</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#zb25vq16">ZB25VQ16</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#platform-support">Platform support</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dos-support-is-removed">DOS support is removed</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#util-flashrom-tester-deleted">util/flashrom_tester deleted</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#misc-updates">Misc updates</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="v_1_8.html">v1.8 (Aug 2026)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="v_1_7.html">v1.7 (Feb 2026)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="v_1_6.html">v1.6 (July 2025)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="v_1_5.html">v1.5 (Dec 2024)</a></li>
@@ -324,7 +211,7 @@ There were no users of this util outside of chromium flashrom fork.</p>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Release notes</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Release notes</a></li>
-      <li>Next: <a href="v_1_7.html" title="next chapter">v1.7 (Feb 2026)</a></li>
+      <li>Next: <a href="v_1_8.html" title="next chapter">v1.8 (Aug 2026)</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -345,7 +232,7 @@ There were no users of this util outside of chromium flashrom fork.</p>
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

@@ -1,4 +1,4 @@
-.TH "libusb_transfer" 3 "Thu Aug 6 2026 22:36:05" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_transfer" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -103,15 +103,15 @@ User context data\&. Useful for associating specific data to a transfer that can
 .PP
 This field may be set manually or is taken as the \fR\fBuser_data\fP\fP parameter of the following functions:
 .IP "\(bu" 2
-\fBlibusb_fill_bulk_transfer()\fP
+libusb_fill_bulk_transfer()
 .IP "\(bu" 2
-\fBlibusb_fill_bulk_stream_transfer()\fP
+libusb_fill_bulk_stream_transfer()
 .IP "\(bu" 2
-\fBlibusb_fill_control_transfer()\fP
+libusb_fill_control_transfer()
 .IP "\(bu" 2
-\fBlibusb_fill_interrupt_transfer()\fP
+libusb_fill_interrupt_transfer()
 .IP "\(bu" 2
-\fBlibusb_fill_iso_transfer()\fP 
+libusb_fill_iso_transfer() 
 .PP
 
 .SS "int libusb_transfer::num_iso_packets"

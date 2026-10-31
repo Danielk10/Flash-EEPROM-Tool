@@ -336,21 +336,12 @@ All operations involving any chip access (probe/read/write/...) require the ``-p
         * ``fault``               (fault injection wrapper for testing)
         * ``nic3com``             (for flash ROMs on 3COM network cards)
         * ``nicrealtek``          (for flash ROMs on Realtek and SMC 1211 network cards)
-        * ``nicnatsemi``          (for flash ROMs on National Semiconductor DP838* network cards)
         * ``nicintel``            (for parallel flash ROMs on Intel 10/100Mbit network cards)
-        * ``gfxnvidia``           (for flash ROMs on NVIDIA graphics cards)
-        * ``drkaiser``            (for flash ROMs on Dr. Kaiser PC-Waechter PCI cards)
-        * ``satasii``             (for flash ROMs on Silicon Image SATA/IDE controllers)
-        * ``satamv``              (for flash ROMs on Marvell SATA controllers)
-        * ``atahpt``              (for flash ROMs on Highpoint ATA/RAID controllers)
         * ``atavia``              (for flash ROMs on VIA VT6421A SATA controllers)
-        * ``atapromise``          (for flash ROMs on Promise PDC2026x ATA/RAID controllers)
-        * ``it8212``              (for flash ROMs on ITE IT8212F ATA/RAID controller)
         * ``ft2232_spi``          (for SPI flash ROMs attached to an FT2232/FT4232H/FT232H family based USB SPI programmer)
         * ``serprog``             (for flash ROMs attached to a programmer speaking serprog, including some Arduino-based devices)
         * ``buspirate_spi``       (for SPI flash ROMs attached to a Bus Pirate)
         * ``dediprog``            (for SPI flash ROMs attached to a Dediprog SF100)
-        * ``rayer_spi``           (for SPI flash ROMs attached to a parallel port by one of various cable types)
         * ``raiden_debug_spi``    (For Chrome EC based debug tools - SuzyQable, Servo V4, C2D2 & uServo)
         * ``pony_spi``            (for SPI flash ROMs attached to a SI-Prog serial port bitbanging adapter)
         * ``nicintel_spi``        (for SPI flash ROMs on Intel Gigabit network cards)
@@ -365,7 +356,6 @@ All operations involving any chip access (probe/read/write/...) require the ``-p
         * ``ch347_api``           (for SPI flash ROMs attached to WHC CH347)
         * ``digilent_spi``        (for SPI flash ROMs attached to iCEblink40 development boards)
         * ``jlink_spi``           (for SPI flash ROMs attached to SEGGER J-Link and compatible devices)
-        * ``ni845x_spi``          (for SPI flash ROMs attached to National Instruments USB-8451 or USB-8452)
         * ``stlinkv3_spi``        (for SPI flash ROMs attached to STMicroelectronics STLINK V3 devices)
         * ``realtek_mst_i2c_spi`` (for SPI flash ROMs attached to Realtek DisplayPort hubs accessible through I2C)
         * ``parade_lspcon``       (for SPI flash ROMs attached to Parade Technologies LSPCONs (PS175))
@@ -562,6 +552,20 @@ internal programmer
         If reading succeeds and the contents of the read file look legit you can try to write the new image.
         You should enable the board enable code in any case now, as it has been written because it is known that writing/erasing
         without the board enable is going to fail. In any case (success or failure), please report to the **flashrom** mailing list, see below.
+
+**Linux MTD**
+        On Intel platforms the kernel's ``spi-intel`` driver claims the PCH flash controller and exposes the flash
+        as an MTD device. The internal programmer uses that device when it is present instead of talking to the
+        chipset itself, and reports doing so.
+
+        This path is more restricted than chipset access. Regions taken from the flash descriptor, protected range
+        handling and chip write protection are unavailable, and ranges the controller refuses to read fail the whole
+        operation unless ``linux_mtd:ignore_read_errors=yes`` is used. To get the chipset path instead, unbind the
+        driver from the controller, which is at ``00:1f.5`` on current chipsets::
+
+                echo 0000:00:1f.5 > /sys/bus/pci/drivers/intel-spi/unbind
+
+        Note that doing so gives up the protections the kernel driver enforces.
 
 **Coreboot**
         On systems running coreboot, **flashrom** checks whether the desired image matches your mainboard.
@@ -874,8 +878,8 @@ Test write verification::
         flashrom -p fault:backend=dummy,...,write_lie_prob=0.2 -w image.bin
 
 
-nic3com, nicrealtek, nicnatsemi, nicintel, nicintel_eeprom, nicintel_spi, gfxnvidia, ogp_spi, drkaiser, satasii, satamv, atahpt, atavia, atapromise, it8212 programmers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+nic3com, nicrealtek, nicintel, nicintel_eeprom, nicintel_spi, ogp_spi, atavia programmers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 These programmers have an option to specify the PCI address of the card your want to use, which must be specified if
 more than one card supported by the selected programmer is installed in your system. The syntax is::
@@ -930,13 +934,6 @@ The revision consists of two characters that are printed below the "VT6421A" str
 prefixed by 4 numbers that encode the production year and week.
 The country is noted right of the revision.
 
-atapromise programmer
-^^^^^^^^^^^^^^^^^^^^^
-
-This programmer is currently limited to 32 kB, regardless of the actual size of the flash chip. This stems from the
-fact that, on the tested device (a Promise Ultra100), not all of the chip's address lines were actually connected.
-You may use this programmer to flash firmware updates, since these are only 16 kB in size (padding to 32 kB is required).
-
 nic3com programmer
 ^^^^^^^^^^^^^^^^^^
 
@@ -960,19 +957,6 @@ themselves to be identified, the controller relies on correct size values writte
 Intel specifies following EEPROMs to be compatible:
 Atmel AT25128, AT25256, Micron (ST) M95128, M95256 and OnSemi (Catalyst) CAT25CS128.
 
-gfxnvidia programmer
-^^^^^^^^^^^^^^^^^^^^
-
-Flashrom supports some Nvidia graphic cards to reflash the (parallel) flash attached to these cards,
-but it is also possible to use these cards to reflash other chips which fit in there electrically.
-
-satasii programmer
-^^^^^^^^^^^^^^^^^^
-
-Flashrom supports some SiI ATA/SATA controllers to reflash the flash attached to these controller cards,
-but it is also possible to use these cards to reflash other chips which fit in there electrically.
-Please note that the small number of address lines connected to the chip may make accessing large chips impossible.
-
 ft2232_spi programmer
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -991,12 +975,24 @@ syntax where ``model`` can be ``2232H``, ``4232H``, ``232H``, ``jtagkey``, ``bus
 ``interface`` can be ``A``, ``B``, ``C``, or ``D``. The default model is ``4232H``, the default interface is ``A`` and
 GPIO is not used by default.
 
-If there is more than one ft2232_spi-compatible device connected, you can select which one should be used by specifying
-its serial number with the::
+If there is more than one ft2232_spi-compatible device connected, you can select which one should be used either by specifying
+its USB port path or serial number/description.
 
-        flashrom -p ft2232_spi:serial=number
+USB port path syntax::
 
-syntax where ``number`` is the serial number of the device (which can be found for example in the output of lsusb -v).
+        flashrom -p ft2232_spi:usbpath=bus-port(.port.port... etc)
+
+Where ``bus`` is a number between 0 and 255 and ``port(s)`` are numbers between 0 and 255.
+Bus and port numbers can be found for example in the output of lsusb -t.
+The maximum depth of USB port path including bus number is 7.
+USB port path will take precedence over any specified serial/description.
+
+Serial/Description syntax::
+
+        flashrom -p ft2232_spi:serial=number,description=product
+
+Where ``number`` is the serial number of the device and ``product`` is the product description of the device (both can be found for example in the output of lsusb -v).
+Either serial or description or both may be provided.
 
 All models supported by the **ft2232_spi** driver can configure the SPI clock rate by setting a divisor. The expressible
 divisors are all **even** numbers between 2 and 2^17 (=131072) resulting in SPI clock frequencies of 6 MHz down to about
@@ -1160,31 +1156,6 @@ An optional ``target`` parameter specifies which target chip should be used. Syn
 where ``value`` can be ``1``, ``2``, or ``3`` to select target chip 1, 2, or socket (3) respectively. The default is target chip 1.
 
 
-rayer_spi programmer
-^^^^^^^^^^^^^^^^^^^^
-
-The default I/O base address used for the parallel port is 0x378 and you can use the optional ``iobase`` parameter to
-specify an alternate base I/O address with the::
-
-        flashrom -p rayer_spi:iobase=baseaddr
-
-syntax where ``baseaddr`` is base I/O port address of the parallel port, which must be a multiple of four.
-Make sure to not forget the "0x" prefix for hexadecimal port addresses.
-
-The default cable type is the RayeR cable. You can use the optional ``type`` parameter to specify the cable type with the::
-
-        flashrom -p rayer_spi:type=model
-
-syntax where ``model`` can be ``rayer`` for the RayeR cable, ``byteblastermv`` for the Altera ByteBlasterMV,
-``stk200`` for the Atmel, ``STK200/300``, ``wiggler`` for the Macraigor Wiggler, ``xilinx`` for the Xilinx Parallel Cable III (DLC 5),
-or ``spi_tt`` for SPI Tiny Tools-compatible hardware.
-
-More information about the RayeR hardware is available at `RayeR's website <http://rayer.g6.cz/elektro/spipgm.htm>`_.
-The Altera ByteBlasterMV datasheet can be obtained from `Altera <http://www.altera.co.jp/literature/ds/dsbytemv.pdf>`_.
-For more information about the Macraigor Wiggler see `their company homepage <http://www.macraigor.com/wiggler.htm>`_.
-The schematic of the Xilinx DLC 5 was published in `a Xilinx guide <http://www.xilinx.com/support/documentation/user_guides/xtp029.pdf>`_.
-
-
 raiden_debug_spi programmer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1344,44 +1315,6 @@ Syntax is::
         flashrom -p ch347_spi:spispeed=value
 
 where ``value`` can be ``60M``, ``30M``, ``15M``, ``7.5M``, ``3.75M``, ``1.875M``, ``937.5K``, ``468.75K``.
-
-
-ni845x_spi programmer
-^^^^^^^^^^^^^^^^^^^^^
-
-An optional ``voltage`` parameter could be used to specify the IO voltage. This parameter is available for the NI USB-8452 device.
-The default unit is Volt if no unit is specified. You can use ``mV``, ``milliVolt``, ``V`` or ``Volt`` as unit specifier.
-Syntax is::
-
-        flashrom -p ni845x_spi:voltage=value
-
-where ``value`` can be ``1.2V``, ``1.5V``, ``1.8V``, ``2.5V``, ``3.3V`` or the equivalent in mV.
-
-In the case if none of the programmer's supported IO voltage is within the supported voltage range of the detected flash
-chip the **flashrom** will abort the operation (to prevent damaging the flash chip).
-You can override this behaviour by passing ``yes`` to the ``ignore_io_voltage_limits`` parameter
-(for e.g. if you are using an external voltage translator circuit). Syntax is::
-
-        flashrom -p ni845x_spi:ignore_io_voltage_limits=yes
-
-You can use the ``serial`` parameter to explicitly specify which connected NI USB-845x device should be used. You should
-use your device's 7 digit hexadecimal serial number. Usage example to select the device with 1230A12 serial number::
-
-        flashrom -p ni845x_spi:serial=1230A12
-
-An optional ``spispeed`` parameter specifies the frequency of the SPI bus. Syntax is::
-
-        flashrom -p ni845x_spi:spispeed=frequency
-
-where ``frequency`` should a number corresponding to the desired frequency in kHz.
-The maximum ``frequency`` is 12 MHz (12000 kHz) for the USB-8451 and 50 MHz (50000 kHz) for the USB-8452.
-The default is a frequency of 1 MHz (1000 kHz).
-
-An optional ``cs`` parameter specifies which target chip select line should be used. Syntax is::
-
-        flashrom -p ni845x_spi:csnumber=value
-
-where ``value`` should be between ``0`` and ``7``. By default the CS0 is used.
 
 
 digilent_spi programmer
@@ -1612,6 +1545,15 @@ If you encounter any problems, please contact us and supply backuplog.txt, write
 See section **BUGS** for contact info.
 
 
+ENVIRONMENT
+-----------
+
+**NO_COLOR**
+        Error messages are printed in red and warnings in yellow when the output is a terminal and **TERM** is not
+        ``dumb``. Setting **NO_COLOR** to a non-empty value disables this. The log file written by **-o** is never
+        colored. Color output is not implemented on Windows.
+
+
 EXIT STATUS
 -----------
 
@@ -1634,38 +1576,18 @@ REQUIREMENTS
 
         * needs PCI configuration space access
 
-* nic3com, nicrealtek, nicnatsemi
+* nic3com, nicrealtek
 
         * need PCI configuration space read access
         * raw I/O port access
-
-* atahpt
-
-        * needs PCI configuration space access
-        * raw I/O port access
-
-* gfxnvidia, drkaiser, it8212
-
-        * need PCI configuration space access
-        * raw memory access
-
-* rayer_spi
-
-        * needs raw I/O port access
 
 * raiden_debug_spi
 
         * needs access to the respective USB device via libusb API version 1.0
 
-* satasii, nicintel, nicintel_eeprom, nicintel_spi
+* nicintel, nicintel_eeprom, nicintel_spi
 
         * need PCI configuration space read access
-        * raw memory access
-
-* satamv, atapromise
-
-        * need PCI configuration space read access
-        * raw I/O port access
         * raw memory access
 
 * serprog
@@ -1688,7 +1610,7 @@ REQUIREMENTS
 
         * needs no access permissions at all
 
-* internal, nic3com, nicrealtek, nicnatsemi, gfxnvidia, drkaiser, satasii, satamv, atahpt, atavia, atapromise, asm106x
+* internal, nic3com, nicrealtek, atavia, asm106x
 
         * have to be run as superuser/root
         * need raw access permission
@@ -1710,6 +1632,10 @@ On OpenBSD, you can obtain raw access permission by setting::
         securelevel=-1
 
 in **/etc/rc.securelevel** and rebooting, or rebooting into single user mode.
+
+On FreeBSD, raw memory and I/O port access are refused once ``kern.securelevel``
+is above 0. Set ``kern_securelevel_enable="NO"`` in **/etc/rc.conf** and reboot,
+or reboot into single user mode. MSR access requires the ``cpuctl`` kernel module.
 
 
 BUGS

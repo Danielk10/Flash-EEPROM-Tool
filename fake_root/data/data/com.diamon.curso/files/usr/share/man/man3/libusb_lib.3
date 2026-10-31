@@ -1,4 +1,4 @@
-.TH "libusb_lib" 3 "Thu Aug 6 2026 22:36:04" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_lib" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -20,6 +20,9 @@ libusb_lib \- Library initialization/deinitialization
 .RI "struct \fBlibusb_init_option\fP"
 .br
 .RI "Structure used for setting options through \fBlibusb_init_context\fP\&. "
+.ti -1c
+.RI "union \fBlibusb_init_option::[union]\&.value\fP"
+.br
 .in -1c
 .SS "Typedefs"
 
@@ -29,7 +32,7 @@ libusb_lib \- Library initialization/deinitialization
 .br
 .RI "Structure representing a libusb session\&. "
 .ti -1c
-.RI "typedef void(* \fBlibusb_log_cb\fP) (\fBlibusb_context\fP *ctx, enum \fBlibusb_log_level\fP level, const char *str)"
+.RI "typedef void(*) \fBlibusb_log_cb\fP(\fBlibusb_context\fP *ctx, enum \fBlibusb_log_level\fP level, const char *str)"
 .br
 .RI "Callback function for handling log messages\&. "
 .in -1c
@@ -94,7 +97,7 @@ Sessions are created by \fBlibusb_init_context()\fP and destroyed through \fBlib
 
 .PP
 For more information, see \fBContexts\fP\&. 
-.SS "typedef void(* libusb_log_cb) (\fBlibusb_context\fP *ctx, enum \fBlibusb_log_level\fP level, const char *str)"
+.SS "typedef void(*) libusb_log_cb(\fBlibusb_context\fP *ctx, enum \fBlibusb_log_level\fP level, const char *str)"
 
 .PP
 Callback function for handling log messages\&. 

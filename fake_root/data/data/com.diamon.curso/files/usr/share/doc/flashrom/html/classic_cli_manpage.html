@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Manual page &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>Manual page &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <script src="_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="_static/flashrom_icon_color-32x32.ico"/>
@@ -313,21 +313,12 @@ Currently supported are:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">fault</span></code>               (fault injection wrapper for testing)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">nic3com</span></code>             (for flash ROMs on 3COM network cards)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">nicrealtek</span></code>          (for flash ROMs on Realtek and SMC 1211 network cards)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">nicnatsemi</span></code>          (for flash ROMs on National Semiconductor DP838* network cards)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">nicintel</span></code>            (for parallel flash ROMs on Intel 10/100Mbit network cards)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gfxnvidia</span></code>           (for flash ROMs on NVIDIA graphics cards)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">drkaiser</span></code>            (for flash ROMs on Dr. Kaiser PC-Waechter PCI cards)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">satasii</span></code>             (for flash ROMs on Silicon Image SATA/IDE controllers)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">satamv</span></code>              (for flash ROMs on Marvell SATA controllers)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">atahpt</span></code>              (for flash ROMs on Highpoint ATA/RAID controllers)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">atavia</span></code>              (for flash ROMs on VIA VT6421A SATA controllers)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">atapromise</span></code>          (for flash ROMs on Promise PDC2026x ATA/RAID controllers)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">it8212</span></code>              (for flash ROMs on ITE IT8212F ATA/RAID controller)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ft2232_spi</span></code>          (for SPI flash ROMs attached to an FT2232/FT4232H/FT232H family based USB SPI programmer)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">serprog</span></code>             (for flash ROMs attached to a programmer speaking serprog, including some Arduino-based devices)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">buspirate_spi</span></code>       (for SPI flash ROMs attached to a Bus Pirate)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dediprog</span></code>            (for SPI flash ROMs attached to a Dediprog SF100)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">rayer_spi</span></code>           (for SPI flash ROMs attached to a parallel port by one of various cable types)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">raiden_debug_spi</span></code>    (For Chrome EC based debug tools - SuzyQable, Servo V4, C2D2 &amp; uServo)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pony_spi</span></code>            (for SPI flash ROMs attached to a SI-Prog serial port bitbanging adapter)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">nicintel_spi</span></code>        (for SPI flash ROMs on Intel Gigabit network cards)</p></li>
@@ -342,7 +333,6 @@ Currently supported are:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">ch347_api</span></code>           (for SPI flash ROMs attached to WHC CH347)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">digilent_spi</span></code>        (for SPI flash ROMs attached to iCEblink40 development boards)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jlink_spi</span></code>           (for SPI flash ROMs attached to SEGGER J-Link and compatible devices)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ni845x_spi</span></code>          (for SPI flash ROMs attached to National Instruments USB-8451 or USB-8452)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">stlinkv3_spi</span></code>        (for SPI flash ROMs attached to STMicroelectronics STLINK V3 devices)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">realtek_mst_i2c_spi</span></code> (for SPI flash ROMs attached to Realtek DisplayPort hubs accessible through I2C)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">parade_lspcon</span></code>       (for SPI flash ROMs attached to Parade Technologies LSPCONs (PS175))</p></li>
@@ -510,6 +500,18 @@ like a USB drive or a network share. If you needed to run the board enable code 
 If reading succeeds and the contents of the read file look legit you can try to write the new image.
 You should enable the board enable code in any case now, as it has been written because it is known that writing/erasing
 without the board enable is going to fail. In any case (success or failure), please report to the <strong>flashrom</strong> mailing list, see below.</p>
+</dd>
+<dt><strong>Linux MTD</strong></dt><dd><p>On Intel platforms the kernel's <code class="docutils literal notranslate"><span class="pre">spi-intel</span></code> driver claims the PCH flash controller and exposes the flash
+as an MTD device. The internal programmer uses that device when it is present instead of talking to the
+chipset itself, and reports doing so.</p>
+<p>This path is more restricted than chipset access. Regions taken from the flash descriptor, protected range
+handling and chip write protection are unavailable, and ranges the controller refuses to read fail the whole
+operation unless <code class="docutils literal notranslate"><span class="pre">linux_mtd:ignore_read_errors=yes</span></code> is used. To get the chipset path instead, unbind the
+driver from the controller, which is at <code class="docutils literal notranslate"><span class="pre">00:1f.5</span></code> on current chipsets:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="mi">0000</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">1</span><span class="n">f</span><span class="mf">.5</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">bus</span><span class="o">/</span><span class="n">pci</span><span class="o">/</span><span class="n">drivers</span><span class="o">/</span><span class="n">intel</span><span class="o">-</span><span class="n">spi</span><span class="o">/</span><span class="n">unbind</span>
+</pre></div>
+</div>
+<p>Note that doing so gives up the protections the kernel driver enforces.</p>
 </dd>
 <dt><strong>Coreboot</strong></dt><dd><p>On systems running coreboot, <strong>flashrom</strong> checks whether the desired image matches your mainboard.
 This needs some special board ID to be present in the image.
@@ -708,7 +710,7 @@ If commandlist is e.g. 0302, the emulated flash chip will ignore command 0x03 (R
 Implementation note: <strong>flashrom</strong> won't detect an error during command execution.</p>
 </dd>
 <dt><strong>SPI status register</strong></dt><dd><p>You can specify the initial content of the chip's status register with the:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">dummy</span><span class="p">:</span><span class="n">spi_status</span><span class="o">=</span><span class="n">content</span><span class="s2">&quot;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">dummy</span><span class="p">:</span><span class="n">spi_status</span><span class="o">=</span><span class="n">content</span><span class="s2">"</span>
 </pre></div>
 </div>
 <p>syntax where <code class="docutils literal notranslate"><span class="pre">content</span></code> is a hexadecimal value of up to 24 bits. For example, <code class="docutils literal notranslate"><span class="pre">0x332211</span></code> assigns 0x11 to SR1,
@@ -789,8 +791,8 @@ injected faults is printed on shutdown.</p>
 </pre></div>
 </div>
 </section>
-<section id="nic3com-nicrealtek-nicnatsemi-nicintel-nicintel-eeprom-nicintel-spi-gfxnvidia-ogp-spi-drkaiser-satasii-satamv-atahpt-atavia-atapromise-it8212-programmers">
-<h3>nic3com, nicrealtek, nicnatsemi, nicintel, nicintel_eeprom, nicintel_spi, gfxnvidia, ogp_spi, drkaiser, satasii, satamv, atahpt, atavia, atapromise, it8212 programmers<a class="headerlink" href="#nic3com-nicrealtek-nicnatsemi-nicintel-nicintel-eeprom-nicintel-spi-gfxnvidia-ogp-spi-drkaiser-satasii-satamv-atahpt-atavia-atapromise-it8212-programmers" title="Link to this heading">¶</a></h3>
+<section id="nic3com-nicrealtek-nicintel-nicintel-eeprom-nicintel-spi-ogp-spi-atavia-programmers">
+<h3>nic3com, nicrealtek, nicintel, nicintel_eeprom, nicintel_spi, ogp_spi, atavia programmers<a class="headerlink" href="#nic3com-nicrealtek-nicintel-nicintel-eeprom-nicintel-spi-ogp-spi-atavia-programmers" title="Link to this heading">¶</a></h3>
 <p>These programmers have an option to specify the PCI address of the card your want to use, which must be specified if
 more than one card supported by the selected programmer is installed in your system. The syntax is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">xxxx</span><span class="p">:</span><span class="n">pci</span><span class="o">=</span><span class="n">bb</span><span class="p">:</span><span class="n">dd</span><span class="o">.</span><span class="n">f</span>
@@ -893,12 +895,6 @@ Serial ATA card&quot;</p></td>
 prefixed by 4 numbers that encode the production year and week.
 The country is noted right of the revision.</p>
 </section>
-<section id="atapromise-programmer">
-<h3>atapromise programmer<a class="headerlink" href="#atapromise-programmer" title="Link to this heading">¶</a></h3>
-<p>This programmer is currently limited to 32 kB, regardless of the actual size of the flash chip. This stems from the
-fact that, on the tested device (a Promise Ultra100), not all of the chip's address lines were actually connected.
-You may use this programmer to flash firmware updates, since these are only 16 kB in size (padding to 32 kB is required).</p>
-</section>
 <section id="nic3com-programmer">
 <h3>nic3com programmer<a class="headerlink" href="#nic3com-programmer" title="Link to this heading">¶</a></h3>
 <p>flashrom supports some 3Com network cards to reflash the (parallel) flash attached to these cards,
@@ -919,17 +915,6 @@ themselves to be identified, the controller relies on correct size values writte
 Intel specifies following EEPROMs to be compatible:
 Atmel AT25128, AT25256, Micron (ST) M95128, M95256 and OnSemi (Catalyst) CAT25CS128.</p>
 </section>
-<section id="gfxnvidia-programmer">
-<h3>gfxnvidia programmer<a class="headerlink" href="#gfxnvidia-programmer" title="Link to this heading">¶</a></h3>
-<p>Flashrom supports some Nvidia graphic cards to reflash the (parallel) flash attached to these cards,
-but it is also possible to use these cards to reflash other chips which fit in there electrically.</p>
-</section>
-<section id="satasii-programmer">
-<h3>satasii programmer<a class="headerlink" href="#satasii-programmer" title="Link to this heading">¶</a></h3>
-<p>Flashrom supports some SiI ATA/SATA controllers to reflash the flash attached to these controller cards,
-but it is also possible to use these cards to reflash other chips which fit in there electrically.
-Please note that the small number of address lines connected to the chip may make accessing large chips impossible.</p>
-</section>
 <section id="ft2232-spi-programmer">
 <h3>ft2232_spi programmer<a class="headerlink" href="#ft2232-spi-programmer" title="Link to this heading">¶</a></h3>
 <p>This module supports various programmers based on FTDI FT2232/FT4232H/FT232H chips including the DLP Design DLP-USB1232H,
@@ -945,12 +930,22 @@ GOEPEL PicoTAP, Google Servo v1/v2, Tin Can Tools Flyswatter/Flyswatter 2 and Kr
 <span class="pre">``google-servo-v2</span></code>, <code class="docutils literal notranslate"><span class="pre">google-servo-v2-legacy</span></code> or <code class="docutils literal notranslate"><span class="pre">kt-link</span></code>.
 <code class="docutils literal notranslate"><span class="pre">interface</span></code> can be <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code>, <code class="docutils literal notranslate"><span class="pre">C</span></code>, or <code class="docutils literal notranslate"><span class="pre">D</span></code>. The default model is <code class="docutils literal notranslate"><span class="pre">4232H</span></code>, the default interface is <code class="docutils literal notranslate"><span class="pre">A</span></code> and
 GPIO is not used by default.</p>
-<p>If there is more than one ft2232_spi-compatible device connected, you can select which one should be used by specifying
-its serial number with the:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ft2232_spi</span><span class="p">:</span><span class="n">serial</span><span class="o">=</span><span class="n">number</span>
+<p>If there is more than one ft2232_spi-compatible device connected, you can select which one should be used either by specifying
+its USB port path or serial number/description.</p>
+<p>USB port path syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ft2232_spi</span><span class="p">:</span><span class="n">usbpath</span><span class="o">=</span><span class="n">bus</span><span class="o">-</span><span class="n">port</span><span class="p">(</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">port</span><span class="o">...</span> <span class="n">etc</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>syntax where <code class="docutils literal notranslate"><span class="pre">number</span></code> is the serial number of the device (which can be found for example in the output of lsusb -v).</p>
+<p>Where <code class="docutils literal notranslate"><span class="pre">bus</span></code> is a number between 0 and 255 and <code class="docutils literal notranslate"><span class="pre">port(s)</span></code> are numbers between 0 and 255.
+Bus and port numbers can be found for example in the output of lsusb -t.
+The maximum depth of USB port path including bus number is 7.
+USB port path will take precedence over any specified serial/description.</p>
+<p>Serial/Description syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ft2232_spi</span><span class="p">:</span><span class="n">serial</span><span class="o">=</span><span class="n">number</span><span class="p">,</span><span class="n">description</span><span class="o">=</span><span class="n">product</span>
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">number</span></code> is the serial number of the device and <code class="docutils literal notranslate"><span class="pre">product</span></code> is the product description of the device (both can be found for example in the output of lsusb -v).
+Either serial or description or both may be provided.</p>
 <p>All models supported by the <strong>ft2232_spi</strong> driver can configure the SPI clock rate by setting a divisor. The expressible
 divisors are all <strong>even</strong> numbers between 2 and 2^17 (=131072) resulting in SPI clock frequencies of 6 MHz down to about
 92 Hz for 12 MHz inputs (non-H chips) and 30 MHz down to about 458 Hz for 60 MHz inputs ('H' chips). The default divisor
@@ -1093,27 +1088,6 @@ The default is a frequency of 12 MHz.</p>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">value</span></code> can be <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, or <code class="docutils literal notranslate"><span class="pre">3</span></code> to select target chip 1, 2, or socket (3) respectively. The default is target chip 1.</p>
 </section>
-<section id="rayer-spi-programmer">
-<h3>rayer_spi programmer<a class="headerlink" href="#rayer-spi-programmer" title="Link to this heading">¶</a></h3>
-<p>The default I/O base address used for the parallel port is 0x378 and you can use the optional <code class="docutils literal notranslate"><span class="pre">iobase</span></code> parameter to
-specify an alternate base I/O address with the:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">rayer_spi</span><span class="p">:</span><span class="n">iobase</span><span class="o">=</span><span class="n">baseaddr</span>
-</pre></div>
-</div>
-<p>syntax where <code class="docutils literal notranslate"><span class="pre">baseaddr</span></code> is base I/O port address of the parallel port, which must be a multiple of four.
-Make sure to not forget the &quot;0x&quot; prefix for hexadecimal port addresses.</p>
-<p>The default cable type is the RayeR cable. You can use the optional <code class="docutils literal notranslate"><span class="pre">type</span></code> parameter to specify the cable type with the:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">rayer_spi</span><span class="p">:</span><span class="nb">type</span><span class="o">=</span><span class="n">model</span>
-</pre></div>
-</div>
-<p>syntax where <code class="docutils literal notranslate"><span class="pre">model</span></code> can be <code class="docutils literal notranslate"><span class="pre">rayer</span></code> for the RayeR cable, <code class="docutils literal notranslate"><span class="pre">byteblastermv</span></code> for the Altera ByteBlasterMV,
-<code class="docutils literal notranslate"><span class="pre">stk200</span></code> for the Atmel, <code class="docutils literal notranslate"><span class="pre">STK200/300</span></code>, <code class="docutils literal notranslate"><span class="pre">wiggler</span></code> for the Macraigor Wiggler, <code class="docutils literal notranslate"><span class="pre">xilinx</span></code> for the Xilinx Parallel Cable III (DLC 5),
-or <code class="docutils literal notranslate"><span class="pre">spi_tt</span></code> for SPI Tiny Tools-compatible hardware.</p>
-<p>More information about the RayeR hardware is available at <a class="reference external" href="http://rayer.g6.cz/elektro/spipgm.htm">RayeR's website</a>.
-The Altera ByteBlasterMV datasheet can be obtained from <a class="reference external" href="http://www.altera.co.jp/literature/ds/dsbytemv.pdf">Altera</a>.
-For more information about the Macraigor Wiggler see <a class="reference external" href="http://www.macraigor.com/wiggler.htm">their company homepage</a>.
-The schematic of the Xilinx DLC 5 was published in <a class="reference external" href="http://www.xilinx.com/support/documentation/user_guides/xtp029.pdf">a Xilinx guide</a>.</p>
-</section>
 <section id="raiden-debug-spi-programmer">
 <h3>raiden_debug_spi programmer<a class="headerlink" href="#raiden-debug-spi-programmer" title="Link to this heading">¶</a></h3>
 <p>Some devices such as the GSC knows how it is wired to AP and EC flash chips, and can be told which specific device to talk to using the <code class="docutils literal notranslate"><span class="pre">target</span></code> parameter:</p>
@@ -1245,40 +1219,6 @@ Syntax is:</p>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">value</span></code> can be <code class="docutils literal notranslate"><span class="pre">60M</span></code>, <code class="docutils literal notranslate"><span class="pre">30M</span></code>, <code class="docutils literal notranslate"><span class="pre">15M</span></code>, <code class="docutils literal notranslate"><span class="pre">7.5M</span></code>, <code class="docutils literal notranslate"><span class="pre">3.75M</span></code>, <code class="docutils literal notranslate"><span class="pre">1.875M</span></code>, <code class="docutils literal notranslate"><span class="pre">937.5K</span></code>, <code class="docutils literal notranslate"><span class="pre">468.75K</span></code>.</p>
-</section>
-<section id="ni845x-spi-programmer">
-<h3>ni845x_spi programmer<a class="headerlink" href="#ni845x-spi-programmer" title="Link to this heading">¶</a></h3>
-<p>An optional <code class="docutils literal notranslate"><span class="pre">voltage</span></code> parameter could be used to specify the IO voltage. This parameter is available for the NI USB-8452 device.
-The default unit is Volt if no unit is specified. You can use <code class="docutils literal notranslate"><span class="pre">mV</span></code>, <code class="docutils literal notranslate"><span class="pre">milliVolt</span></code>, <code class="docutils literal notranslate"><span class="pre">V</span></code> or <code class="docutils literal notranslate"><span class="pre">Volt</span></code> as unit specifier.
-Syntax is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ni845x_spi</span><span class="p">:</span><span class="n">voltage</span><span class="o">=</span><span class="n">value</span>
-</pre></div>
-</div>
-<p>where <code class="docutils literal notranslate"><span class="pre">value</span></code> can be <code class="docutils literal notranslate"><span class="pre">1.2V</span></code>, <code class="docutils literal notranslate"><span class="pre">1.5V</span></code>, <code class="docutils literal notranslate"><span class="pre">1.8V</span></code>, <code class="docutils literal notranslate"><span class="pre">2.5V</span></code>, <code class="docutils literal notranslate"><span class="pre">3.3V</span></code> or the equivalent in mV.</p>
-<p>In the case if none of the programmer's supported IO voltage is within the supported voltage range of the detected flash
-chip the <strong>flashrom</strong> will abort the operation (to prevent damaging the flash chip).
-You can override this behaviour by passing <code class="docutils literal notranslate"><span class="pre">yes</span></code> to the <code class="docutils literal notranslate"><span class="pre">ignore_io_voltage_limits</span></code> parameter
-(for e.g. if you are using an external voltage translator circuit). Syntax is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ni845x_spi</span><span class="p">:</span><span class="n">ignore_io_voltage_limits</span><span class="o">=</span><span class="n">yes</span>
-</pre></div>
-</div>
-<p>You can use the <code class="docutils literal notranslate"><span class="pre">serial</span></code> parameter to explicitly specify which connected NI USB-845x device should be used. You should
-use your device's 7 digit hexadecimal serial number. Usage example to select the device with 1230A12 serial number:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ni845x_spi</span><span class="p">:</span><span class="n">serial</span><span class="o">=</span><span class="mi">1230</span><span class="n">A12</span>
-</pre></div>
-</div>
-<p>An optional <code class="docutils literal notranslate"><span class="pre">spispeed</span></code> parameter specifies the frequency of the SPI bus. Syntax is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ni845x_spi</span><span class="p">:</span><span class="n">spispeed</span><span class="o">=</span><span class="n">frequency</span>
-</pre></div>
-</div>
-<p>where <code class="docutils literal notranslate"><span class="pre">frequency</span></code> should a number corresponding to the desired frequency in kHz.
-The maximum <code class="docutils literal notranslate"><span class="pre">frequency</span></code> is 12 MHz (12000 kHz) for the USB-8451 and 50 MHz (50000 kHz) for the USB-8452.
-The default is a frequency of 1 MHz (1000 kHz).</p>
-<p>An optional <code class="docutils literal notranslate"><span class="pre">cs</span></code> parameter specifies which target chip select line should be used. Syntax is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flashrom</span> <span class="o">-</span><span class="n">p</span> <span class="n">ni845x_spi</span><span class="p">:</span><span class="n">csnumber</span><span class="o">=</span><span class="n">value</span>
-</pre></div>
-</div>
-<p>where <code class="docutils literal notranslate"><span class="pre">value</span></code> should be between <code class="docutils literal notranslate"><span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">7</span></code>. By default the CS0 is used.</p>
 </section>
 <section id="digilent-spi-programmer">
 <h3>digilent_spi programmer<a class="headerlink" href="#digilent-spi-programmer" title="Link to this heading">¶</a></h3>
@@ -1473,6 +1413,15 @@ to set target frequency at 15MHz.:</p>
 <p>If you encounter any problems, please contact us and supply backuplog.txt, writelog.txt and restorelog.txt.
 See section <strong>BUGS</strong> for contact info.</p>
 </section>
+<section id="environment">
+<h2>ENVIRONMENT<a class="headerlink" href="#environment" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt><strong>NO_COLOR</strong></dt><dd><p>Error messages are printed in red and warnings in yellow when the output is a terminal and <strong>TERM</strong> is not
+<code class="docutils literal notranslate"><span class="pre">dumb</span></code>. Setting <strong>NO_COLOR</strong> to a non-empty value disables this. The log file written by <strong>-o</strong> is never
+colored. Color output is not implemented on Windows.</p>
+</dd>
+</dl>
+</section>
 <section id="exit-status">
 <h2>EXIT STATUS<a class="headerlink" href="#exit-status" title="Link to this heading">¶</a></h2>
 <p><strong>flashrom</strong> exits with 0 on success, 1 on most failures but with 3 if a call to mmap() fails.</p>
@@ -1498,34 +1447,11 @@ See section <strong>BUGS</strong> for contact info.</p>
 </ul>
 </div></blockquote>
 </li>
-<li><p>nic3com, nicrealtek, nicnatsemi</p>
+<li><p>nic3com, nicrealtek</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>need PCI configuration space read access</p></li>
 <li><p>raw I/O port access</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>atahpt</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>needs PCI configuration space access</p></li>
-<li><p>raw I/O port access</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>gfxnvidia, drkaiser, it8212</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>need PCI configuration space access</p></li>
-<li><p>raw memory access</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>rayer_spi</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>needs raw I/O port access</p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -1536,19 +1462,10 @@ See section <strong>BUGS</strong> for contact info.</p>
 </ul>
 </div></blockquote>
 </li>
-<li><p>satasii, nicintel, nicintel_eeprom, nicintel_spi</p>
+<li><p>nicintel, nicintel_eeprom, nicintel_spi</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>need PCI configuration space read access</p></li>
-<li><p>raw memory access</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p>satamv, atapromise</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>need PCI configuration space read access</p></li>
-<li><p>raw I/O port access</p></li>
 <li><p>raw memory access</p></li>
 </ul>
 </div></blockquote>
@@ -1588,7 +1505,7 @@ See section <strong>BUGS</strong> for contact info.</p>
 </ul>
 </div></blockquote>
 </li>
-<li><p>internal, nic3com, nicrealtek, nicnatsemi, gfxnvidia, drkaiser, satasii, satamv, atahpt, atavia, atapromise, asm106x</p>
+<li><p>internal, nic3com, nicrealtek, atavia, asm106x</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>have to be run as superuser/root</p></li>
@@ -1621,6 +1538,9 @@ See section <strong>BUGS</strong> for contact info.</p>
 </pre></div>
 </div>
 <p>in <strong>/etc/rc.securelevel</strong> and rebooting, or rebooting into single user mode.</p>
+<p>On FreeBSD, raw memory and I/O port access are refused once <code class="docutils literal notranslate"><span class="pre">kern.securelevel</span></code>
+is above 0. Set <code class="docutils literal notranslate"><span class="pre">kern_securelevel_enable=&quot;NO&quot;</span></code> in <strong>/etc/rc.conf</strong> and reboot,
+or reboot into single user mode. MSR access requires the <code class="docutils literal notranslate"><span class="pre">cpuctl</span></code> kernel module.</p>
 </section>
 <section id="bugs">
 <h2>BUGS<a class="headerlink" href="#bugs" title="Link to this heading">¶</a></h2>
@@ -1707,20 +1627,16 @@ terms of the GNU GPL (version 2 or later).</p>
 <li class="toctree-l3"><a class="reference internal" href="#internal-programmer">internal programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dummy-programmer">dummy programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fault-programmer">fault programmer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#nic3com-nicrealtek-nicnatsemi-nicintel-nicintel-eeprom-nicintel-spi-gfxnvidia-ogp-spi-drkaiser-satasii-satamv-atahpt-atavia-atapromise-it8212-programmers">nic3com, nicrealtek, nicnatsemi, nicintel, nicintel_eeprom, nicintel_spi, gfxnvidia, ogp_spi, drkaiser, satasii, satamv, atahpt, atavia, atapromise, it8212 programmers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nic3com-nicrealtek-nicintel-nicintel-eeprom-nicintel-spi-ogp-spi-atavia-programmers">nic3com, nicrealtek, nicintel, nicintel_eeprom, nicintel_spi, ogp_spi, atavia programmers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#atavia-programmer">atavia programmer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#atapromise-programmer">atapromise programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nic3com-programmer">nic3com programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nicintel-spi-programmer">nicintel_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nicintel-eeprom-programmer">nicintel_eeprom programmer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#gfxnvidia-programmer">gfxnvidia programmer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#satasii-programmer">satasii programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#ft2232-spi-programmer">ft2232_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#serprog-programmer">serprog programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#buspirate-spi-programmer">buspirate_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pickit2-spi-programmer">pickit2_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dediprog-programmer">dediprog programmer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#rayer-spi-programmer">rayer_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#raiden-debug-spi-programmer">raiden_debug_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pony-spi-programmer">pony_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#ogp-spi-programmer">ogp_spi programmer</a></li>
@@ -1729,7 +1645,6 @@ terms of the GNU GPL (version 2 or later).</p>
 <li class="toctree-l3"><a class="reference internal" href="#mstarddc-spi-programmer">mstarddc_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#ch341a-spi-programmer">ch341a_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#ch347-spi-programmer">ch347_spi programmer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ni845x-spi-programmer">ni845x_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#digilent-spi-programmer">digilent_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dirtyjtag-spi-programmer">dirtyjtag_spi programmer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#jlink-spi-programmer">jlink_spi programmer</a></li>
@@ -1746,6 +1661,7 @@ terms of the GNU GPL (version 2 or later).</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#examples">EXAMPLES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#environment">ENVIRONMENT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#exit-status">EXIT STATUS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">REQUIREMENTS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#bugs">BUGS</a></li>
@@ -1788,7 +1704,7 @@ terms of the GNU GPL (version 2 or later).</p>
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

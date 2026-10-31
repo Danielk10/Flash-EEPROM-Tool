@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Arduino flasher 3.3v &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>Arduino flasher 3.3v &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
-    <script src="../../../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../../../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../../../_static/flashrom_icon_color-32x32.ico"/>
@@ -105,7 +105,7 @@ To do that make sure that the arduino is not connected to your computer and run:
 </pre></div>
 </div>
 <p>If everything went fine it will output something like that:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls</span><span class="p">:</span> <span class="n">cannot</span> <span class="n">access</span> <span class="s1">&#39;/dev/ttyUSB0&#39;</span><span class="p">:</span> <span class="n">No</span> <span class="n">such</span> <span class="n">file</span> <span class="ow">or</span> <span class="n">directory</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls</span><span class="p">:</span> <span class="n">cannot</span> <span class="n">access</span> <span class="s1">'/dev/ttyUSB0'</span><span class="p">:</span> <span class="n">No</span> <span class="n">such</span> <span class="n">file</span> <span class="ow">or</span> <span class="n">directory</span>
 </pre></div>
 </div>
 <p>If instead it looks like that:</p>
@@ -141,14 +141,14 @@ flashrom v1.0 on Linux 4.15.2-gnu-1 (i686)
 flashrom is free software, get the source code at https://flashrom.org
 
 Using clock_gettime for delay loops (clk_id: 1, resolution: 1ns).
-serprog: Programmer name is &quot;frser-duino&quot;
+serprog: Programmer name is "frser-duino"
 serprog: requested mapping AT45CS1282 is incompatible: 0x1080000 bytes at 0xfef80000.
 No EEPROM/flash device found.
-Note: flashrom can never write if the flash chip isn&#39;t found automatically.
+Note: flashrom can never write if the flash chip isn't found automatically.
 </pre></div>
 </div>
 <p>This is the important line:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">serprog</span><span class="p">:</span> <span class="n">Programmer</span> <span class="n">name</span> <span class="ow">is</span> <span class="s2">&quot;frser-duino&quot;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">serprog</span><span class="p">:</span> <span class="n">Programmer</span> <span class="n">name</span> <span class="ow">is</span> <span class="s2">"frser-duino"</span>
 </pre></div>
 </div>
 <p>It means that flashrom is able to talk to the flasher, which reports itself as &quot;frser-duino&quot; We also have the following line:</p>
@@ -205,14 +205,14 @@ flashrom v1.0 on Linux 4.15.2-gnu-1 (i686)
 flashrom is free software, get the source code at https://flashrom.org
 
 Using clock_gettime for delay loops (clk_id: 1, resolution: 1ns).
-serprog: Programmer name is &quot;frser-duino&quot;
+serprog: Programmer name is "frser-duino"
 serprog: requested mapping AT45CS1282 is incompatible: 0x1080000 bytes at 0xfef80000.
 No EEPROM/flash device found.
-Note: flashrom can never write if the flash chip isn&#39;t found automatically.
+Note: flashrom can never write if the flash chip isn't found automatically.
 </pre></div>
 </div>
 <p>Again like before the important parts are:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">serprog</span><span class="p">:</span> <span class="n">Programmer</span> <span class="n">name</span> <span class="ow">is</span> <span class="s2">&quot;frser-duino&quot;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">serprog</span><span class="p">:</span> <span class="n">Programmer</span> <span class="n">name</span> <span class="ow">is</span> <span class="s2">"frser-duino"</span>
 </pre></div>
 </div>
 <p>And:</p>
@@ -428,7 +428,7 @@ Thanks also for telling me about the Macronix issues on the Thinkpad X200. This 
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

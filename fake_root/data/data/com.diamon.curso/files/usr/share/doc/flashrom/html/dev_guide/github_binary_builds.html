@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GitHub binary builds &#8212; flashrom v2.0.0-devel documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Development Guide" href="development_guide.html" />
+    <link rel="prev" title="Building from source" href="building_from_source.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="github-binary-builds">
+<h1>GitHub binary builds<a class="headerlink" href="#github-binary-builds" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">build.yml</span></code> runs on branch pushes, pull requests and manual dispatch. It
+calls <code class="docutils literal notranslate"><span class="pre">build-binaries.yml</span></code>, which builds the CLI using Meson on these runners:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Runner</p></th>
+<th class="head"><p>Artifact</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Linux x86-64</p></td>
+<td><p>Ubuntu 24.04</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.deb</span></code> with generated runtime dependencies</p></td>
+</tr>
+<tr class="row-odd"><td><p>macOS Apple Silicon</p></td>
+<td><p>macOS 15</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code> with bundled libraries</p></td>
+</tr>
+<tr class="row-even"><td><p>macOS Intel</p></td>
+<td><p>macOS 15 Intel</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code> with bundled libraries</p></td>
+</tr>
+<tr class="row-odd"><td><p>Windows x86-64</p></td>
+<td><p>Windows 2022, MSYS2 UCRT64</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.zip</span></code> with bundled DLLs</p></td>
+</tr>
+</tbody>
+</table>
+<p>Download the <code class="docutils literal notranslate"><span class="pre">flashrom-*</span></code> artifacts from the workflow run. Install the Linux
+package with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">./flashrom-*.deb</span></code> on Ubuntu 24.04 or a
+compatible newer distribution. On macOS, extract the archive and run
+<code class="docutils literal notranslate"><span class="pre">./flashrom</span></code> from its directory, keeping <code class="docutils literal notranslate"><span class="pre">lib/</span></code> beside it. These builds
+target macOS 15 or later. On Windows, extract the ZIP and run <code class="docutils literal notranslate"><span class="pre">flashrom.exe</span></code>,
+keeping its DLLs beside it; MSYS2 is not required on the target.</p>
+<p>The macOS executable and bundled libraries are ad-hoc signed after their
+library paths are rewritten, and each signature is verified before packaging.
+They are not signed with an Apple Developer ID or notarized. Ad-hoc signing
+allows local execution but does not establish trust for Gatekeeper: macOS may
+block files quarantined by a browser download. The CI startup check does not
+test this download path. Distribution without a Gatekeeper override requires
+Developer ID signing and <a class="reference external" href="https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution">Apple notarization</a>.</p>
+<p>Builds enable Meson's <code class="docutils literal notranslate"><span class="pre">auto</span></code> programmer selection and RPMC. Linux includes
+PCI, USB, FTDI, J-Link and serial dependencies. macOS includes USB, FTDI and
+serial programmers; Windows also includes J-Link. Internal/PCI programmers
+are not available on macOS or Windows. USB access on Windows requires the
+appropriate device driver. The Meson configuration summary lists the actual
+programmers.</p>
+<p>Linux and Windows run the unit tests using GNU linker wrapping, which is not
+available with the macOS linker. Every job smoke-tests the packaged CLI using
+<code class="docutils literal notranslate"><span class="pre">--version</span></code>; Windows clears the toolchain from PATH first, and macOS checks
+that bundled binaries no longer reference Homebrew libraries. These checks
+do not test physical programmers.</p>
+<section id="releases">
+<h2>Releases<a class="headerlink" href="#releases" title="Link to this heading">¶</a></h2>
+<p>Update <code class="docutils literal notranslate"><span class="pre">VERSION</span></code>, commit it with these workflows, tag that commit, and
+publish a GitHub Release for the tag. Publishing either a release or a
+prerelease triggers <code class="docutils literal notranslate"><span class="pre">release.yml</span></code>. It uses the same build and packaging
+jobs as CI, with the version from <code class="docutils literal notranslate"><span class="pre">VERSION</span></code> and without a Git suffix.
+Tag names must refer to commits containing these workflows and the packaging
+script.</p>
+<p>Once all four builds pass, the workflow attaches their packages, a source
+archive of the release commit, and <code class="docutils literal notranslate"><span class="pre">SHA256SUMS</span></code> to that release. Only the
+asset upload job has <code class="docutils literal notranslate"><span class="pre">contents:</span> <span class="pre">write</span></code>; build jobs have read-only access.
+Assets are not overwritten. If an upload partially fails, remove any assets
+uploaded by that attempt before rerunning the upload job.</p>
+<p>CI packages append the commit ID to their version. Packages include the source
+commit ID, Meson options and license information. The macOS and Windows builds
+bundle package-manager libraries and include dependency notices/provenance;
+Linux relies on distribution packages. Dependency versions follow the runner's
+package repositories, so rebuilding a tag later is not bit-for-bit reproducible.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flashrom</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Developers documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="building_from_source.html">Building from source</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">GitHub binary builds</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#releases">Releases</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_guide.html">Development Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="release_process.html">Release process</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_docs/index.html">Users documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contrib_howtos/index.html">Contributors howtos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../supported_hw/index.html">Supported hardware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classic_cli_manpage.html">Manual page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contact.html">Contact</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes/index.html">Release notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_flashrom/index.html">About flashrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_to_support_flashrom.html">How to support flashrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_to_add_docs.html">How to add or update docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../documentation_license.html">Documentation license</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Developers documentation</a><ul>
+      <li>Previous: <a href="building_from_source.html" title="previous chapter">Building from source</a></li>
+      <li>Next: <a href="development_guide.html" title="next chapter">Development Guide</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/dev_guide/github_binary_builds.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

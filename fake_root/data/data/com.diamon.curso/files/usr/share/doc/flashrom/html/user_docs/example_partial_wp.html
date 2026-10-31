@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Example of partial write-protection &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>Example of partial write-protection &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
@@ -89,27 +89,27 @@ you're trying to protect bootblock stored in CBFS at the end of some <code class
 it might be a separate file which is put at the beginning of a chip. You need to have an idea of what
 you're doing here or have some reliable instructions to follow.</p>
 <p>In this case <code class="code docutils literal notranslate"><span class="pre">cbfstool</span></code> can be used to list information about bootblock like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cbfstool rom print | sed -n &#39;2p; /bootblock/p&#39;
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cbfstool rom print | sed -n '2p; /bootblock/p'
 Name                           Offset     Type           Size   Comp
 bootblock                      0x3ef100   bootblock       36544 none
 </pre></div>
 </div>
 <p>However, the offset is relative to the start of CBFS region, so we also need to find out offset of CBFS:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cbfstool rom layout | grep CBFS
-&#39;COREBOOT&#39; (CBFS, size 4161536, offset 12615680)
+'COREBOOT' (CBFS, size 4161536, offset 12615680)
 </pre></div>
 </div>
 <p>Now we can calculate:</p>
 <ul>
 <li><p>start offset (CBFS offset + 64 + bootblock offset):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>12615680 + 64 + 0x3ef100 = 0xff7140
-(printf &quot;%#x\n&quot; $(( 12615680 + 64 + 0x3ef100 )))
+(printf "%#x\n" $(( 12615680 + 64 + 0x3ef100 )))
 </pre></div>
 </div>
 </li>
 <li><p>end offset (start offset + bootblock size - 1):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>0xff7140 + 36544 - 1 = 0xffffff
-(printf &quot;%#x\n&quot; $(( 0xff7140 + 36544 - 1 )))
+(printf "%#x\n" $(( 0xff7140 + 36544 - 1 )))
 </pre></div>
 </div>
 </li>
@@ -200,6 +200,7 @@ that we additionally include a part of 876 KiB empty space which will hopefully 
 <p>You can set the range and change WP status independently as well if needed (just specify one <code class="code docutils literal notranslate"><span class="pre">--wp-*</span></code> option at a time).
 Make sure that hardware protection is off (state of <code class="code docutils literal notranslate"><span class="pre">W#</span></code>/<code class="code docutils literal notranslate"><span class="pre">W/</span></code> pin of the chip) or you won't be able
 to change WP configuration.</p>
+<p><strong>Note:</strong> For the <code class="code docutils literal notranslate"><span class="pre">linux_mtd</span></code> programmer, the WP range is bound to the WP status. You need to set both at the same time.</p>
 <p>On success, the output of the above command will include such lines:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Enabled</span> <span class="n">hardware</span> <span class="n">protection</span>
 <span class="n">Activated</span> <span class="n">protection</span> <span class="nb">range</span><span class="p">:</span> <span class="n">start</span><span class="o">=</span><span class="mh">0x00fc0000</span> <span class="n">length</span><span class="o">=</span><span class="mh">0x00040000</span> <span class="p">(</span><span class="n">upper</span> <span class="mi">1</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span>
@@ -212,6 +213,7 @@ so double-check status of WP before changing state of WP pin on your chip!</p>
 <h2>Verifying hardware protection<a class="headerlink" href="#verifying-hardware-protection" title="Link to this heading">¶</a></h2>
 <p>Once you're happy with the configuration and changed state of WP pin, you can try disabling WP
 using <code class="code docutils literal notranslate"><span class="pre">flashrom</span> <span class="pre">--wp-disable</span></code> to make sure that it fails now.</p>
+<p><strong>Note:</strong> For <code class="code docutils literal notranslate"><span class="pre">linux_mtd</span></code>, use <code class="code docutils literal notranslate"><span class="pre">flashrom</span> <span class="pre">--wp-disable</span> <span class="pre">--wp-range=0,0</span></code>.</p>
 </section>
 </section>
 
@@ -303,7 +305,7 @@ using <code class="code docutils literal notranslate"><span class="pre">flashrom
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

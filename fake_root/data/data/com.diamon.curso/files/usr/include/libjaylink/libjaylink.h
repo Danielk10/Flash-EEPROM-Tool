@@ -140,6 +140,8 @@ enum jaylink_device_capability {
 	JAYLINK_DEV_CAP_EMUCOM = 33,
 	/** Device supports ethernet connectivity. */
 	JAYLINK_DEV_CAP_ETHERNET = 38,
+	/** Device supports virtual COM (VCOM) port. */
+	JAYLINK_DEV_CAP_VCOM = 48,
 	/** Device supports SPI. */
 	JAYLINK_DEV_CAP_SPI = 56,
 };

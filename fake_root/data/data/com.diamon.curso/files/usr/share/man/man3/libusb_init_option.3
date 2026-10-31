@@ -1,4 +1,4 @@
-.TH "libusb_init_option" 3 "Thu Aug 6 2026 22:36:05" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_init_option" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,13 @@ libusb_init_option \- Structure used for setting options through \fBlibusb_init_
 .PP
 .PP
 \fR#include <libusb\&.h>\fP
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "union \fB[union]\&.value\fP"
+.br
+.in -1c
 .SS "Data Fields"
 
 .in +1c
@@ -17,18 +24,9 @@ libusb_init_option \- Structure used for setting options through \fBlibusb_init_
 .br
 .RI "Which option to set\&. "
 .ti -1c
-.RI "union {"
+.RI "\fBunion \fP \fBvalue\fP"
 .br
-.ti -1c
-.RI "   int \fBival\fP"
-.br
-.ti -1c
-.RI "   \fBlibusb_log_cb\fP \fBlog_cbval\fP"
-.br
-.ti -1c
-.RI "} \fBvalue\fP"
-.br
-.RI "An integer value used by the option (if applicable)\&. "
+.RI "The value used by the option (if applicable)\&. "
 .in -1c
 .SH "Detailed Description"
 .PP 

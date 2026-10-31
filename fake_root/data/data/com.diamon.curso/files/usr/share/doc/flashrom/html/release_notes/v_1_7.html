@@ -5,18 +5,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>v1.7 (Feb 2026) &#8212; flashrom v1.8.0-devel documentation</title>
+    <title>v1.7 (Feb 2026) &#8212; flashrom v2.0.0-devel documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <script src="../_static/documentation_options.js?v=8a0f4bd2"></script>
+    <script src="../_static/documentation_options.js?v=a3c35dc3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="icon" href="../_static/flashrom_icon_color-32x32.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="v1.6 (July 2025)" href="v_1_6.html" />
-    <link rel="prev" title="Recent development (unreleased)" href="devel.html" />
+    <link rel="prev" title="v1.8 (Aug 2026)" href="v_1_8.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -127,7 +127,7 @@ read-only.</p>
 <p>A new message is now printed for the user to explain what happened,
 example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">can_change_target_regions</span><span class="p">:</span> <span class="n">cannot</span> <span class="n">fully</span> <span class="n">update</span> <span class="n">part1</span> <span class="n">region</span>
-<span class="p">(</span><span class="mf">00000000..0</span><span class="n">x04ffff</span><span class="p">)</span> <span class="n">due</span> <span class="n">to</span> <span class="n">chip</span><span class="s1">&#39;s write-protection.</span>
+<span class="p">(</span><span class="mf">00000000..0</span><span class="n">x04ffff</span><span class="p">)</span> <span class="n">due</span> <span class="n">to</span> <span class="n">chip</span><span class="s1">'s write-protection.</span>
 <span class="n">At</span> <span class="n">least</span> <span class="n">one</span> <span class="n">target</span> <span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">fully</span> <span class="n">writable</span><span class="o">.</span> <span class="n">Aborting</span><span class="o">.</span>
 <span class="n">Error</span><span class="p">:</span> <span class="n">some</span> <span class="n">of</span> <span class="n">the</span> <span class="n">required</span> <span class="n">checks</span> <span class="n">to</span> <span class="n">prepare</span> <span class="n">flash</span> <span class="n">access</span> <span class="n">failed</span><span class="o">.</span>
 <span class="n">Earlier</span> <span class="n">messages</span> <span class="n">should</span> <span class="n">give</span> <span class="n">more</span> <span class="n">details</span><span class="o">.</span>
@@ -196,8 +196,8 @@ device ID is 0x0611.</p>
 <section id="libflashrom">
 <h2>libflashrom<a class="headerlink" href="#libflashrom" title="Link to this heading">¶</a></h2>
 <p>The real life usage of <code class="docutils literal notranslate"><span class="pre">flashrom_flash_probe_v2</span></code> discovered the issue, the error messages as below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">error</span><span class="p">:</span> <span class="n">variable</span> <span class="s1">&#39;flashctx&#39;</span> <span class="n">has</span> <span class="n">initializer</span> <span class="n">but</span> <span class="n">incomplete</span> <span class="nb">type</span>
-<span class="n">error</span><span class="p">:</span> <span class="n">storage</span> <span class="n">size</span> <span class="n">of</span> <span class="s1">&#39;flashctx&#39;</span> <span class="n">isn</span><span class="s1">&#39;t known</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">error</span><span class="p">:</span> <span class="n">variable</span> <span class="s1">'flashctx'</span> <span class="n">has</span> <span class="n">initializer</span> <span class="n">but</span> <span class="n">incomplete</span> <span class="nb">type</span>
+<span class="n">error</span><span class="p">:</span> <span class="n">storage</span> <span class="n">size</span> <span class="n">of</span> <span class="s1">'flashctx'</span> <span class="n">isn</span><span class="s1">'t known</span>
 </pre></div>
 </div>
 <p>New API method <code class="docutils literal notranslate"><span class="pre">flashrom_create_context</span></code> is created to fix this.
@@ -284,6 +284,7 @@ and should stay as is.</p>
 <li class="toctree-l1"><a class="reference internal" href="../contact.html">Contact</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Release notes</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="devel.html">Recent development (unreleased)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="v_1_8.html">v1.8 (Aug 2026)</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">v1.7 (Feb 2026)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#download">Download</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#bugs-fixed">Bugs fixed</a></li>
@@ -317,7 +318,7 @@ and should stay as is.</p>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Release notes</a><ul>
-      <li>Previous: <a href="devel.html" title="previous chapter">Recent development (unreleased)</a></li>
+      <li>Previous: <a href="v_1_8.html" title="previous chapter">v1.8 (Aug 2026)</a></li>
       <li>Next: <a href="v_1_6.html" title="next chapter">v1.6 (July 2025)</a></li>
   </ul></li>
   </ul></li>
@@ -339,7 +340,7 @@ and should stay as is.</p>
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |

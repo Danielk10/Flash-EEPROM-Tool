@@ -4,7 +4,7 @@ libdir=${prefix}/lib
 
 Name: flashrom
 Description: library to interact with flashrom
-Version: v1.8.0-devel
-Requires.private: libcrypto >= 3.0.0, libpci >= 2.2.0, libusb-1.0, libftdi1, libjaylink >= 0.3.0
+Version: v2.0.0-devel
+Requires.private: libcrypto >= 3.0.0, libusb-1.0, libftdi1, libjaylink >= 0.3.0
 Libs: -L${libdir} -lflashrom
 Cflags: -I${includedir}

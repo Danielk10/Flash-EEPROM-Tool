@@ -1,4 +1,4 @@
-.TH "libusb_dev" 3 "Thu Aug 6 2026 22:36:04" "Version 1.0.30" "libusb" \" -*- nroff -*-
+.TH "libusb_dev" 3 "Version 1.0.30" "libusb" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -120,15 +120,15 @@ libusb_dev \- Device handling and enumeration
 .br
 .RI "Set the active configuration for a device\&. "
 .ti -1c
-.RI "int \fBlibusb_claim_interface\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number) EXCLUDES(dev_handle \-> lock)"
+.RI "int \fBlibusb_claim_interface\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number)"
 .br
 .RI "Claim an interface on a given device handle\&. "
 .ti -1c
-.RI "int \fBlibusb_release_interface\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number) EXCLUDES(dev_handle \-> lock)"
+.RI "int \fBlibusb_release_interface\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number)"
 .br
 .RI "Release an interface previously claimed with \fBlibusb_claim_interface()\fP\&. "
 .ti -1c
-.RI "int \fBlibusb_set_interface_alt_setting\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number, int alternate_setting) EXCLUDES(dev_handle \-> lock)"
+.RI "int \fBlibusb_set_interface_alt_setting\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number, int alternate_setting)"
 .br
 .RI "Activate an alternate setting for an interface\&. "
 .ti -1c
@@ -144,15 +144,15 @@ libusb_dev \- Device handling and enumeration
 .br
 .RI "Determine if a kernel driver is active on an interface\&. "
 .ti -1c
-.RI "int \fBlibusb_detach_kernel_driver\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number) EXCLUDES(dev_handle \-> lock)"
+.RI "int \fBlibusb_detach_kernel_driver\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number)"
 .br
 .RI "Detach a kernel driver from an interface\&. "
 .ti -1c
-.RI "int \fBlibusb_attach_kernel_driver\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number) EXCLUDES(dev_handle \-> lock)"
+.RI "int \fBlibusb_attach_kernel_driver\fP (\fBlibusb_device_handle\fP *dev_handle, int interface_number)"
 .br
 .RI "Re-attach an interface's kernel driver, which was previously detached using \fBlibusb_detach_kernel_driver()\fP\&. "
 .ti -1c
-.RI "int \fBlibusb_set_auto_detach_kernel_driver\fP (\fBlibusb_device_handle\fP *dev_handle, int enable) EXCLUDES(dev_handle \-> lock)"
+.RI "int \fBlibusb_set_auto_detach_kernel_driver\fP (\fBlibusb_device_handle\fP *dev_handle, int enable)"
 .br
 .RI "Enable/disable libusb's automatic kernel driver detachment\&. "
 .ti -1c
@@ -542,7 +542,7 @@ Calculate the maximum packet size which a specific endpoint is capable is sendin
 If acting on an isochronous or interrupt endpoint, this function will multiply the value found in bits 0:10 by the number of transactions per microframe (determined by bits 11:12)\&. Otherwise, this function just returns the numeric value found in bits 0:10\&. For USB 3\&.0 device, it will attempts to retrieve the Endpoint Companion Descriptor to return wBytesPerInterval\&.
 
 .PP
-This function is useful for setting up isochronous transfers, for example you might pass the return value from this function to \fBlibusb_set_iso_packet_lengths()\fP in order to set the length field of every isochronous packet in a transfer\&.
+This function is useful for setting up isochronous transfers, for example you might pass the return value from this function to libusb_set_iso_packet_lengths() in order to set the length field of every isochronous packet in a transfer\&.
 
 .PP
 This function only considers the first alternate setting of the interface\&. If the endpoint has different maximum packet sizes for different alternate settings, you probably want \fBlibusb_get_max_alt_packet_size()\fP instead\&.
@@ -584,7 +584,7 @@ Calculate the maximum packet size which a specific endpoint is capable of sendin
 If acting on an isochronous or interrupt endpoint, this function will multiply the value found in bits 0:10 by the number of transactions per microframe (determined by bits 11:12)\&. Otherwise, this function just returns the numeric value found in bits 0:10\&. For USB 3\&.0 device, it will attempts to retrieve the Endpoint Companion Descriptor to return wBytesPerInterval\&.
 
 .PP
-This function is useful for setting up isochronous transfers, for example you might pass the return value from this function to \fBlibusb_set_iso_packet_lengths()\fP in order to set the length field of every isochronous packet in a transfer\&.
+This function is useful for setting up isochronous transfers, for example you might pass the return value from this function to libusb_set_iso_packet_lengths() in order to set the length field of every isochronous packet in a transfer\&.
 
 .PP
 Since version 1\&.0\&.27, \fBLIBUSB_API_VERSION\fP >= 0x0100010A
@@ -885,7 +885,7 @@ another LIBUSB_ERROR code on other failure
 .RE
 .PP
 
-.SS "int libusb_claim_interface (\fBlibusb_device_handle\fP * dev_handle, int interface_number) \-> lock)"
+.SS "int libusb_claim_interface (\fBlibusb_device_handle\fP * dev_handle, int interface_number)"
 
 .PP
 Claim an interface on a given device handle\&. You must claim the interface you wish to use before you can perform I/O on any of its endpoints\&.
@@ -912,7 +912,7 @@ This is a non-blocking function\&.
 .PP
 \fBReturns\fP
 .RS 4
-0 on success 
+\fBLIBUSB_SUCCESS\fP on success 
 
 .PP
 \fBLIBUSB_ERROR_NOT_FOUND\fP if the requested interface does not exist 
@@ -933,10 +933,10 @@ a LIBUSB_ERROR code on other failure
 .RE
 .PP
 
-.SS "int libusb_release_interface (\fBlibusb_device_handle\fP * dev_handle, int interface_number) \-> lock)"
+.SS "int libusb_release_interface (\fBlibusb_device_handle\fP * dev_handle, int interface_number)"
 
 .PP
-Release an interface previously claimed with \fBlibusb_claim_interface()\fP\&. You should release all claimed interfaces before closing a device handle\&.
+Release an interface previously claimed with \fBlibusb_claim_interface()\fP\&. If the device is still connected, you should release all claimed interfaces before closing a device handle\&. This step is not required, and not useful, for a device that has been disconnected (for example, when handling a \fBLIBUSB_HOTPLUG_EVENT_DEVICE_LEFT\fP event): the call will fail with \fBLIBUSB_ERROR_NO_DEVICE\fP and the kernel/backend will have already released the interfaces associated with the disconnected device\&.
 
 .PP
 This is a blocking function\&. A SET_INTERFACE control request will be sent to the device, resetting interface state to the first alternate setting\&.
@@ -954,7 +954,7 @@ If auto_detach_kernel_driver is set to 1 for \fRdev\fP, the kernel driver will b
 .PP
 \fBReturns\fP
 .RS 4
-0 on success 
+\fBLIBUSB_SUCCESS\fP on success 
 
 .PP
 \fBLIBUSB_ERROR_NOT_FOUND\fP if the interface was not claimed 
@@ -972,7 +972,7 @@ another LIBUSB_ERROR code on other failure
 .RE
 .PP
 
-.SS "int libusb_set_interface_alt_setting (\fBlibusb_device_handle\fP * dev_handle, int interface_number, int alternate_setting) \-> lock)"
+.SS "int libusb_set_interface_alt_setting (\fBlibusb_device_handle\fP * dev_handle, int interface_number, int alternate_setting)"
 
 .PP
 Activate an alternate setting for an interface\&. The interface must have been previously claimed with \fBlibusb_claim_interface()\fP\&.
@@ -1110,7 +1110,7 @@ another LIBUSB_ERROR code on other failure
 .RE
 .PP
 
-.SS "int libusb_detach_kernel_driver (\fBlibusb_device_handle\fP * dev_handle, int interface_number) \-> lock)"
+.SS "int libusb_detach_kernel_driver (\fBlibusb_device_handle\fP * dev_handle, int interface_number)"
 
 .PP
 Detach a kernel driver from an interface\&. If successful, you will then be able to claim the interface and perform I/O\&.
@@ -1131,7 +1131,7 @@ Note that libusb itself also talks to the device through a special kernel driver
 .PP
 \fBReturns\fP
 .RS 4
-0 on success 
+\fBLIBUSB_SUCCESS\fP on success 
 
 .PP
 \fBLIBUSB_ERROR_NOT_FOUND\fP if no kernel driver was active 
@@ -1155,7 +1155,7 @@ another LIBUSB_ERROR code on other failure
 .RE
 .PP
 
-.SS "int libusb_attach_kernel_driver (\fBlibusb_device_handle\fP * dev_handle, int interface_number) \-> lock)"
+.SS "int libusb_attach_kernel_driver (\fBlibusb_device_handle\fP * dev_handle, int interface_number)"
 
 .PP
 Re-attach an interface's kernel driver, which was previously detached using \fBlibusb_detach_kernel_driver()\fP\&. This functionality is not available on Windows\&.
@@ -1170,7 +1170,7 @@ Re-attach an interface's kernel driver, which was previously detached using \fBl
 .PP
 \fBReturns\fP
 .RS 4
-0 on success 
+\fBLIBUSB_SUCCESS\fP on success 
 
 .PP
 \fBLIBUSB_ERROR_NOT_FOUND\fP if no kernel driver was active 
@@ -1197,7 +1197,7 @@ another LIBUSB_ERROR code on other failure
 .RE
 .PP
 
-.SS "int libusb_set_auto_detach_kernel_driver (\fBlibusb_device_handle\fP * dev_handle, int enable) \-> lock)"
+.SS "int libusb_set_auto_detach_kernel_driver (\fBlibusb_device_handle\fP * dev_handle, int enable)"
 
 .PP
 Enable/disable libusb's automatic kernel driver detachment\&. When this is enabled libusb will automatically detach the kernel driver on an interface when claiming the interface, and attach it when releasing the interface\&.
