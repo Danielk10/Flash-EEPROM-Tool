@@ -47,6 +47,58 @@ cd "$HOME/flashrom" || exit 1
 rm -rf builddir
 
 # ==========================================
+# 2.1 PARCHEO DE MESON PARA SOPORTE SERIE EN ANDROID
+# ==========================================
+echo "Aplicando parches para habilitar programadores serie (serprog, buspirate_spi, spidriver) en Android..."
+
+python3 - << 'EOF'
+import os
+import re
+
+meson_path = "meson.build"
+if not os.path.exists(meson_path):
+    print("Error: meson.build no encontrado.")
+    exit(1)
+
+with open(meson_path, "r", encoding="utf-8") as f:
+    content = f.read()
+
+# 1. Habilitar sistemas serie en Android agregando 'android' a systems_serial
+if "'android'" not in content:
+    content = re.sub(
+        r"(systems_serial\s*=\s*\[)([^\]]+)(\])",
+        r"\1\2, 'android'\3",
+        content
+    )
+    print("[PATCH] Añadido 'android' a systems_serial en meson.build")
+
+# 2. Mapear custom_baud_linux en Android (Android usa el kernel Linux y soporta termios2 / BOTHER)
+content = re.sub(
+    r"host_machine\.system\(\)\s*==\s*'linux'",
+    "host_machine.system() in ['linux', 'android']",
+    content
+)
+print("[PATCH] Mapeado host_machine.system() en Android para soporte custom baud")
+
+# 3. Habilitar systems_linux_spi y systems_linux_mtd en Android si están presentes
+content = re.sub(
+    r"(systems_linux_spi\s*=\s*\[)([^\]]+)(\])",
+    r"\1\2, 'android'\3",
+    content
+)
+content = re.sub(
+    r"(systems_linux_mtd\s*=\s*\[)([^\]]+)(\])",
+    r"\1\2, 'android'\3",
+    content
+)
+
+with open(meson_path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("[PATCH] Parcheo de meson.build completado exitosamente.")
+EOF
+
+# ==========================================
 # 3. CONFIGURACIÓN CON MESON
 # ==========================================
 echo "Configurando flashrom con Meson..."
@@ -91,6 +143,16 @@ if [ -n "$FLASHROM_BIN" ]; then
     echo
     echo "=== Alineación 16KB en ejecutable flashrom ==="
     readelf -l "$FLASHROM_BIN" 2>/dev/null | grep LOAD || true
+
+    echo
+    echo "=== Verificación de Programadores Soportados en el Binario ==="
+    for prog in ch341a_spi ch347_spi ft2232_spi usbblaster_spi serprog buspirate_spi spidriver dirtyjtag_spi stlinkv3_spi jlink_spi; do
+        if strings "$FLASHROM_BIN" 2>/dev/null | grep -q "$prog"; then
+            echo "  [OK] $prog: Incluido"
+        else
+            echo "  [AVISO] $prog: No detectado en cadenas"
+        fi
+    done
 else
     echo "Error: No se encontró el binario de flashrom instalado."
     exit 1
