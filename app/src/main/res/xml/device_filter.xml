@@ -4,7 +4,7 @@
     <!-- 0x0403 / 0x60??: FTDI -->
     <usb-device
         vendor-id="1027"
-        product-id="24577" /> <!-- 0x6001: FT232R -->
+        product-id="24577" /> <!-- 0x6001: FT232R (Bus Pirate, SPIDriver, serie) -->
     <usb-device
         vendor-id="1027"
         product-id="24592" /> <!-- 0x6010: FT2232H -->
@@ -16,7 +16,7 @@
         product-id="24596" /> <!-- 0x6014: FT232H -->
     <usb-device
         vendor-id="1027"
-        product-id="24597" /> <!-- 0x6015: FT230X, FT231X, FT234XD -->
+        product-id="24597" /> <!-- 0x6015: FT230X, FT231X, FT234XD (serie) -->
     <usb-device
         vendor-id="1027"
         product-id="24641" /> <!-- 0x6041: FT4233H -->
@@ -57,18 +57,12 @@
         vendor-id="5562"
         product-id="43" /> <!-- 0x002b: ARM-USB-OCD-H -->
 
-    <!-- 0x18D1: Google Servo debug boards -->
-    <usb-device
-        vendor-id="6353"
-        product-id="20481" /> <!-- 0x5001: Servo -->
-    <usb-device
-        vendor-id="6353"
-        product-id="20482" /> <!-- 0x5002: Servo V2 legacy -->
-    <usb-device
-        vendor-id="6353"
-        product-id="20483" /> <!-- 0x5003: Servo V2 -->
+    <!-- 0x18D1: Google Servo / Raiden debug boards.
+         raiden_debug_spi no filtra por PID: busca la interfaz vendor-specific
+         0xFF/0x51, por lo que el filtro debe cubrir todo el VID de Google. -->
+    <usb-device vendor-id="6353" />
 
-    <!-- 0x10C4 / 0xEA??: Silabs CP210x -->
+    <!-- 0x10C4 / 0xEA??: Silabs CP210x (Developerbox, serprog) -->
     <usb-device
         vendor-id="4292"
         product-id="60000" /> <!-- 0xea60: CP2102 and other CP210x single port devices -->
@@ -115,9 +109,6 @@
         product-id="21778" /> <!-- 0x5512: CH341A (SPI/I2C Programmer) -->
     <usb-device
         vendor-id="6790"
-        product-id="21795" /> <!-- 0x5523: CH347 / CH341 UART -->
-    <usb-device
-        vendor-id="6790"
         product-id="21979" /> <!-- 0x55db: CH347T SPI (Mode 3) -->
     <usb-device
         vendor-id="6790"
@@ -153,19 +144,16 @@
         vendor-id="11914"
         product-id="10" /> <!-- 0x2E8A / 0x000A: Raspberry Pi Pico SDK -->
 
-    <!-- ST-LINK (0x0483) -->
-    <usb-device vendor-id="1155" product-id="14152" /> <!-- 0x3748: ST-LINK/V2 -->
-    <usb-device vendor-id="1155" product-id="14155" /> <!-- 0x374b: ST-LINK/V2-1 -->
-    <usb-device vendor-id="1155" product-id="14157" /> <!-- 0x374d: STLINK-V3 -->
-    <usb-device vendor-id="1155" product-id="14158" /> <!-- 0x374e: STLINK-V3 -->
-    <usb-device vendor-id="1155" product-id="14159" /> <!-- 0x374f: STLINK-V3 -->
-    <usb-device vendor-id="1155" product-id="14162" /> <!-- 0x3752: STLINK-V3 -->
-    <usb-device vendor-id="1155" product-id="14163" /> <!-- 0x3753: STLINK-V3 -->
-    <usb-device vendor-id="1155" product-id="14164" /> <!-- 0x3754: STLINK-V3 -->
+    <!-- ST-LINK V3 con bridge SPI (0x0483).
+         Solo estos tres PID están soportados por stlinkv3_spi. Los ST-LINK/V2
+         (0x3748, 0x374b, 0x374d) y el V3E (0x374e, marcado BAD en flashrom)
+         no sirven para este programador. -->
+    <usb-device vendor-id="1155" product-id="14159" /> <!-- 0x374f: STLINK-V3S -->
+    <usb-device vendor-id="1155" product-id="14163" /> <!-- 0x3753: STLINK-V3 dual VCP -->
+    <usb-device vendor-id="1155" product-id="14164" /> <!-- 0x3754: STLINK-V3 no MSD -->
 
     <!-- Dediprog (0x0483) -->
-    <usb-device vendor-id="1155" product-id="56026" /> <!-- 0xdada: Dediprog SF100 -->
-    <usb-device vendor-id="1155" product-id="56032" /> <!-- 0xdae0: Dediprog SF600 -->
+    <usb-device vendor-id="1155" product-id="56026" /> <!-- 0xdada: Dediprog SF100/SF200/SF600 -->
 
     <!-- SEGGER J-Link: libjaylink reconoce todos los modelos/PID -->
     <usb-device vendor-id="4966" />
@@ -180,4 +168,7 @@
     <!-- Digilent & DirtyJTAG -->
     <usb-device vendor-id="5187" product-id="7" />     <!-- 0x1443 / 0x0007: Digilent SPI -->
     <usb-device vendor-id="4617" product-id="49354" /> <!-- 0x1209 / 0xc0ca: DirtyJTAG -->
+
+    <!-- NVIDIA SMA USB-to-SPI -->
+    <usb-device vendor-id="2389" product-id="53009" /> <!-- 0x0955 / 0xcf11: NVIDIA SMA -->
 </resources>

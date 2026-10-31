@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/home/danielpdiamon/emulador_flashrom/local_root/lib'
+libdir='/home/danielpdiamon/Flash-EEPROM-Tool/emulador_flashrom/local_root/lib'

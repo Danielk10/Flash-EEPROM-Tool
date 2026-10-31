@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import androidx.core.content.IntentCompat;
@@ -54,82 +55,84 @@ public class UsbController {
     private int currentFd = -1;
     private PtyBridge ptyBridge = null;
 
-    public static final Map<String, String> USB_AUTO_MAP = new HashMap<String, String>() {{
-        // CH341A SPI
-        put("1a86:5512", "ch341a_spi");
-        put("1a86:5523", "ch347_spi"); // ch347 SPI/I2C/UART
-        put("1a86:55db", "ch347_spi"); // CH347T SPI (Mode 3)
-        put("1a86:55de", "ch347_spi"); // CH347F SPI
-        // FT2232H / FT4232H / FT232H / FT4233H y placas FTDI compatibles
-        put("0403:6010", "ft2232_spi");
-        put("0403:6011", "ft2232_spi");
-        put("0403:6014", "ft2232_spi");
-        put("0403:6015", "ft2232_spi");
-        put("0403:6041", "ft2232_spi"); // FT4233H
-        put("0403:8a98", "ft2232_spi"); // TIAO TUMPA
-        put("0403:8a99", "ft2232_spi"); // TIAO TUMPA Lite
-        put("0403:bbe2", "ft2232_spi"); // Kristech KT-LINK
-        put("0403:cff8", "ft2232_spi"); // Amontec JTAGkey
-        put("096c:1449", "ft2232_spi"); // GOEPEL PicoTAP
-        put("1457:5118", "ft2232_spi"); // FIC OpenMoko debug board
-        put("15ba:0003", "ft2232_spi"); // Olimex ARM-USB-OCD
-        put("15ba:0004", "ft2232_spi"); // Olimex ARM-USB-TINY
-        put("15ba:002a", "ft2232_spi"); // Olimex ARM-USB-TINY-H
-        put("15ba:002b", "ft2232_spi"); // Olimex ARM-USB-OCD-H
-        put("18d1:5001", "ft2232_spi"); // Google Servo
-        put("18d1:5002", "ft2232_spi"); // Google Servo V2 legacy
-        put("18d1:5003", "ft2232_spi"); // Google Servo V2
-        // Bus Pirate
-        put("0403:6001", "buspirate_spi");
-        // ST-LINK
-        put("0483:3748", "stlinkv3_spi");
-        put("0483:374b", "stlinkv3_spi");
-        put("0483:374d", "stlinkv3_spi");
-        put("0483:374e", "stlinkv3_spi");
-        put("0483:374f", "stlinkv3_spi");
-        put("0483:3752", "stlinkv3_spi");
-        put("0483:3753", "stlinkv3_spi");
-        put("0483:3754", "stlinkv3_spi");
-        // J-Link
-        put("1366:0101", "jlink_spi");
-        put("1366:0105", "jlink_spi");
-        put("1fc9:000c", "jlink_spi");
-        // Pickit2
-        put("04d8:0033", "pickit2_spi");
-        // USB-Blaster
-        put("09fb:6001", "usbblaster_spi");
-        // Dediprog
-        put("0483:dada", "dediprog");
-        put("0483:dae0", "dediprog");
-        // Digilent
-        put("1443:0007", "digilent_spi");
-        // DirtyJTAG
-        put("1209:c0ca", "dirtyjtag_spi");
-        // Serprog (adaptadores USB-serie; el firmware debe implementar serprog)
-        put("2341:0043", "serprog"); // Arduino Uno
-        put("2341:0001", "serprog"); // Arduino
-        put("16c0:0483", "serprog"); // Teensy
-        put("03eb:2044", "serprog"); // Atmel LUFA
-        put("1eaf:0004", "serprog"); // LeafLabs Maple
-        put("0d28:0204", "serprog"); // ARM mbed
-        put("0483:5740", "serprog"); // STM32 virtual COM port
-        put("2e8a:0005", "serprog"); // Raspberry Pi Pico (MicroPython)
-        put("2e8a:000a", "serprog"); // Raspberry Pi Pico SDK
-        put("1a86:7523", "serprog"); // CH340
-        put("1a86:55d4", "serprog"); // CH9102F
-        put("10c4:ea60", "serprog"); // CP2102
-        put("10c4:ea70", "serprog"); // CP2105
-        put("10c4:ea71", "serprog"); // CP2108
-        put("067b:2303", "serprog"); // PL2303
-        put("067b:23a3", "serprog"); // PL2303GC
-        put("067b:23b3", "serprog"); // PL2303GB
-        put("067b:23c3", "serprog"); // PL2303GT
-        put("067b:23d3", "serprog"); // PL2303GL
-        put("067b:23e3", "serprog"); // PL2303GE
-        put("067b:23f3", "serprog"); // PL2303GS
-        put("067b:2323", "serprog"); // PL2303 variant
-        put("067b:2304", "serprog"); // PL2303 variant
-    }};
+    public static final Map<String, String> USB_AUTO_MAP;
+
+    static {
+        Map<String, String> map = new HashMap<>();
+
+        // CH341A: solo el PID 0x5512 corresponde al modo SPI.
+        // 0x5523 es CH341 en modo UART y no sirve para flashrom.
+        map.put("1a86:5512", "ch341a_spi");
+
+        // CH347T / CH347F.
+        map.put("1a86:55db", "ch347_spi");
+        map.put("1a86:55de", "ch347_spi");
+
+        // FTDI: el nombre del programador no basta; hay que indicar el tipo
+        // porque ft2232_spi usa FT4232H (0x6011) como PID por defecto.
+        map.put("0403:6010", "ft2232_spi:type=2232H");
+        map.put("0403:6011", "ft2232_spi:type=4232H");
+        map.put("0403:6014", "ft2232_spi:type=232H");
+        map.put("0403:6041", "ft2232_spi:type=4233H");
+        map.put("0403:8a98", "ft2232_spi:type=tumpa");
+        map.put("0403:8a99", "ft2232_spi:type=tumpalite");
+        map.put("0403:bbe2", "ft2232_spi:type=kt-link");
+        map.put("0403:cff8", "ft2232_spi:type=jtagkey");
+        map.put("096c:1449", "ft2232_spi:type=picotap");
+        map.put("1457:5118", "ft2232_spi:type=openmoko");
+        map.put("15ba:0003", "ft2232_spi:type=arm-usb-ocd");
+        map.put("15ba:0004", "ft2232_spi:type=arm-usb-tiny");
+        map.put("15ba:002a", "ft2232_spi:type=arm-usb-tiny-h");
+        map.put("15ba:002b", "ft2232_spi:type=arm-usb-ocd-h");
+        map.put("18d1:5001", "ft2232_spi:type=google-servo");
+        map.put("18d1:5002", "ft2232_spi:type=google-servo-v2-legacy");
+        map.put("18d1:5003", "ft2232_spi:type=google-servo-v2");
+
+        // ST-LINK V3 con bridge SPI. 0x374E (V3E Mini/MiniE) queda fuera
+        // porque flashrom lo marca como BAD (no soporta el bridge).
+        map.put("0483:374f", "stlinkv3_spi");
+        map.put("0483:3753", "stlinkv3_spi");
+        map.put("0483:3754", "stlinkv3_spi");
+
+        // J-Link: libjaylink reconoce cualquier J-Link de SEGGER.
+        map.put("1366:0101", "jlink_spi");
+        map.put("1366:0105", "jlink_spi");
+        map.put("1fc9:000c", "jlink_spi");
+
+        map.put("04d8:0033", "pickit2_spi");
+        map.put("09fb:6001", "usbblaster_spi");
+        map.put("0483:dada", "dediprog");
+        map.put("1443:0007", "digilent_spi");
+        map.put("1209:c0ca", "dirtyjtag_spi");
+        map.put("0955:cf11", "nv_sma_spi");
+
+        // Serprog sobre adaptadores USB-serie (el firmware debe implementar serprog).
+        map.put("2341:0043", "serprog"); // Arduino Uno
+        map.put("2341:0001", "serprog"); // Arduino
+        map.put("16c0:0483", "serprog"); // Teensy
+        map.put("03eb:2044", "serprog"); // Atmel LUFA
+        map.put("1eaf:0004", "serprog"); // LeafLabs Maple
+        map.put("0d28:0204", "serprog"); // ARM mbed
+        map.put("0483:5740", "serprog"); // STM32 virtual COM port
+        map.put("2e8a:0005", "serprog"); // Raspberry Pi Pico (MicroPython)
+        map.put("2e8a:000a", "serprog"); // Raspberry Pi Pico SDK
+        map.put("1a86:7523", "serprog"); // CH340
+        map.put("1a86:55d4", "serprog"); // CH9102F
+        map.put("10c4:ea60", "serprog"); // CP2102
+        map.put("10c4:ea70", "serprog"); // CP2105
+        map.put("10c4:ea71", "serprog"); // CP2108
+        map.put("067b:2303", "serprog"); // PL2303
+        map.put("067b:23a3", "serprog"); // PL2303GC
+        map.put("067b:23b3", "serprog"); // PL2303GB
+        map.put("067b:23c3", "serprog"); // PL2303GT
+        map.put("067b:23d3", "serprog"); // PL2303GL
+        map.put("067b:23e3", "serprog"); // PL2303GE
+        map.put("067b:23f3", "serprog"); // PL2303GS
+        map.put("067b:2323", "serprog"); // PL2303 variant
+        map.put("067b:2304", "serprog"); // PL2303 variant
+
+        USB_AUTO_MAP = Collections.unmodifiableMap(map);
+    }
 
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         @Override
@@ -301,20 +304,72 @@ public class UsbController {
         if (device == null) {
             return null;
         }
-        String productName = device.getProductName();
-        if (productName != null && productName.toLowerCase(Locale.US).contains("spidriver")) {
+        return resolveAutoProgrammer(
+                device.getVendorId(),
+                device.getProductId(),
+                device.getProductName(),
+                hasRaidenInterface(device));
+    }
+
+    /**
+     * Resuelve el programador a partir del VID/PID y, cuando el PID es ambiguo,
+     * del nombre del producto. Es estático y sin dependencias de Android para
+     * poder probarse en tests unitarios.
+     */
+    static String resolveAutoProgrammer(int vendorId, int productId, String productName,
+            boolean hasRaidenInterface) {
+        String name = productName == null ? "" : productName.toLowerCase(Locale.US);
+
+        // Adaptadores USB-serie cuyo VID/PID es genérico: solo el nombre del
+        // producto permite saber qué firmware/protocolo implementan.
+        if (name.contains("spidriver")) {
             return "spidriver";
         }
-        String key = String.format(Locale.US, "%04x:%04x", device.getVendorId(), device.getProductId());
+        if (name.contains("bus pirate") || name.contains("buspirate")) {
+            return "buspirate_spi";
+        }
+        if (name.contains("developerbox")) {
+            return "developerbox";
+        }
+
+        // Variantes FT2232H que comparten VID/PID con el FT2232H genérico pero
+        // necesitan un type= distinto por su cableado de GPIO.
+        if (name.contains("busblaster") || name.contains("bus blaster")) {
+            return "ft2232_spi:type=busblaster";
+        }
+        if (name.contains("flyswatter")) {
+            return "ft2232_spi:type=flyswatter";
+        }
+
+        // raiden_debug_spi no usa una tabla de PID: coincide con cualquier
+        // dispositivo Google que exponga la interfaz vendor-specific 0xff/0x51.
+        if (vendorId == 0x18d1 && hasRaidenInterface) {
+            return "raiden_debug_spi";
+        }
+
+        String key = String.format(Locale.US, "%04x:%04x", vendorId, productId);
         String mapped = USB_AUTO_MAP.get(key);
         if (mapped != null) {
             return mapped;
         }
+
         // libjaylink reconoce cualquier J-Link de SEGGER, no solo los PID listados.
-        if (device.getVendorId() == 0x1366) {
+        if (vendorId == 0x1366 || (vendorId == 0x1fc9 && productId == 0x000c)) {
             return "jlink_spi";
         }
         return null;
+    }
+
+    private static boolean hasRaidenInterface(UsbDevice device) {
+        for (int i = 0; i < device.getInterfaceCount(); i++) {
+            UsbInterface usbInterface = device.getInterface(i);
+            if (usbInterface != null
+                    && usbInterface.getInterfaceClass() == 0xff
+                    && usbInterface.getInterfaceSubclass() == 0x51) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void connectToDevice(UsbDevice device) {

@@ -24,7 +24,7 @@ public class ProgrammerSettingsActivity extends AppCompatActivity {
 
     private static final String[] SUPPORTED_PROGRAMMERS = {
             "asm106x", "atavia", "buspirate_spi", "ch341a_spi", "ch347_spi", "dediprog",
-            "developerbox_spi", "digilent_spi", "dirtyjtag_spi", "drkaiser", "dummy",
+            "developerbox", "digilent_spi", "dirtyjtag_spi", "drkaiser", "dummy",
             "ft2232_spi", "gfxnvidia", "internal", "it8212", "jlink_spi", "linux_mtd",
             "linux_spi", "mediatek_i2c_spi", "mstarddc_spi", "nicintel", "nicintel_eeprom",
             "nicintel_spi", "nv_sma_spi", "ogp_spi", "parade_lspcon", "pickit2_spi",

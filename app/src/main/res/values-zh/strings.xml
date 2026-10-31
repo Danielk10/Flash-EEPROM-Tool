@@ -8,7 +8,7 @@
     <string name="str_ajustes_manuale">手动参数设置 (-p)：</string>
     <string name="str_guardar_configu">保存配置</string>
     <string name="str_hardware_soport">此版本支持的硬件：</string>
-    <string name="str_asm106x_atavia_">asm106x, atavia, buspirate_spi, ch341a_spi, ch347_spi, dediprog, developerbox_spi, digilent_spi, dirtyjtag_spi, drkaiser, dummy, ft2232_spi, gfxnvidia, internal, it8212, jlink_spi, linux_mtd, linux_spi, mediatek_i2c_spi, mstarddc_spi, nicintel, nicintel_eeprom, nicintel_spi, nv_sma_spi, ogp_spi, parade_lspcon, pickit2_spi, pony_spi, raiden_debug_spi, realtek_mst_i2c_spi, satasii, serprog, spidriver, stlinkv3_spi, usbblaster_spi</string>
+    <string name="str_asm106x_atavia_">asm106x, atavia, buspirate_spi, ch341a_spi, ch347_spi, dediprog, developerbox, digilent_spi, dirtyjtag_spi, drkaiser, dummy, ft2232_spi, gfxnvidia, internal, it8212, jlink_spi, linux_mtd, linux_spi, mediatek_i2c_spi, mstarddc_spi, nicintel, nicintel_eeprom, nicintel_spi, nv_sma_spi, ogp_spi, parade_lspcon, pickit2_spi, pony_spi, raiden_debug_spi, realtek_mst_i2c_spi, satasii, serprog, spidriver, stlinkv3_spi, usbblaster_spi</string>
     <string name="str_hardware_no_sop">不支持或排除的硬件：</string>
     <string name="str_atahpt_atapromi">atahpt, atapromise, ft232r_spi, ni845x_spi, nic3com, nicnatsemi, nicrealtek, rayer_spi, satamv</string>
     <string name="str_cargando_archiv">正在加载文件...</string>

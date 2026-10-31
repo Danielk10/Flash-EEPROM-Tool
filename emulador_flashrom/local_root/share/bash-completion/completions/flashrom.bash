@@ -1,9 +1,8 @@
-# Completion file for bash
-#
-# This file is part of the flashrom project.
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 # SPDX-FileCopyrightText: 2022 Alexander Goncharov <chat@joursoir.net>
+#
+# Completion file for bash
 
 _flashrom()
 {
@@ -23,7 +22,7 @@ _flashrom()
 			return 0
 			;;
 		'-p'|'--programmer')
-			COMPREPLY=( $(compgen -W "asm106x atavia buspirate_spi ch341a_spi ch347_spi dediprog developerbox_spi digilent_spi dirtyjtag_spi drkaiser dummy gfxnvidia internal it8212 linux_mtd linux_spi nic3com nicintel nicintel_eeprom nicintel_spi nicrealtek nv_sma_spi ogp_spi pickit2_spi pony_spi raiden_debug_spi rayer_spi satamv satasii serprog spidriver stlinkv3_spi " -- $cur) )
+			COMPREPLY=( $(compgen -W "buspirate_spi ch341a_spi ch347_spi dediprog digilent_spi dirtyjtag_spi dummy linux_mtd linux_spi nv_sma_spi pickit2_spi pony_spi raiden_debug_spi serprog spidriver stlinkv3_spi " -- $cur) )
 			return 0
 			;;
 		'-h'|'--help'|'-R'|'--version'|'-L'|'--list-supported')

@@ -1,4 +1,4 @@
-prefix=/home/danielpdiamon/emulador_flashrom/local_root
+prefix=/home/danielpdiamon/Flash-EEPROM-Tool/emulador_flashrom/local_root
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

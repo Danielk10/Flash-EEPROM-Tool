@@ -1,9 +1,9 @@
-# Flash SPI Tool v1.9.10
+# Flash SPI Tool v1.9.11
 
-[![Release](https://img.shields.io/badge/Release-v1.9.10%20(Build%2096)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool)
+[![Release](https://img.shields.io/badge/Release-v1.9.11%20(Build%2097)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool)
 [![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024%20a%20API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![minSdk](https://img.shields.io/badge/minSdk-24%20(Nougat)-brightgreen?logo=android)](https://developer.android.com/)
-[![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.10.md)
+[![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.11.md)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20(16KB%20Aligned)-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
 [![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
 [![AGP](https://img.shields.io/badge/AGP-9.4.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
@@ -22,10 +22,9 @@
 Diseñada tanto para ingenieros de hardware y laboratorios de reparación técnica como para entusiastas de la electrónica, la suite integra el poder del motor nativo de **flashrom** y una capa de transporte de alto rendimiento en C++ (`usb_bridge.cpp`) con una interfaz gráfica moderna, segura y optimizada para dispositivos táctiles.
 
 > **Información de la Versión Actual:**
-> - **Versión de la App:** `v1.9.10`
-> - **Código de Versión (`versionCode`):** `96`
-> - **Novedad principal:** handshake serprog `HELLO` con fallback `NOP/ACK`, forwarding SPI transparente y eliminación de los falsos positivos del beacon `0xAA 0x55`.
-> - **Corrección:** NPE en `PtyBridge.prepareForFlashromSession` (Crashlytics `151f4af3f7a67cdbf6197cbec9d3db55`).
+> - **Versión de la App:** `v1.9.11`
+> - **Código de Versión (`versionCode`):** `97`
+> - **Novedad principal:** Corrección del error de inicialización en programadores FTDI (`ft2232_spi:type=232H`, etc.), soporte NVIDIA SMA y optimización de auto-mapeo USB.
 > - **Rango de Compatibilidad:** Android 7.0 Nougat (API 24) hasta Android 17 (API 37)
 > - **Arquitectura de Procesador:** ARM64 (`arm64-v8a`) con alineación de páginas de memoria de 16KB para compatibilidad total con Android 15+.
 > - **Seguridad:** Operación 100% en espacio de usuario mediante Android USB Host API; no requiere root.
@@ -38,11 +37,11 @@ Flash SPI Tool implementa una arquitectura de comunicación dual de alta fidelid
 
 | Programador | Modo de Conexión | Identificador USB (VID:PID) | Descripción Técnica y Características |
 |---|---|---|---|
-| **CH341A / CH347T / CH347F** | TCP Bridge Socket / USB Directo | `1a86:5512` (CH341A)<br>`1a86:5523`<br>`1a86:55db` (CH347T)<br>`1a86:55de` (CH347F) | Programadores SPI/I2C de bajo costo. CH347T/F aceptan la frecuencia SPI seleccionable en la app (`spispeed=15M/30M/60M`). Usa un bridge nativo con sockets TCP locales y descriptores `libusb` inyectados vía `ANDROID_USB_FD` con herencia despojada de `O_CLOEXEC`. |
+| **CH341A / CH347T / CH347F** | TCP Bridge Socket / USB Directo | `1a86:5512` (CH341A)<br>`1a86:55db` (CH347T)<br>`1a86:55de` (CH347F) | Programadores SPI/I2C de bajo costo. CH347T/F aceptan la frecuencia SPI seleccionable en la app (`spispeed=15M/30M/60M`). Usa un bridge nativo con sockets TCP locales y descriptores `libusb` inyectados vía `ANDROID_USB_FD` con herencia despojada de `O_CLOEXEC`. |
 | **Serprog (RP2040, Arduino, STM32)** | Pseudo-Terminal PTY / Socket TCP | `2341:0043` / `0001` (Arduino)<br>`1a86:7523` (CH340)<br>`10c4:ea60` (CP2102)<br>`067b:2303` (PL2303) | Protocolo serie estándar configurado de forma fija y transparente a **115.200 baudios**. Handshake solicitado `HELLO` (versionado) con fallback `NOP/ACK`, compatible con el firmware Arduino oficial (`frser-arduino`), Raspberry Pi Pico, STM32 y el firmware custom. El forwarding es transparente: no escanea los datos SPI en busca de beacons, por lo que `0xAA 0x55` en una lectura nunca se confunde con control. |
 | **Bus Pirate (v3 / v4)** | PTY Serial Bridge | `0403:6001` (FTDI) | Dispositivo multiprotocolo. Conmutación automática a modo binario `BBIO` y control directo de líneas SPI mediante pseudo-terminales dedicados. |
-| **SPIDriver** | PTY Serial Bridge | `0403:6015` / FTDI Serial | Herramienta de desarrollo SPI a 460.800 baudios con soporte de protocolo binario/ASCII, validación de eco `e` y control granular de Chip Select. |
-| **Programadores USB Directos Adicionales** | libusb Nativa Parcheada | FTDI FT2232H/FT4232H/FT232H/FT4233H, TIAO TUMPA, Olimex ARM-USB, GOEPEL PicoTAP, ST-Link v3, Segger J-Link (cualquier PID), Dediprog SF100/SF600, Pickit2, USB-Blaster | Operación directa mediante invocación nativa y bypass de permisos de kernel. |
+| **SPIDriver** | PTY Serial Bridge | `0403:6001` / `0403:6015` (FTDI Serial) | Herramienta de desarrollo SPI a 460.800 baudios con soporte de protocolo binario/ASCII, validación de eco `e` y control granular de Chip Select. |
+| **Programadores USB Directos Adicionales** | libusb Nativa Parcheada | FTDI FT2232H/FT4232H/FT232H/FT4233H, TIAO TUMPA, Olimex ARM-USB, GOEPEL PicoTAP, ST-Link v3, Segger J-Link (cualquier PID), Dediprog SF100/SF200/SF600, Pickit2, USB-Blaster, NVIDIA SMA (`0955:cf11`), Google Raiden/Servo | Operación directa mediante invocación nativa y bypass de permisos de kernel. |
 
 ```
                                ┌─────────────────────────┐
@@ -276,7 +275,7 @@ Para facilitar la auditoría, mantenimiento y extensión del proyecto, se detall
 | [**Reporte Optimización PTY Asíncrono**](./REPORTE_OPTIMIZACION_PTY_USB_ASYNC.md) | Implementación de `poll()` JNI, colas `UsbRequest` y beacons de sincronización `0xAA 0x55`. | Mitigación de timeouts de hardware. |
 | [**Guía de Uso del Emulador Flashrom**](./GUIA_USO_EMULADOR.md) | Manual interactivo para ejecutar la suite de emulación de hardware sin dispositivos físicos conectados. | Pruebas locales y CI/CD. |
 | [**Guía de Configuración de Monetización**](./GUIA_CONFIGURACION_PLAY_CONSOLE_MONETIZACION.md) | Pasos de Google Play Console para el producto `donacion_pizza`, AdMob Rewarded Video y persistencia Firestore. | Administración y publicación en Play Store. |
-| [**Notas de Lanzamiento v1.9.10**](./RELEASE_NOTES_v1.9.10.md) | Registro técnico de cambios, compatibilidad de firmware y pruebas de la versión 1.9.10 (Build 96). | Registro de versiones y auditoría de seguridad. |
+| [**Notas de Lanzamiento v1.9.11**](./RELEASE_NOTES_v1.9.11.md) | Registro técnico de cambios, compatibilidad de firmware y pruebas de la versión 1.9.11 (Build 97). | Registro de versiones y auditoría de seguridad. |
 
 ---
 
