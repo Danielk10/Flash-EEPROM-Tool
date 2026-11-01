@@ -22,7 +22,7 @@ _flashrom()
 			return 0
 			;;
 		'-p'|'--programmer')
-			COMPREPLY=( $(compgen -W "ch341a_spi ch347_spi dediprog digilent_spi dirtyjtag_spi dummy fault ft2232_spi jlink_spi nv_sma_spi pickit2_spi raiden_debug_spi stlinkv3_spi usbblaster_spi " -- $cur) )
+			COMPREPLY=( $(compgen -W "asm106x atavia buspirate_spi ch341a_spi ch347_spi dediprog digilent_spi dirtyjtag_spi dummy fault ft2232_spi jlink_spi linux_mtd linux_spi nicintel nicintel_eeprom nicintel_spi nv_sma_spi ogp_spi pickit2_spi pony_spi raiden_debug_spi serprog spidriver stlinkv3_spi usbblaster_spi " -- $cur) )
 			return 0
 			;;
 		'-h'|'--help'|'-R'|'--version'|'-L'|'--list-supported')
