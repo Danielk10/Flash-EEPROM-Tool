@@ -68,6 +68,62 @@ public class FlashromExecutor {
         }
     }
 
+    /** Comprueba si el comando ya incluye una selección explícita de chip (-c). */
+    public static boolean hasChipArgument(String[] args) {
+        if (args == null) return false;
+        for (String arg : args) {
+            if ("-c".equals(arg)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Devuelve una copia del comando con {@code -c <chip>}.
+     *
+     * Si ya existe un {@code -c}, reemplaza su valor. Si no existe, inserta la
+     * selección justo después del par {@code -p <programador>} para que
+     * flashrom reciba el argumento en una posición válida.
+     */
+    public static String[] withChipArgument(String[] args, String chip) {
+        if (args == null || args.length == 0 || chip == null || chip.trim().isEmpty()) {
+            return args;
+        }
+
+        String chipName = chip.trim();
+        List<String> result = new ArrayList<>();
+        boolean replaced = false;
+
+        for (int i = 0; i < args.length; i++) {
+            if ("-c".equals(args[i])) {
+                result.add("-c");
+                result.add(chipName);
+                if (i + 1 < args.length) i++; // omitir el valor anterior
+                replaced = true;
+            } else {
+                result.add(args[i]);
+            }
+        }
+
+        if (!replaced) {
+            int insertAt = -1;
+            for (int i = 0; i < result.size(); i++) {
+                if ("-p".equals(result.get(i)) && i + 1 < result.size()) {
+                    insertAt = i + 2;
+                    break;
+                }
+            }
+            if (insertAt >= 0) {
+                result.add(insertAt, "-c");
+                result.add(insertAt + 1, chipName);
+            } else {
+                result.add(0, "-c");
+                result.add(1, chipName);
+            }
+        }
+
+        return result.toArray(new String[0]);
+    }
+
     public static AmbiguityInfo parseOutputForAmbiguity(String fullOutput) {
         boolean multipleChipsFound = false;
         List<String> suggestedChips = new ArrayList<>();
@@ -212,7 +268,10 @@ public class FlashromExecutor {
             }
 
             AmbiguityInfo ambiguity = parseOutputForAmbiguity(fullOutputCollector.toString());
-            if (exitCode != 0 && ambiguity.multipleChipsFound) {
+            // No dependemos del código de salida: algunas versiones de flashrom
+            // pueden devolver 0 aunque hayan detectado varias definiciones y no
+            // hayan realizado la operación solicitada.
+            if (ambiguity.multipleChipsFound) {
                 callback.onAmbiguityDetected(args, ambiguity.suggestedChips);
                 return;
             }

@@ -67,7 +67,7 @@ Si en versiones previas diste de alta el identificador técnico `donacion_pizza`
 3. **¿Qué puedes cambiar libremente?**
    - **Nombre:** Cámbialo a `Flash SPI Tool Pro (Sin Anuncios de por Vida + Herramientas)`.
    - **Descripción:** Actualízala con los beneficios Pro y la garantía de Sin anuncios de por vida.
-   - **Precio:** Configúralo en `$4.99 USD` (o el valor que prefieras).
+   - **Precio:** Configúralo en `$5.00 USD` (o el valor que prefieras).
    - **Etiquetas:** Puedes colocar `flash-spi-pro`.
    - **Ícono:** Puedes subir el ícono de la app o de herramientas.
 4. **¿Qué NO se puede cambiar?**
@@ -114,7 +114,7 @@ En la interfaz moderna de Google Play Console:
 ---
 
 ### Paso 2.5: Fijar Precio y Activar
-* **Precio Oficial Recomendado:** `$4.99 USD` (Google Play calculará automáticamente los equivalentes en moneda local para cada país con impuestos incluidos).
+* **Precio Oficial Recomendado:** `$5.00 USD` (Google Play calculará automáticamente los equivalentes en moneda local para cada país con impuestos incluidos).
 * Haz clic en **Guardar** y luego en **Activar producto**.
 
 ---
@@ -184,7 +184,7 @@ Cuando el usuario tiene el **Pase Pro activo** (sea por compra in-app permanente
 ## ✅ 7. Checklist de Validación Final
 
 - [ ] Producto `remove_ads_pro` (o ID legacy `donacion_pizza`) creado y en estado **Activo** en Google Play Console.
-- [ ] Opción de compra configurada como `Comprar` (precio ~$4.99 USD) para otorgar **Sin anuncios de por vida** y la suite Pro completa.
+- [ ] Opción de compra configurada como `Comprar` (precio ~$5.00 USD) para otorgar **Sin anuncios de por vida** y la suite Pro completa.
 - [ ] Tu correo de Google registrado en **Evaluadores con acceso a licencias**.
 - [ ] Bloque bonificado AdMob (`9025351389`) activo y enlazado para el Pase Pro de 12 horas.
 - [ ] Al ver video bonificado: se activa el temporizador de 12 horas, se oculta el banner y se desbloquean las herramientas Pro.

@@ -1205,36 +1205,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        List<String> list = new ArrayList<>();
-        boolean hasChipArg = false;
-        for (String a : args) {
-            if ("-c".equals(a)) {
-                hasChipArg = true;
-                break;
-            }
+        String[] effectiveArgs = Arrays.copyOf(args, args.length);
+        if (!FlashromExecutor.hasChipArgument(effectiveArgs)
+                && selectedChip != null && !selectedChip.trim().isEmpty()
+                && !isDummyProgrammer()) {
+            effectiveArgs = FlashromExecutor.withChipArgument(effectiveArgs, selectedChip);
         }
-
-        if (!hasChipArg && selectedChip != null && !selectedChip.trim().isEmpty() && !isDummyProgrammer()) {
-            boolean inserted = false;
-            for (int i = 0; i < args.length; i++) {
-                list.add(args[i]);
-                if ("-p".equals(args[i]) && i + 1 < args.length) {
-                    list.add(args[i + 1]);
-                    list.add("-c");
-                    list.add(selectedChip.trim());
-                    i++;
-                    inserted = true;
-                }
-            }
-            if (!inserted) {
-                list.add(0, "-c");
-                list.add(1, selectedChip.trim());
-            }
-        } else {
-            list.addAll(Arrays.asList(args));
-        }
-
-        String[] effectiveArgs = list.toArray(new String[0]);
 
         // Aplicar la frecuencia SPI solo a los comandos generados por la GUI.
         // Los comandos escritos en la consola no pasan por executeFlashromTask().
@@ -2116,35 +2092,7 @@ public class MainActivity extends AppCompatActivity {
         if (args == null || args.length == 0 || chip == null || chip.trim().isEmpty()) {
             return;
         }
-        List<String> newArgs = new ArrayList<>();
-        boolean cFound = false;
-        for (int i = 0; i < args.length; i++) {
-            if ("-c".equals(args[i])) {
-                newArgs.add("-c");
-                newArgs.add(chip.trim());
-                i++; // saltar chip anterior
-                cFound = true;
-            } else {
-                newArgs.add(args[i]);
-            }
-        }
-        if (!cFound) {
-            int insertIdx = -1;
-            for (int i = 0; i < newArgs.size(); i++) {
-                if ("-p".equals(newArgs.get(i)) && i + 1 < newArgs.size()) {
-                    insertIdx = i + 2;
-                    break;
-                }
-            }
-            if (insertIdx != -1) {
-                newArgs.add(insertIdx, "-c");
-                newArgs.add(insertIdx + 1, chip.trim());
-            } else {
-                newArgs.add(0, "-c");
-                newArgs.add(1, chip.trim());
-            }
-        }
-        executeFlashromTask(newArgs.toArray(new String[0]));
+        executeFlashromTask(FlashromExecutor.withChipArgument(args, chip));
     }
 
     private void releaseWakeLockAndScreenOn() {

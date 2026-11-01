@@ -195,7 +195,7 @@ public class ProAccessDialog {
         Button btnBuyPro = new Button(activity);
         String priceText = (billingManager != null && billingManager.getFormattedPrice() != null)
                 ? " - " + billingManager.getFormattedPrice()
-                : " - $4.99";
+                : " - $5.00";
         btnBuyPro.setText(activity.getString(R.string.pro_btn_buy_permanent, appName, priceText));
         btnBuyPro.setTextSize(14);
         btnBuyPro.setTypeface(null, Typeface.BOLD);
