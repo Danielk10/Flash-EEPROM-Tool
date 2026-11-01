@@ -38,4 +38,5 @@ Siempre que se prepare un lanzamiento o se suba una actualización a **Google Pl
 - **Eliminar las notas obsoletas.** Al preparar un nuevo lanzamiento, borra las notas de versiones anteriores (`RELEASE_NOTES_v*.md`) en lugar de acumularlas.
 - **No crear históricos de notas.** El historial completo ya queda en Git, en las releases de GitHub y en Google Play; no hace falta mantener copias antiguas en el árbol de trabajo.
 - **Verificar enlaces antes de borrar.** Comprueba que `README.md` y la documentación no enlacen a la nota que vas a eliminar; actualiza esos enlaces a la nota vigente.
+- **No exponer datos de firma.** Las notas públicas (GitHub, Google Play, README) no deben incluir el nombre del keystore, su ruta, alias, contraseñas ni ningún detalle del certificado de firma.
 
