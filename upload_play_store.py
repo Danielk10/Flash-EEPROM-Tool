@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+
 def main():
     parser = argparse.ArgumentParser(description="Upload AAB to Google Play Store")
     parser.add_argument('--package_name', required=True, help='The package name of the app')
@@ -14,8 +15,9 @@ def main():
     parser.add_argument('--release_notes_en', default='', help='Structured release notes for English (en-US) using multiline bullet points (- Item)')
     parser.add_argument('--release_notes_zh', default='', help='Structured release notes for Chinese Simplified (zh-CN) using multiline bullet points (- Item)')
     parser.add_argument('--release_notes_zh_tw', default='', help='Structured release notes for Chinese Traditional (zh-TW) using multiline bullet points (- Item)')
+    parser.add_argument('--status', default='completed', choices=['draft', 'inProgress', 'halted', 'completed'], help='Release status for the Play track (default: completed)')
     parser.add_argument('--dry_run', action='store_true', help='Validate upload and track assignment without committing')
-    
+
     args = parser.parse_args()
 
     scopes = ['https://www.googleapis.com/auth/androidpublisher']
@@ -39,13 +41,11 @@ def main():
         version_code = bundle_response['versionCode']
         print(f"Successfully uploaded AAB with version code: {version_code}")
 
-        print(f"Assigning AAB to track '{args.track}'...")
-        
         release_notes_list = []
         if args.release_notes:
             release_notes_list.append({'language': 'es-419', 'text': args.release_notes})
             release_notes_list.append({'language': 'es-ES', 'text': args.release_notes})
-        
+
         en_notes = args.release_notes_en if args.release_notes_en else args.release_notes
         if en_notes:
             release_notes_list.append({'language': 'en-US', 'text': en_notes})
@@ -55,16 +55,38 @@ def main():
             zh_tw = args.release_notes_zh_tw if args.release_notes_zh_tw else args.release_notes_zh
             release_notes_list.append({'language': 'zh-TW', 'text': zh_tw})
 
+        new_release = {
+            'name': f"Release {version_code}",
+            'versionCodes': [version_code],
+            'status': args.status,
+            'releaseNotes': release_notes_list
+        }
+        releases = [new_release]
+
+        # Un borrador debe convivir con la release publicada actual. Si se
+        # reemplazara la lista completa, la track podría quedarse sin release
+        # activa mientras el borrador no se despliega.
+        if args.status == 'draft':
+            try:
+                current_track = service.edits().tracks().get(
+                    editId=edit_id,
+                    packageName=args.package_name,
+                    track=args.track
+                ).execute()
+                existing_releases = [
+                    release for release in current_track.get('releases', [])
+                    if release.get('status') != 'draft'
+                ]
+            except Exception:
+                existing_releases = []
+            releases = existing_releases + releases
+
         track_release = {
             'track': args.track,
-            'releases': [{
-                'name': f"Release {version_code}",
-                'versionCodes': [version_code],
-                'status': 'completed',
-                'releaseNotes': release_notes_list
-            }]
+            'releases': releases
         }
 
+        print(f"Assigning AAB to track '{args.track}' with status '{args.status}'...")
         service.edits().tracks().update(
             editId=edit_id,
             packageName=args.package_name,
@@ -82,13 +104,17 @@ def main():
 
         print("Committing the edit...")
         service.edits().commit(editId=edit_id, packageName=args.package_name).execute()
-        print("Release successfully published to Google Play!")
+        if args.status == 'draft':
+            print("Draft release successfully created on Google Play!")
+        else:
+            print("Release successfully published to Google Play!")
 
     except Exception as e:
         print(f"An error occurred: {e}")
         print("Reverting the edit...")
         service.edits().delete(editId=edit_id, packageName=args.package_name).execute()
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
