@@ -1,100 +1,113 @@
-# Flash SPI Tool v1.9.11 (versionCode 97) — Soporte FTDI robusto, parche libusb ioctl y binarios actualizados / Robust FTDI support, libusb ioctl patch & updated binaries
+# Flash SPI Tool v1.9.11 (versionCode 97) — Soporte Serial/USB Universal, Flashrom v2.0 con Serprog/BusPirate/SPIDriver y Parche FTDI / Universal Serial/USB Support, Flashrom v2.0 with Serprog/BusPirate/SPIDriver & FTDI Patch
 
-Esta versión soluciona de forma definitiva los errores de inicialización en programadores FTDI (`-3: device not found` y `-10: libusb_get_config_descriptor() failed`), incorpora un parche quirúrgico en `libusb` para el paso de descriptores de configuración mediante `ioctl` sin requerir root en Android, sincroniza la suite completa de binarios y dependencias nativas ARM64 (`jniLibs/arm64-v8a`), amplía la compatibilidad USB con NVIDIA SMA y optimiza los filtros para ST-LINK V3 y Google Servo.
+Esta versión expande masivamente la compatibilidad de hardware del ecosistema **Flash SPI Tool**: compila y activa de forma nativa en Android la suite completa de programadores serie y puente USB de **flashrom v2.0.0-devel** (`serprog`, `buspirate_spi`, `spidriver`, `pony_spi`, `ch347_spi`, `stlinkv3_spi`, `dirtyjtag_spi`, `nv_sma_spi`, `linux_spi`, `linux_mtd`, `asm106x`), aísla el ciclo de vida del puente serie PTY/Socket para prevenir bloqueos de interfaz USB (`LIBUSB_ERROR_BUSY`), incorpora desambiguación dinámica de chips FTDI por descriptor de producto, resuelve de forma definitiva los errores de inicialización FTDI (`-3` y `-10`) mediante interceptación `ioctl` sin root, actualiza los binarios nativos ARM64 con alineación obligatoria de páginas de memoria de 16 KB para Android 15 y sincroniza los recursos de autocompletado del sistema.
 
-This release definitively resolves initialization errors on FTDI programmers (`-3: device not found` and `-10: libusb_get_config_descriptor() failed`), implements a surgical `libusb` patch for configuration descriptor handling via `ioctl` without root on Android, synchronizes the complete ARM64 native binaries and dependencies suite (`jniLibs/arm64-v8a`), adds USB support for NVIDIA SMA, and refines filter mappings for ST-LINK V3 and Google Servo.
+This release massively expands hardware compatibility across the **Flash SPI Tool** ecosystem: natively compiles and enables the complete serial and USB-bridge programmer suite in **flashrom v2.0.0-devel** on Android (`serprog`, `buspirate_spi`, `spidriver`, `pony_spi`, `ch347_spi`, `stlinkv3_spi`, `dirtyjtag_spi`, `nv_sma_spi`, `linux_spi`, `linux_mtd`, `asm106x`), completely isolates the PTY/Socket serial bridge lifecycle to prevent interface contention (`LIBUSB_ERROR_BUSY`), adds dynamic FTDI chip disambiguation by USB product descriptor strings, definitively resolves FTDI initialization errors (`-3` and `-10`) via rootless descriptor `ioctl` interception, updates ARM64 native binaries with 16 KB memory page alignment for Android 15, and synchronizes shell completion assets.
 
 ---
 
 ## 🚀 Novedades y Mejoras Técnicas
 
-### 1. Resolución integral del soporte para programadores FTDI (FT232H, FT2232H, FT4232H)
+### 1. Integración de `flashrom v2.0.0-devel` con Suite Completa de Programadores en Android
+• **Activación de controladores serie en Android:**  
+  En compilaciones estándar de Android / Termux, Meson desactiva por defecto los programadores serie al no incluir `'android'` en la lista `systems_serial`. Mediante parcheo automatizado en `build_flashrom_custom.sh`, se incorporaron formalmente a la compilación:
+  - `serprog` (Serial flasher universal para Arduino, RP2040, ESP32, STM32 vía USB-CDC).
+  - `buspirate_spi` (Bus Pirate v3 y v4).
+  - `spidriver` (Excamera SPIDriver con display y monitor de corriente en vivo).
+  - `pony_spi` (SI-Prog / PonyProg serie).
+• **Activación de controladores de hardware extendidos y Linux kernel:**  
+  Se habilitó soporte para `linux_spi`, `linux_mtd`, `ch347_spi` (alta velocidad hasta 60 MHz), `stlinkv3_spi`, `dirtyjtag_spi`, `nv_sma_spi`, `raiden_debug_spi`, `asm106x`, `atavia`, `nicintel`, `ogp_spi`.
+• **Cumplimiento estricto de páginas de memoria de 16 KB (Android 15):**  
+  Todos los binarios ejecutables y librerías dinámicas fueron compilados con `-Wl,-z,max-page-size=16384` (`0x4000`), garantizando compatibilidad nativa y previniendo fallos de segmentación en dispositivos modernos con Android 15+.
+
+### 2. Control de Ciclo de Vida USB y Aislamiento PTY vs USB Directo (`libusb`)
+• **Prevención de colisión de interfaces (`LIBUSB_ERROR_BUSY / -6`):**  
+  Cuando un programador serie (`serprog`, `buspirate_spi`, `spidriver`) se conecta, el sistema Android inicia un puente serie (`UsbSerialBridge`) enlazado a un pseudoterminal `/dev/pts/N` o socket TCP local `127.0.0.1:port`. Si el usuario alternaba a un programador USB directo (`ch341a_spi`, `ft2232_spi`), la interfaz USB permanecía reclamada por el puente java, provocando fallos en `libusb_claim_interface()`.
+  - Se implementó `UsbController.ensurePtyBridge(selectedProgrammer)` y `UsbController.closePtyBridge()` en `MainActivity.java`.
+  - La app libera y cierra limpiamente la interfaz USB antes de ceder el descriptor `ANDROID_USB_FD` a `libusb`, eliminando el error `-6`.
+• **Desambiguación dinámica de hardware con mismo VID:PID (`0403:6001` y `0403:6015`):**  
+  Diversos dispositivos comparten el mismo chip FTDI FT232R o FT230X. `UsbController.resolveAutoProgrammer()` inspecciona ahora el `productName`:
+  - `Bus Pirate` $\rightarrow$ `buspirate_spi:dev=/dev/pts/N`
+  - `SPIDriver` $\rightarrow$ `spidriver:dev=/dev/pts/N`
+  - `USB-Blaster` $\rightarrow$ `usbblaster_spi`
+  - `Developerbox` $\rightarrow$ `ft2232_spi:type=4232H`
+  - Genérico / Arduino $\rightarrow$ `serprog:dev=/dev/pts/N`
+• **Ampliación masiva de filtros USB (`device_filter.xml` y `USB_AUTO_MAP`):**  
+  Soporte automático para Arduino Mega 2560 (`2341:0042`, `2341:0010`), Leonardo (`2341:8036`), Micro (`2341:8037`), Due (`2341:003e`), SparkFun Pro Micro (`1b4f:9205`, `1b4f:9206`), Raspberry Pi Pico CDC stdio (`2e8a:0003`) y Debug Probe (`2e8a:0009`), ESP32-S2/S3/C3/C6 CDC (`303a:0002`, `303a:1001`), WCH CH342/CH343 (`1a86:55d2`, `1a86:55d3`), CP2104 (`10c4:ea61`) y DirtyJTAG 2 (`1209:c0cb`).
+
+### 3. Resolución Integral del Soporte FTDI (FT232H, FT2232H, FT4232H)
 • **Corrección del error `-3 (device not found)`:**  
-  Se actualizó el mapa automático `USB_AUTO_MAP` en `UsbController.java` para asociar cada VID:PID FTDI con su parámetro de silicio correspondiente (`ft2232_spi:type=232H`, `type=2232H`, `type=4232H`, etc.). Esto evita que flashrom recurra al tipo por defecto y falle al abrir el dispositivo.
+  Mapeo explícito en `USB_AUTO_MAP` con parámetros de silicio (`ft2232_spi:type=232H`, `type=2232H`, `type=4232H`).
 • **Corrección del error `-10 (libusb_get_config_descriptor() failed)`:**  
-  En Android sin root, el acceso a `/dev/bus/usb/` y `/sys/bus/usb/` está restringido por SELinux. Cuando `libftdi` intentaba consultar el descriptor de configuración para validar interfaces y endpoints, el backend estándar de `libusb` fallaba al no poder leer el filesystem.
-  - **Interceptación en `descriptor.c`:** Al detectar el descriptor de archivo inyectado (`ANDROID_USB_FD`), `libusb_get_config_descriptor()` realiza una transferencia de control directa mediante `ioctl(fd, USBDEVFS_CONTROL)` con valor `0x0200` (Configuration Descriptor 0), obteniendo la longitud total (`wTotalLength`) y analizando la jerarquía completa de endpoints en memoria con `raw_desc_to_config()`.
-  - **Interceptación en `core.c`:** `libusb_get_configuration()` retorna la configuración activa 1, previniendo llamadas conflictivas a `libusb_set_configuration()` que provocan errores `EBUSY` en interfaces ya asignadas en Android.
+  Interceptación quirúrgica en `libusb` mediante `ioctl(fd, USBDEVFS_CONTROL)` con descriptor `0x0200` para leer la configuración en memoria sin requerir root ni acceso a `/dev/bus/usb/`.
 
-### 2. Sincronización completa de binarios nativos ARM64 (`jniLibs/arm64-v8a`)
-• **5 Binarios ejecutables (cumplimiento Google Play):**  
-  `libflashrom_bin.so` (830 KB), `libftdi_eeprom.so` (76.5 KB), `liblspci.so` (94.8 KB), `libpcilmr.so` (29.2 KB), `libsetpci.so` (24 KB).
-• **19 Librerías compartidas actualizadas:**  
-  - `libusb_1_0.so` (137 KB) con el interceptor de configuración y dispositivo.
-  - `libflashrom.so`, `libflashrom_1.so`, `libflashrom_1_0_0.so` (794 KB).
-  - `libftdi1.so`, `libftdipp1.so`, `libjaylink.so`, `libpci.so`, `libpyftdi1.so`.
-  - Dependencias de sistema y compilador actualizadas: `libc++_shared.so` (1.42 MB), `libcrypto_3.so` (OpenSSL 3, 5.21 MB), `libconfuse.so` (64 KB) y `libz_1.so` (72 KB).
-• **Cabeceras C/C++ actualizadas (`app/src/main/cpp/include`):**  
-  Sincronización de `libjaylink` (v0.5.0 con soporte VCOM), opciones de logging en `libusb-1.0`, y alineación PCI en `pci/pciutils`.
-• **Assets y scripts de entorno:**  
-  Actualización de `ftdi1.py` a SWIG 4.5.1, autocompletado `flashrom.bash` y manuales man correspondientes.
-
-### 3. Ampliación de Hardware USB Compatible
-• **NVIDIA SMA USB-to-SPI:** Integración de VID:PID `0955:cf11` mapeado al programador `nv_sma_spi`.
-• **ST-LINK V3:** Filtrado refinado para soportar únicamente modelos con puente SPI (`0x374f`, `0x3753`, `0x3754`), excluyendo variantes no compatibles (V3E `0x374e` y V2).
-• **Google Servo / Raiden:** Detección dinámica de interfaces vendor-specific `0xFF/0x51` sin dependencia de PIDs fijos.
+### 4. Sincronización de Binarios Nativo ARM64 (`jniLibs/arm64-v8a`)
+• **Binarios y Librerías Actualizadas:**  
+  - `libflashrom_bin.so`: Actualizado a **918 KB** con soporte nativo para los más de 30 programadores.
+  - `libflashrom.so`, `libflashrom_1.so`, `libflashrom_1_0_0.so`: Actualizadas a **883 KB**.
+  - `libpci.so.3` / `libpci_3.so` (91 KB): Enlazadas dinámicamente para los controladores PCI.
+  - `libusb_1_0.so` (137 KB), `libftdi1_2.so` (172 KB), `libcrypto_3.so` (OpenSSL 3, 5.21 MB), `libjaylink.so` (77 KB).
+• **Assets Actualizados:**  
+  - `flashrom.bash`: Base de autocompletado sincronizada con la lista completa de controladores activos.
+  - `pci.ids.gz`: Base de datos de identificadores PCI verificada.
 
 ---
 
-## ✅ Validación de esta versión
+## ✅ Validación de esta Versión
 
-• **Validación con Emulador de Hardware:**  
-  Ejecución completa de `test_all_devices.sh` cubriendo los 5 perfiles de conexión:
-  - **SERPROG (PTY):** ✅ Detección y lectura verificada.
-  - **BUS PIRATE (PTY):** ✅ Detección y lectura verificada.
-  - **SPIDRIVER (PTY):** ✅ Detección y lectura verificada.
-  - **CH341A (USB Directo / ANDROID_USB_FD):** ✅ Detección y lectura verificada.
-  - **FTDI FT232H (USB Directo / ANDROID_USB_FD):** ✅ Detección de chip flash GigaDevice `GD25Q80(B)` (1024 kB, SPI) y volcado íntegro de 1 MB sin fallos ni timeouts.
-• **Pruebas Unitarias:** Pruebas de mapeo automático de programadores y filtros USB validadas exitosamente (`ExampleUnitTest.java`).
-• **Portabilidad y Seguridad:** Verificación de binarios ELF con `patchelf --remove-rpath` y eliminación de dependencias absolutas a Termux.
+• **Verificación en Runtime CLI:**  
+  Comprobación nativa directa en el ejecutable confirmando estado `[OK]` en runtime para:  
+  `ch341a_spi`, `ch347_spi`, `ft2232_spi`, `usbblaster_spi`, `serprog`, `buspirate_spi`, `spidriver`, `dirtyjtag_spi`, `stlinkv3_spi`, `jlink_spi`, `pickit2_spi`, `dediprog`, `digilent_spi`, `raiden_debug_spi`, `pony_spi`, `nv_sma_spi`, `asm106x`, `atavia`, `linux_mtd`, `linux_spi`, `nicintel`.
+• **Pruebas de Aislamiento de Puertos:**  
+  Verificación de liberación de descriptor USB y desconexión limpia del puente serie antes de conmutar entre programadores CDC y programadores USB directos.
+• **Pruebas Unitarias:**  
+  Mapeo de programadores, desambiguación dinámica por nombre de producto y filtros USB validados exitosamente en `UsbControllerTest.java` y `ExampleUnitTest.java`.
 
 ---
 
-## 🌐 Notas de Versión para Google Play
+## 🌐 Notas de Versión para Google Play (Bilingüe Obligatorio)
 
 ### 🇪🇸 Español (`es-419` / `es-ES`)
-- Soporte FTDI robusto: corrección de errores -3 y -10 mediante interceptación ioctl de descriptores USB sin root.
-- Actualización de binarios nativos arm64-v8a (flashrom, libusb, libftdi, libcrypto).
-- Soporte para adaptador USB-to-SPI NVIDIA SMA (0955:cf11).
-- Filtros optimizados para ST-LINK V3 y Google Servo/Raiden.
-- Mapeo automático de tipo de chip FTDI (:type=232H, :type=2232H).
+- Soporte para flashrom v2.0: activados Serprog, Bus Pirate, SPIDriver, CH347 y ST-LINK V3.
+- Corrección de conflicto USB: aislamiento limpio entre puente serie PTY y programadores directos libusb.
+- Desambiguación automática por modelo para adaptadores basados en chips FTDI.
+- Ampliada compatibilidad con Arduino Mega/Due/Leonardo, Raspberry Pi Pico y ESP32 CDC.
+- Binarios nativos ARM64 optimizados con alineación de páginas de 16 KB para Android 15.
 
 ### 🇺🇸 English (`en-US`)
-- Robust FTDI support: fixes for errors -3 and -10 via rootless USB descriptor ioctl interception.
-- Updated arm64-v8a native binaries (flashrom, libusb, libftdi, libcrypto).
-- Added support for NVIDIA SMA USB-to-SPI adapter (0955:cf11).
-- Optimized USB filters for ST-LINK V3 and Google Servo/Raiden.
-- Automatic FTDI chip type mapping (:type=232H, :type=2232H).
+- Added flashrom v2.0 support: enabled Serprog, Bus Pirate, SPIDriver, CH347, and ST-LINK V3.
+- Fixed USB interface conflict: clean isolation between PTY serial bridge and direct libusb drivers.
+- Dynamic product disambiguation for multi-purpose FTDI-based programmer hardware.
+- Expanded hardware support for Arduino Mega/Due/Leonardo, Raspberry Pi Pico, and ESP32 CDC.
+- Optimized ARM64 native binaries with 16 KB memory page alignment for Android 15.
 
 ### 🇨🇳 简体中文 (`zh-CN`)
-- 稳健的 FTDI 支持：通过底层 ioctl 拦截读取 USB 配置描述符，彻底修复 -3 与 -10 错误（免 Root）。
-- 更新 arm64-v8a 原生库（flashrom、libusb、libftdi、libcrypto）。
-- 新增 NVIDIA SMA USB 转 SPI 适配器支持（0955:cf11）。
-- 优化 ST-LINK V3 和 Google Servo/Raiden 过滤器。
-- 自动匹配 FTDI 芯片类型参数（:type=232H、:type=2232H）。
+- 全面支持 flashrom v2.0：原生激活 Serprog、Bus Pirate、SPIDriver、CH347 和 ST-LINK V3。
+- 修复 USB 冲突：在 PTY 串口桥接与 libusb 直连烧录器之间实现安全隔离。
+- 针对 FTDI 芯片设备增加基于产品名称的动态智能识别。
+- 新增支持 Arduino Mega/Due/Leonardo、Raspberry Pi Pico 与 ESP32 CDC 设备。
+- 原生 ARM64 二进制库针对 Android 15 全面优化（16 KB 内存分页对齐）。
 
 ### 🇹🇼 繁體中文 (`zh-TW`)
-- 穩健的 FTDI 支援：透過底層 ioctl 攔截讀取 USB 設定描述元，徹底修復 -3 與 -10 錯誤（免 Root）。
-- 更新 arm64-v8a 原生函式庫（flashrom、libusb、libftdi、libcrypto）。
-- 新增 NVIDIA SMA USB 轉 SPI 介面卡支援（0955:cf11）。
-- 最佳化 ST-LINK V3 和 Google Servo/Raiden 過濾器。
-- 自動對應 FTDI 晶片類型參數（:type=232H、:type=2232H）。
+- 全面支援 flashrom v2.0：原生啟用 Serprog、Bus Pirate、SPIDriver、CH347 與 ST-LINK V3。
+- 修復 USB 衝突：在 PTY 序列埠橋接與 libusb 直連燒錄器之間實現乾淨隔離。
+- 針對 FTDI 晶片裝置新增基於產品名稱的動態智慧辨識。
+- 新增支援 Arduino Mega/Due/Leonardo、Raspberry Pi Pico 與 ESP32 CDC 裝置。
+- 原生 ARM64 二進位程式庫針對 Android 15 全面最佳化（16 KB 記憶體分頁對齊）。
 
 ---
 
 ## 📦 Artefactos de la Versión
 
-• **APK Release:** `Flash-SPI-Tool-v1.9.11-release.apk` (19.5 MiB / 20,455,216 bytes)  
-  **SHA-256:** `e4f9bfa18309d6b4929152199457154b8934827b9ab50ab6d876f8c81da52996`
-• **AAB Release (Google Play Bundle):** `Flash-SPI-Tool-v1.9.11-release.aab` (18.5 MiB / 19,394,641 bytes)  
-  **SHA-256:** `10a84b362538d13300d1b01d272f4216332ba655288513d7cb41adcf0d4aad9e`
-• **Arquitectura:** `arm64-v8a` (alineación de página de memoria de 16 KB)
+• **APK Release:** `Flash-SPI-Tool-v1.9.11-release.apk`  
+• **AAB Release (Google Play Bundle):** `Flash-SPI-Tool-v1.9.11-release.aab`  
+• **Arquitectura:** `arm64-v8a` (alineación estricta de 16 KB / Android 15)  
 • **Firma Digital:** Certificado oficial RSA 2048-bit (`firma_flash_spi_tool.jks`), válido hasta 2046.
 
 ---
 
 ## 🔗 Enlaces
 
-• **Google Play:** https://play.google.com/store/apps/details?id=com.diamon.curso
-• **Repositorio:** https://github.com/Danielk10/Flash-EEPROM-Tool
-• **Lanzamiento v1.9.11:** https://github.com/Danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.11
+• **Google Play:** https://play.google.com/store/apps/details?id=com.diamon.curso  
+• **Repositorio:** https://github.com/Danielk10/Flash-EEPROM-Tool  
+• **Lanzamiento v1.9.11:** https://github.com/Danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.11  
