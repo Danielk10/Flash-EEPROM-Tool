@@ -32,3 +32,10 @@ Después de una compilación exitosa, el archivo APK generado se encontrará en 
 
 Siempre que se prepare un lanzamiento o se suba una actualización a **Google Play**, es obligatorio generar y proporcionar las notas de versión estructuradas tanto en **Español** (`es-419` / `es-ES`) como en **Inglés** (`en-US`), usando viñetas concisas (`- Elemento`) compatibles con el límite de caracteres de Google Play Console.
 
+### Ciclo de vida de las notas de versión
+
+- **Solo se conserva la nota de la última versión.** El repositorio debe contener un único archivo `RELEASE_NOTES_vX.Y.Z.md`, correspondiente a la versión que se está publicando.
+- **Eliminar las notas obsoletas.** Al preparar un nuevo lanzamiento, borra las notas de versiones anteriores (`RELEASE_NOTES_v*.md`) en lugar de acumularlas.
+- **No crear históricos de notas.** El historial completo ya queda en Git, en las releases de GitHub y en Google Play; no hace falta mantener copias antiguas en el árbol de trabajo.
+- **Verificar enlaces antes de borrar.** Comprueba que `README.md` y la documentación no enlacen a la nota que vas a eliminar; actualiza esos enlaces a la nota vigente.
+
