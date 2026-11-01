@@ -1,8 +1,8 @@
-# Guía de Uso del Emulador Flashrom (CH341A, Serprog, Bus Pirate y SPIDriver) — Flash SPI Tool v1.9.2
+# Guía de Uso del Emulador Flashrom (CH341A, Serprog, Bus Pirate, SPIDriver y FTDI FT232H) — Flash SPI Tool v1.9.12
 
-Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash SPI** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo para la validación y pruebas de **Flash SPI Tool v1.9.2** (versionCode 88).
+Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash SPI** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo para la validación y pruebas de **Flash SPI Tool v1.9.12** (versionCode 98).
 
-El emulador permite simular dispositivos programadores reales contra una memoria SPI de prueba (**GigaDevice GD25Q80** de 1 MB) en un entorno local, ideal para desarrollo, validación y depuración rápida sin hardware real.
+El emulador permite simular dispositivos programadores reales contra una memoria SPI de prueba (**GigaDevice GD25Q80** de 1 MB) en un entorno local, ideal para desarrollo, validación y depuración rápida sin hardware real. La misma instalación incluye `libftdi1` para validar el programador **FTDI FT232H**.
 
 ---
 
@@ -40,6 +40,8 @@ Para que `flashrom` (o el código nativo de la app Android) pueda comunicarse co
 
 *   **Modo CH341A (USB Directo)**: A través del script `patch_libusb_local.py`, se interceptan las llamadas a la biblioteca `libusb`. Todas las transferencias de lectura/escritura USB se desvían a través de un Socket UNIX (variable de entorno `ANDROID_USB_FD`). El emulador escucha en ese socket, descodifica los paquetes de comandos USB de CH341A (como levantar/bajar la señal CS en los pines `0xAB` o enviar datos SPI `0xA8`), ejecuta la operación en el chip virtual, y devuelve los bytes simulados empaquetados como si vinieran de un chip USB real.
 
+*   **Modo FTDI FT232H (USB Directo / libftdi)**: El emulador simula un FT232H con motor MPSSE. `flashrom` usa `libftdi1` para construir las tramas MPSSE y la `libusb` parcheada para entregarlas por el socket; el emulador las descodifica y las traduce a operaciones SPI sobre el chip virtual. Es el modo que valida la ruta FT2232H/FT232H.
+
 *   **Modo Serprog (PTY Serie)**: El emulador crea un pseudo-terminal (PTY) y expone un enlace simbólico (`./serprog_pty`). `flashrom` lo abre creyendo que es un puerto serie físico. El emulador recibe los comandos binarios del protocolo Serprog y los traduce a señales SPI para el chip virtual.
 
 *   **Modo Bus Pirate (PTY Serie)**: Similar a Serprog pero utilizando el protocolo binario de Bus Pirate v3. El emulador gestiona la secuencia de inicialización de texto → modo BBIO → modo SPI, incluyendo el banner de versión y el comando de reset `0x0f`.
@@ -58,12 +60,20 @@ Te permite **validar todo el flujo de software en tu máquina local**:
 
 ## 🔄 Gestión de Cambios y Desarrollo
 
-Para mantener un entorno de trabajo organizado y bajo control de versiones, se utiliza un flujo de dos directorios:
+El repositorio es la **única fuente de verdad y el único directorio de ejecución**:
 
-*   **Versión del Repositorio (`~/Flash-SPI-Tool/emulador_flashrom`)**: Es la fuente de verdad. **Cualquier actualización, corrección o mejora en el código fuente del emulador debe aplicarse y confirmarse (commit) en esta ubicación.**
-*   **Versión de Desarrollo/Ejecución (`~/emulador_flashrom`)**: Es el entorno de trabajo activo. Se utiliza para compilar el binario, ejecutar las pruebas y generar archivos de datos temporales.
+*   **Versión del Repositorio (`~/Flash-EEPROM-Tool/emulador_flashrom`)**: contiene el código, el binario, `local_root` con las librerías y los scripts de prueba. **Cualquier actualización, corrección o mejora debe aplicarse y confirmarse (commit) aquí.**
+*   **No se mantiene una copia separada en `~/emulador_flashrom`**: la copia antigua del home se eliminó para evitar binarios y librerías desincronizados.
+*   Si necesitas un espacio temporal para pruebas, usa `/tmp/opencode` y no dupliques `local_root` ni el código del emulador.
 
-*Recomendación*: Si realizas cambios en el código en la carpeta de home para probarlos, asegúrate de copiarlos de vuelta a la carpeta del repositorio una vez validados para no perderlos.
+### ⚠️ Compatibilidad de librerías: flashrom vs. minipro
+
+Cada herramienta usa su propio parche de `libusb`; **no se deben mezclar**:
+
+*   **flashrom (este emulador):** `emulador_flashrom/local_root/lib/libusb-1.0.so.0.6.0`, con el parche de descriptores FTDI/CH341A y `ANDROID_USB_FD`.
+*   **minipro (proyecto Lector-De-Memorias):** `~/native_test_root/lib/libusb-1.0.so.0.6.0`, con su propio parche de socket.
+
+El parche de flashrom intercepta VIDs que no son FTDI/CH341A y devuelve un descriptor CH341 simulado; si se copia sobre la librería de minipro, minipro se queda colgado. A la inversa, la librería de minipro no implementa la ruta FTDI necesaria para `ft2232_spi`. Mantén cada librería en su directorio.
 
 ---
 
@@ -73,7 +83,7 @@ El entorno consta de tres partes principales que trabajan en conjunto:
 
 ```
 [ Flashrom (Host CLI) ]
-          │ (Mediante libusb parchado con ANDROID_USB_FD o enlace PTY serie)
+          │ (libusb parcheada + libftdi para USB directo, o enlace PTY serie)
           ▼
 [ Puente Socket UNIX / Pseudo-terminal PTY ]
           │ (Framing de paquetes LSB o traducción de protocolos de hardware)
@@ -84,7 +94,7 @@ El entorno consta de tres partes principales que trabajan en conjunto:
 [ Modelo de Memoria (SpiFlashGD25Q80) ]
 ```
 
-1. **El Parche de `libusb`**: intercepta las llamadas de bus del sistema real. Cuando la variable de entorno `ANDROID_USB_FD` está presente, simula descriptores, salta controles de kernel invasivos (`ioctl`s de reclamación de interfaz) e implementa una cola de llamadas asíncronas en diferido para evitar deadlocks de callbacks.
+1. **El parche de `libusb` y `libftdi`**: intercepta las llamadas de bus del sistema real. Cuando la variable de entorno `ANDROID_USB_FD` está presente, simula descriptores, salta controles de kernel invasivos (`ioctl`s de reclamación de interfaz) e implementa una cola de llamadas asíncronas en diferido para evitar deadlocks de callbacks. En FTDI, `libftdi1` construye las tramas MPSSE sobre esa misma `libusb`.
 2. **El Emulador C++**: implementa la lógica específica de los microcontroladores de los programadores.
 3. **El Chip SPI Virtual**: simula los comandos estándar JEDEC (`RDID` `9Fh`, `REMS` `90h`), control de chip select (`CS`), y lectura/escritura de memoria.
 
@@ -95,7 +105,7 @@ El entorno consta de tres partes principales que trabajan en conjunto:
 Asegúrate de contar con las siguientes herramientas de desarrollo en tu sistema:
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential meson ninja-build libpci-dev libudev-dev pkg-config curl unzip
+sudo apt-get install -y build-essential meson ninja-build libpci-dev libudev-dev libftdi1-dev pkg-config curl unzip
 ```
 
 ---
@@ -105,38 +115,56 @@ sudo apt-get install -y build-essential meson ninja-build libpci-dev libudev-dev
 El emulador contiene los tres controladores en un único binario multiprotocolo. Para compilarlo:
 
 ```bash
-cd /home/danielpdiamon/emulador_flashrom
+cd ~/Flash-EEPROM-Tool/emulador_flashrom
 make clean && make
 ```
 Esto generará el archivo ejecutable `emulador_flashrom`.
 
 ---
 
-## 📦 Paso 2: Compilar e Instalar `libusb` y `flashrom` Locales
+## 📦 Paso 2: Compilar e Instalar `libusb`, `libftdi` y `flashrom` Locales
 
-Para no ensuciar las bibliotecas del sistema principal, toda la instalación local se compila y aloja dentro del directorio `/home/danielpdiamon/emulador_flashrom/local_root`.
+Para no ensuciar las bibliotecas del sistema principal, toda la instalación local se compila y aloja dentro de `~/Flash-EEPROM-Tool/emulador_flashrom/local_root`.
 
 1. **Compilar `libusb` con el parche**:
-   El script descarga la versión adecuada de `libusb`, le aplica las modificaciones requeridas de simulación de descriptor y temporización de callbacks, y la compila:
+   El script descarga la versión adecuada de `libusb`, le aplica las modificaciones requeridas de simulación de descriptor y temporización de callbacks, y la instala en `local_root`:
    ```bash
    bash build_libusb_local.sh
    ```
 
 2. **Compilar `flashrom` contra la biblioteca parchada**:
-   El script descarga la última versión de `flashrom`, la enlaza estáticamente contra nuestro `libusb` modificado y la instala en `local_root/sbin`:
+   El script descarga la última versión de `flashrom`, la enlaza dinámicamente contra la `libusb` local y la instala en `local_root/sbin`:
    ```bash
    bash build_flashrom_local.sh
    ```
 
-3. **Script de Ejecución Wrapper (`flashrom_local.sh`)**:
-   Para ejecutar `flashrom` forzando el uso de las bibliotecas dinámicas de nuestro directorio local en lugar de las del sistema, utiliza el wrapper provisto:
+3. **Dependencias de ejecución ya incluidas**:
+   `local_root/lib` contiene:
+   - `libusb-1.0.so.0.6.0`, con el parche nuevo de descriptores y `ANDROID_USB_FD`.
+   - `libftdi1.so.2` y `libftdi1.so.2.5.0`, necesarias para la ruta FT232H.
+
+   El wrapper `flashrom_local.sh` añade `local_root/lib` a `LD_LIBRARY_PATH`, por lo que **no hay que exportar rutas manualmente**.
+
+4. **Verificar la instalación**:
    ```bash
-   ./flashrom_local.sh -p <programador>
+   ./flashrom_local.sh -V
    ```
+   Debe mostrar `flashrom v2.0.0-devel` sin errores de `libusb` ni de `libftdi1.so.2`.
 
 ---
 
 ## 🔌 Paso 3: Pruebas de Detección por Dispositivo
+
+### Suite automática (cinco programadores)
+
+La forma recomendada de validar toda la instalación es ejecutar la suite desde el repositorio:
+
+```bash
+cd ~/Flash-EEPROM-Tool/emulador_flashrom
+./test_all_devices.sh
+```
+
+El script compila el emulador si hace falta y prueba **Serprog, Bus Pirate, SPIDriver, CH341A y FTDI FT232H**. La salida correcta termina con cinco `✅ [ÉXITO]` y `=== FIN DE LAS PRUEBAS ===`.
 
 ### A. Emulación de CH341A (Modo USB Directo)
 El controlador de CH341A se comunica mediante transferencias USB. Nuestro `libusb` intercepta el socket UNIX generado por el emulador y simula los endpoints USB.
@@ -221,9 +249,20 @@ El SPIDriver es un programador SPI compacto y rápido. El emulador crea un pseud
 
 ---
 
+### E. Emulación de FTDI FT232H (USB Directo / libftdi)
+El FT232H es un puente USB-SPI basado en MPSSE. El emulador simula sus transferencias y `flashrom` lo usa mediante `libftdi1` sobre la `libusb` parcheada.
+
+*   **Comando de Ejecución (Autónomo)**:
+    ```bash
+    ./emulador_flashrom --ftdi ./flashrom_local.sh -p ft2232_spi:type=232H -VVV
+    ```
+    *Nota: el emulador crea el canal socket, exporta `ANDROID_USB_FD` y lanza automáticamente `flashrom`. `libftdi1` construye las tramas MPSSE y el emulador las traduce a operaciones SPI sobre el chip virtual.*
+
+---
+
 ## 📊 Salida de Detección Exitosa de Memoria (GD25Q80)
 
-Cuando ejecutes cualquiera de los modos anteriores, la salida de `flashrom` reportará la correcta inicialización del programador, la interrogación de los IDs de fabricante y capacidad y la identificación final de la memoria virtualizada:
+Cuando ejecutes cualquiera de los cinco modos anteriores, la salida de `flashrom` reportará la correcta inicialización del programador, la interrogación de los IDs de fabricante y capacidad y la identificación final de la memoria virtualizada. La suite `test_all_devices.sh` comprueba automáticamente esta salida en cada modo:
 
 ```text
 Initializing programmer...
@@ -232,7 +271,7 @@ Probing for Generic unknown SPI chip (RDID), 0 kB: compare_id: id1 0xc8, id2 0x4
 Found GigaDevice flash chip "GD25Q80(B)" (1024 kB, SPI).
 This flash part has status UNTESTED for operations: WP
 No operations were specified.
-Bus Pirate/Serprog/CH341A/SPIDriver shutdown completed.
+Bus Pirate/Serprog/CH341A/SPIDriver/FTDI shutdown completed.
 ```
 
 ¡El entorno local de emulación y validación está listo y comprobado al 100%!

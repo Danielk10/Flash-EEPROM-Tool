@@ -40,3 +40,16 @@ Siempre que se prepare un lanzamiento o se suba una actualización a **Google Pl
 - **Verificar enlaces antes de borrar.** Comprueba que `README.md` y la documentación no enlacen a la nota que vas a eliminar; actualiza esos enlaces a la nota vigente.
 - **No exponer datos de firma.** Las notas públicas (GitHub, Google Play, README) no deben incluir el nombre del keystore, su ruta, alias, contraseñas ni ningún detalle del certificado de firma.
 
+## 5. Emulador Local y Pruebas
+
+El emulador vive únicamente en `emulador_flashrom/`. No mantener copias de ejecución en `~/emulador_flashrom` ni duplicar `local_root`.
+
+```bash
+cd emulador_flashrom
+./test_all_devices.sh
+```
+
+- `flashrom_local.sh` es autónomo: carga la `libusb` parcheada y `libftdi1` desde `local_root/lib`; no requiere `LD_LIBRARY_PATH` externo.
+- La suite debe terminar con cinco `✅ [ÉXITO]`: Serprog, Bus Pirate, SPIDriver, CH341A y FTDI FT232H.
+- No mezclar la `libusb` de flashrom con la de minipro (`~/native_test_root`): cada herramienta usa su propio parche.
+

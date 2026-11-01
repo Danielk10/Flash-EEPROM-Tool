@@ -1,8 +1,8 @@
-# Emulador de Flashrom (GD25Q80) — Flash SPI Tool v1.9.2
+# Emulador de Flashrom (GD25Q80) — Flash SPI Tool v1.9.12
 
-Entorno de simulación de hardware y silicio para desarrollo, pruebas unitarias y validación local de **Flash SPI Tool v1.9.2** sin necesidad de conectar programadores físicos o chips reales.
+Entorno de simulación de hardware y silicio para desarrollo, pruebas unitarias y validación local de **Flash SPI Tool v1.9.12** sin necesidad de conectar programadores físicos o chips reales.
 
-El emulador implementa un modelo de silicio en C++ para el chip **GigaDevice GD25Q80** (1 Megabyte / 1024 KB) junto con la emulación de protocolo para los cuatro tipos de programadores compatibles con la aplicación.
+El emulador implementa un modelo de silicio en C++ para el chip **GigaDevice GD25Q80** (1 Megabyte / 1024 KB) junto con la emulación de protocolo para los cinco tipos de programadores compatibles con la aplicación.
 
 ---
 
@@ -26,6 +26,10 @@ El emulador implementa un modelo de silicio en C++ para el chip **GigaDevice GD2
    - Expone un PTY virtual en `./spidriver_pty`.
    - Simula el protocolo híbrido binario/ASCII a 460.800 baudios con comando de estado `?`, comprobación de eco `e <byte>`, Chip Select `s`/`u` y bloques de transferencia SPI de 1 a 64 bytes.
 
+5. **FTDI FT232H (USB Directo / libftdi)**:
+   - Simula las transferencias MPSSE del FT232H a través del socket UNIX y la variable `ANDROID_USB_FD`.
+   - `flashrom` usa `libftdi1` sobre la `libusb` parcheada; el emulador descodifica las tramas MPSSE y las traduce a operaciones SPI.
+
 ---
 
 ## 🚀 Compilación y Ejecución
@@ -35,6 +39,19 @@ El emulador implementa un modelo de silicio en C++ para el chip **GigaDevice GD2
 make clean && make
 ```
 Esto genera el ejecutable `emulador_flashrom`.
+
+### Dependencias y wrapper autónomo
+
+`local_root/lib` ya incluye:
+
+- `libusb-1.0.so.0.6.0` con el parche de descriptores y `ANDROID_USB_FD`.
+- `libftdi1.so.2` / `libftdi1.so.2.5.0` para la ruta FT232H.
+
+`flashrom_local.sh` añade `local_root/lib` a `LD_LIBRARY_PATH`, así que **no hace falta exportar rutas manualmente**. Para comprobar la instalación:
+
+```bash
+./flashrom_local.sh -V
+```
 
 ### Comandos de prueba rápida:
 
@@ -59,6 +76,12 @@ kill %1
 ./emulador_flashrom --spidriver &
 ./flashrom_local.sh -p spidriver:dev=./spidriver_pty -r backup.bin
 kill %1
+
+# Modo FTDI FT232H autónomo:
+./emulador_flashrom --ftdi ./flashrom_local.sh -p ft2232_spi:type=232H -r backup.bin
+
+# Suite completa de los cinco programadores:
+./test_all_devices.sh
 ```
 
 ---
@@ -74,6 +97,7 @@ Los archivos `.bin` generados durante las pruebas con el emulador pueden auditar
 
 ## 🔄 Flujo de Desarrollo
 
-- **Repositorio (`Flash-EEPROM-Tool/emulador_flashrom/`)**: Fuente de verdad con control de versiones. Todas las modificaciones deben registrarse aquí.
-- **Directorio Local de Ejecución (`~/emulador_flashrom/`)**: Utilizado para compilar binarios locales y ejecutar pruebas de integración con `flashrom_local.sh`.
+- **Repositorio (`Flash-EEPROM-Tool/emulador_flashrom/`)**: única fuente de verdad y único directorio de ejecución. Todas las modificaciones deben registrarse aquí.
+- **No mantener una copia en `~/emulador_flashrom/`**: la copia antigua del home se eliminó para evitar binarios y librerías desincronizados.
+- **No mezclar librerías**: la `libusb` de este emulador es específica para flashrom (FTDI/CH341A). La `libusb` de `~/native_test_root` pertenece a minipro y su parche es distinto; copiarla aquí rompe la ruta FTDI y viceversa.
 - Para documentación exhaustiva sobre arquitectura, parcheo de `libusb` y simulación JEDEC, consulta [`GUIA_USO_EMULADOR.md`](../GUIA_USO_EMULADOR.md).

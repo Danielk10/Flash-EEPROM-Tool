@@ -221,14 +221,14 @@ Para mantener el árbol de trabajo limpio, Gradle redirige todos los artefactos 
 
 ## 🧪 Pruebas Locales con el Emulador Flashrom (`emulador_flashrom`)
 
-El repositorio incluye un **emulador local de silicio y hardware multiprotocolo** desarrollado en C++ dentro del directorio [`emulador_flashrom/`](./emulador_flashrom/). Este emulador simula un chip **GigaDevice GD25Q80 (1 Megabyte)** con soporte completo de comandos SPI e implementa los puentes de comunicación de los cuatro programadores soportados para permitir pruebas completas sin periféricos conectados:
+El repositorio incluye un **emulador local de silicio y hardware multiprotocolo** desarrollado en C++ dentro del directorio [`emulador_flashrom/`](./emulador_flashrom/). Este emulador simula un chip **GigaDevice GD25Q80 (1 Megabyte)** con soporte completo de comandos SPI e implementa los puentes de comunicación de los cinco programadores soportados para permitir pruebas completas sin periféricos conectados:
 
 1. **Compilar el Emulador:**
    ```bash
    cd emulador_flashrom
    make clean && make
    ```
-2. **Probar los 4 Modos de Emulación:**
+2. **Probar los 5 Modos de Emulación:**
    - **Emulador CH341A (Socket UNIX):**
      ```bash
      ./emulador_flashrom --ch341a ./flashrom_local.sh -p ch341a_spi -VVV
@@ -251,6 +251,15 @@ El repositorio incluye un **emulador local de silicio y hardware multiprotocolo*
      ./flashrom_local.sh -p spidriver:dev=./spidriver_pty -r dump.bin
      kill %1
      ```
+   - **Emulador FTDI FT232H (USB Directo / libftdi):**
+     ```bash
+     ./emulador_flashrom --ftdi ./flashrom_local.sh -p ft2232_spi:type=232H -r dump.bin
+     ```
+3. **Ejecutar la suite completa:**
+   ```bash
+   ./test_all_devices.sh
+   ```
+   Comprueba automáticamente los cinco modos. `flashrom_local.sh` ya carga la `libusb` parcheada y `libftdi1` desde `local_root/lib`; **no requiere `LD_LIBRARY_PATH` externo**.
 
 Para un desglose paso a paso de las opciones de emulación y validación de protocolos, consulta la [Guía de Uso del Emulador](./GUIA_USO_EMULADOR.md).
 

@@ -5,6 +5,8 @@
 > **Área:** Biblioteca Nativa `libusb-1.0` / Subsistema Linux USBFS / Android NDK C++  
 > **Herramientas Beneficiadas:** `flashrom`, `ftdi_eeprom`, programadores USB directos (CH341A, CH347, ST-LINK v2/v3, J-Link, FT2232H, Dediprog SF100/SF600).
 
+> **Nota para el emulador local:** esta guía describe el parche de Android (`patch_libusb.py`). Para el emulador x86_64 se usa `emulador_flashrom/patch_libusb_local.py`; `flashrom_local.sh` ya incluye la `libusb` parcheada y `libftdi1` en `local_root/lib`. No mezclar esa librería con la de minipro en `~/native_test_root`.
+
 ---
 
 ## 1. El Problema Base: Arquitectura Linux vs. Sandbox SELinux en Android
