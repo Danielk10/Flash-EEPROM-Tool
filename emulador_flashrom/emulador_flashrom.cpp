@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-// Op-codes del protocolo SPI para GD25Q80 (1MB)
+// Op-codes del protocolo SPI para memorias Flash NOR (GD25Q80 / MX25L128)
 #define CMD_WREN         0x06
 #define CMD_WRDI         0x04
 #define CMD_RDSR         0x05
@@ -41,10 +41,17 @@ uint8_t reverse_byte(uint8_t b) {
     return b;
 }
 
-// Clase para simular el chip de memoria flash GD25Q80
-class SpiFlashGD25Q80 {
+// Clase para simular un chip de memoria flash SPI configurable.
+// Por defecto: GigaDevice GD25Q80 (1 MB, JEDEC C8 40 14).
+// Con --mx25l128: Macronix MX25L128 (16 MB, JEDEC C2 20 18), el chip del
+// issue #101 que hace que flashrom encuentre cinco definiciones compatibles.
+class SpiFlashChip {
 private:
     std::vector<uint8_t> memory;
+    uint8_t jedec_manufacturer;
+    uint8_t jedec_memory_type;
+    uint8_t jedec_capacity;
+    uint8_t rems_device_id;
     std::mutex mtx;
     bool write_enable;
     uint8_t status_reg;
@@ -66,7 +73,18 @@ private:
     uint32_t byte_count;
 
 public:
-    SpiFlashGD25Q80() : memory(1048576, 0xFF), write_enable(false), status_reg(0x00), cs_active(false), state(SPI_IDLE), cmd(0), addr(0), byte_count(0) {}
+    SpiFlashChip(size_t size_bytes = 1048576,
+                 uint8_t manufacturer_id = 0xC8,
+                 uint8_t memory_type = 0x40,
+                 uint8_t capacity_id = 0x14,
+                 uint8_t device_id = 0x13)
+        : memory(size_bytes, 0xFF),
+          jedec_manufacturer(manufacturer_id),
+          jedec_memory_type(memory_type),
+          jedec_capacity(capacity_id),
+          rems_device_id(device_id),
+          write_enable(false), status_reg(0x00), cs_active(false),
+          state(SPI_IDLE), cmd(0), addr(0), byte_count(0) {}
 
     void load(const std::string& path) {
         std::lock_guard<std::mutex> lock(mtx);
@@ -222,9 +240,11 @@ public:
 
             case SPI_DATA_OUT:
                 if (cmd == CMD_RDID) {
-                    if (byte_count == 0) miso = 0xC8;      // GigaDevice Manufacturer ID
-                    else if (byte_count == 1) miso = 0x40; // Memory Type
-                    else if (byte_count == 2) miso = 0x14; // Capacity (GD25Q80 = 1MB)
+                    // JEDEC ID configurable: GD25Q80 = C8 40 14,
+                    // MX25L128 = C2 20 18 (16 MB).
+                    if (byte_count == 0) miso = jedec_manufacturer;
+                    else if (byte_count == 1) miso = jedec_memory_type;
+                    else if (byte_count == 2) miso = jedec_capacity;
                     else miso = 0x00;
                     byte_count++;
                 } else if (cmd == CMD_READ || cmd == CMD_FAST_READ) {
@@ -233,11 +253,11 @@ public:
                 } else if (cmd == CMD_RDSR) {
                     miso = status_reg | (write_enable ? 0x02 : 0x00);
                 } else if (cmd == CMD_REMS) {
-                    if (byte_count % 2 == 0) miso = 0xC8;
-                    else miso = 0x13;
+                    if (byte_count % 2 == 0) miso = jedec_manufacturer;
+                    else miso = rems_device_id;
                     byte_count++;
                 } else if (cmd == CMD_RES) {
-                    miso = 0x13;
+                    miso = rems_device_id;
                 }
                 break;
 
@@ -326,7 +346,7 @@ bool write_all(int fd, const void* data, size_t n) {
 }
 
 // Hilo del emulador Serprog
-void serprog_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
+void serprog_thread(SpiFlashChip* flash, const std::string& symlink) {
     std::cout << "[SERPROG] Iniciando emulación en " << symlink << std::endl;
 
     while (true) {
@@ -446,7 +466,7 @@ void serprog_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
 }
 
 // Hilo del emulador Bus Pirate
-void buspirate_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
+void buspirate_thread(SpiFlashChip* flash, const std::string& symlink) {
     std::cout << "[BUSPIRATE] Iniciando emulación en " << symlink << std::endl;
 
     while (true) {
@@ -559,7 +579,7 @@ void buspirate_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
 }
 
 // Hilo del emulador SPIDriver
-void spidriver_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
+void spidriver_thread(SpiFlashChip* flash, const std::string& symlink) {
     std::cout << "[SPIDRIVER] Iniciando emulación en " << symlink << std::endl;
 
     while (true) {
@@ -634,7 +654,7 @@ void spidriver_thread(SpiFlashGD25Q80* flash, const std::string& symlink) {
 }
 
 // Lógica de emulación CH341A para un socket/FD determinado
-void handle_ch341a_client(SpiFlashGD25Q80* flash, int fd) {
+void handle_ch341a_client(SpiFlashChip* flash, int fd) {
     std::cout << "[CH341A-DEBUG] Cliente conectado al descriptor de socket/archivo " << fd << std::endl;
 
     // Enviar descriptor USB de 18 bytes al inicio para que libusb lo lea
@@ -723,43 +743,48 @@ exit_client:
 //   - Todas las transferencias IN del hijo (bulk lectura de MISO):
 //     [4B longitud LE][datos] escritos por este emulador.
 //
-// Demangling de libftdi 1.6rc1 (ftdi_read_data, packet_size = 64):
-//   N <= 2          -> 0 bytes ("no more data")  [nunca usado en SPI]
-//   3 <= N <= 64    -> N - 2 bytes de datos
-//   N > 64          -> 62*(N/64) + max(0, N%64 - 2) bytes de datos
-//   Layout de cada bloque de 64B: 2 bytes estado + 62 bytes de datos.
+// Demangling de libftdi (ftdi_read_data):
+//   El FT232H es un dispositivo high-speed cuyo endpoint bulk declara
+//   wMaxPacketSize = 512 (ver el descriptor de configuracion del parche de
+//   libusb). libftdi toma ese valor como packet_size y elimina 2 bytes de
+//   estado por CADA paquete de 512 bytes:
+//   Layout de cada bloque de 512B: 2 bytes estado + 510 bytes de datos.
+//   N <= 2          -> 0 bytes ("no more data")
+//   3 <= N <= 512   -> N - 2 bytes de datos
+//   N > 512         -> 510*(N/512) + max(0, N%512 - 2) bytes de datos
 // ---------------------------------------------------------------------------
+static const size_t FTDI_PACKET_SIZE = 512;
+static const size_t FTDI_STATUS_SIZE = 2;
+static const size_t FTDI_DATA_PER_PACKET = FTDI_PACKET_SIZE - FTDI_STATUS_SIZE; // 510
+
 // Construye la trama cruda del socket que hace que ftdi_read_data devuelva
 // exactamente D bytes de miso (miso[o..o+D)):
 static std::vector<uint8_t> build_ftdi_frame(const std::vector<uint8_t>& miso, size_t o, size_t D) {
     std::vector<uint8_t> raw;
-    if (D <= 62) {
-        // N = D + 2 (una "paqueta" con 2 bytes de estado y D de datos)
-        raw.resize(D + 2, 0x00);
-        std::copy(miso.begin() + o, miso.begin() + o + D, raw.begin() + 2);
+    size_t k = D / FTDI_DATA_PER_PACKET;
+    size_t s = D % FTDI_DATA_PER_PACKET;
+    if (s == 0) {
+        // k paquetes completos [2 estado + 510 datos]
+        raw.resize(FTDI_PACKET_SIZE * k, 0x00);
+        for (size_t b = 0; b < k; b++)
+            std::copy(miso.begin() + o + FTDI_DATA_PER_PACKET * b,
+                      miso.begin() + o + FTDI_DATA_PER_PACKET * (b + 1),
+                      raw.begin() + FTDI_PACKET_SIZE * b + FTDI_STATUS_SIZE);
     } else {
-        size_t k = D / 62, s = D % 62;
-        if (s == 0) {
-            // N = 64k: k paquetas completas [2 estado + 62 datos]
-            raw.resize(64 * k, 0x00);
-            for (size_t b = 0; b < k; b++)
-                std::copy(miso.begin() + o + 62 * b, miso.begin() + o + 62 * (b + 1),
-                          raw.begin() + 64 * b + 2);
-        } else {
-            // N = 64k + s + 2: k paquetas completas + cola [2 estado + s datos]
-            raw.resize(64 * k + s + 2, 0x00);
-            for (size_t b = 0; b < k; b++)
-                std::copy(miso.begin() + o + 62 * b, miso.begin() + o + 62 * (b + 1),
-                          raw.begin() + 64 * b + 2);
-            std::copy(miso.begin() + o + 62 * k, miso.begin() + o + D,
-                      raw.begin() + 64 * k + 2);
-        }
+        // k paquetes completos + cola [2 estado + s datos]
+        raw.resize(FTDI_PACKET_SIZE * k + FTDI_STATUS_SIZE + s, 0x00);
+        for (size_t b = 0; b < k; b++)
+            std::copy(miso.begin() + o + FTDI_DATA_PER_PACKET * b,
+                      miso.begin() + o + FTDI_DATA_PER_PACKET * (b + 1),
+                      raw.begin() + FTDI_PACKET_SIZE * b + FTDI_STATUS_SIZE);
+        std::copy(miso.begin() + o + FTDI_DATA_PER_PACKET * k, miso.begin() + o + D,
+                  raw.begin() + FTDI_PACKET_SIZE * k + FTDI_STATUS_SIZE);
     }
     return raw;
 }
 
 // Lógica de emulación FTDI FT232H para un socket/FD determinado
-void handle_ftdi_client(SpiFlashGD25Q80* flash, int fd) {
+void handle_ftdi_client(SpiFlashChip* flash, int fd) {
     std::cout << "[FTDI] Cliente conectado al descriptor de socket/archivo " << fd << std::endl;
 
     // Descriptor USB de 18 bytes para FT232H (0403:6014), EN BRUTO (sin prefijo).
@@ -841,16 +866,18 @@ void handle_ftdi_client(SpiFlashGD25Q80* flash, int fd) {
         // Emitir TODA la MISO pendiente de una vez: libftdi no alterna
         // OUT/IN durante ftdi_read_data, asi que no hay riesgo de deadlock
         // pre-escribiendo todas las tramas antes de que el hijo siga.
-        // Max por trama: 3968 bytes de datos (N = 4096 = readbuffer_chunksize).
+        // Max por trama: 4080 bytes de datos (8 paquetes de 512B = 4096,
+        // que es el readbuffer_chunksize por defecto de libftdi).
+        const size_t MAX_DATA_PER_FRAME = 8 * FTDI_DATA_PER_PACKET; // 4080
         size_t pos = 0;
-        while (miso.size() - pos > 3968) {
-            std::vector<uint8_t> raw = build_ftdi_frame(miso, pos, 3968);
+        while (miso.size() - pos > MAX_DATA_PER_FRAME) {
+            std::vector<uint8_t> raw = build_ftdi_frame(miso, pos, MAX_DATA_PER_FRAME);
             uint32_t raw_len = raw.size();
             if (!write_all(fd, (uint8_t*)&raw_len, 4) || !write_all(fd, &raw[0], raw.size())) {
                 std::cerr << "[FTDI] Error escribiendo trama MISO" << std::endl;
                 return;
             }
-            pos += 3968;
+            pos += MAX_DATA_PER_FRAME;
         }
         if (pos < miso.size()) {
             std::vector<uint8_t> raw = build_ftdi_frame(miso, pos, miso.size() - pos);
@@ -865,7 +892,7 @@ void handle_ftdi_client(SpiFlashGD25Q80* flash, int fd) {
 }
 
 // Servidor CH341A en UNIX Socket para modo background
-void ch341a_socket_server(SpiFlashGD25Q80* flash, const std::string& path) {
+void ch341a_socket_server(SpiFlashChip* flash, const std::string& path) {
     unlink(path.c_str());
     int server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server_fd < 0) {
@@ -903,7 +930,7 @@ void ch341a_socket_server(SpiFlashGD25Q80* flash, const std::string& path) {
 }
 
 // Servidor FTDI en UNIX Socket para modo background (misma lógica que CH341A)
-void ftdi_socket_server(SpiFlashGD25Q80* flash, const std::string& path) {
+void ftdi_socket_server(SpiFlashChip* flash, const std::string& path) {
     unlink(path.c_str());
     int server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server_fd < 0) {
@@ -946,6 +973,7 @@ int main(int argc, char* argv[]) {
     bool run_buspirate = false;
     bool run_spidriver = false;
     bool run_all = false;
+    bool run_mx25l128 = false;
     std::string flash_file = "";
     std::string save_file = "";
     std::string fill_pattern = "";
@@ -959,6 +987,7 @@ int main(int argc, char* argv[]) {
         else if (arg == "--buspirate") run_buspirate = true;
         else if (arg == "--spidriver") run_spidriver = true;
         else if (arg == "--all") run_all = true;
+        else if (arg == "--mx25l128") run_mx25l128 = true;
         else if (arg == "--flash" && i + 1 < argc) flash_file = argv[++i];
         else if (arg == "--save" && i + 1 < argc) save_file = argv[++i];
         else if (arg == "--fill" && i + 1 < argc) fill_pattern = argv[++i];
@@ -970,6 +999,7 @@ int main(int argc, char* argv[]) {
                       << "  --buspirate      Emula Bus Pirate v3 SPI via PTY\n"
                       << "  --spidriver      Emula SPIDriver SPI via PTY\n"
                       << "  --all            Ejecuta todos los emuladores simultáneamente (por defecto)\n"
+                      << "  --mx25l128       Emula Macronix MX25L128 de 16 MB (JEDEC C2 20 18)\n"
                       << "  --flash ARCHIVO  Carga contenido de flash desde ARCHIVO al inicio\n"
                       << "  --save ARCHIVO   Guarda contenido de flash en ARCHIVO al salir\n"
                       << "  --fill PATRON    Rellena flash: empty (0xFF), count (0..255), random\n";
@@ -982,7 +1012,31 @@ int main(int argc, char* argv[]) {
         run_all = true;
     }
 
-    SpiFlashGD25Q80 flash;
+    // Chip virtual: por defecto GD25Q80 (1 MB); --mx25l128 simula el
+    // Macronix MX25L128 de 16 MB con JEDEC C2 20 18 (issue #101).
+    size_t flash_size = 1024 * 1024;
+    uint8_t flash_manufacturer = 0xC8;
+    uint8_t flash_memory_type = 0x40;
+    uint8_t flash_capacity = 0x14;
+    uint8_t flash_device_id = 0x13;
+    if (run_mx25l128) {
+        flash_size = 16 * 1024 * 1024;
+        flash_manufacturer = 0xC2;
+        flash_memory_type = 0x20;
+        flash_capacity = 0x18;
+        flash_device_id = 0x18;
+    }
+
+    SpiFlashChip flash(flash_size, flash_manufacturer, flash_memory_type,
+                       flash_capacity, flash_device_id);
+
+    if (run_mx25l128) {
+        std::cout << "[FLASH] Chip emulado: Macronix MX25L128 (16384 kB, JEDEC C2 20 18)"
+                  << std::endl;
+    } else {
+        std::cout << "[FLASH] Chip emulado: GigaDevice GD25Q80 (1024 kB, JEDEC C8 40 14)"
+                  << std::endl;
+    }
 
     if (!fill_pattern.empty()) {
         flash.fill(fill_pattern);

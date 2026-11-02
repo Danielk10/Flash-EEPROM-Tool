@@ -28,8 +28,8 @@ This release consolidates the **chip disambiguation flow**: when flashrom matche
 • **Tests unitarios:** 7/7 en `FlashromExecutorTest` (detección de las cinco variantes MX25L128, inserción/reemplazo de `-c` y casos sin programador).
 • **Compilación Android completa:** `:app:compileDebugJavaWithJavac` y `:app:testDebugUnitTest` con Gradle finalizados correctamente.
 • **Emulador flashrom:** suite completa de los cinco programadores (serprog, Bus Pirate, SPIDriver, CH341A y FTDI FT232H) superada.
-• **Reproducción del issue #101:** emulador de 16 MB con JEDEC `C2 20 18`; se obtienen exactamente las cinco definiciones Macronix y el mensaje de ambigüedad original.
-• **Resolución con `-c`:** lectura de 16.777.216 bytes y verificación `VERIFIED` con `flashrom v2.0.0-devel`, libusb parcheado (`[LIBUSB-HACK]`) y libftdi.
+• **Reproducción del issue #101:** la opción `--mx25l128` del emulador simula un Macronix MX25L128 de 16 MB (JEDEC `C2 20 18`); se obtienen exactamente las cinco definiciones Macronix y el mensaje de ambigüedad original.
+• **Resolución con `-c`:** lectura de 16.777.216 bytes y verificación `VERIFIED` con `flashrom v2.0.0-devel`, libusb parcheado (`[LIBUSB-HACK]`) y libftdi. La validación completa está automatizada en `emulador_flashrom/test_issue_101.sh`.
 
 ---
 

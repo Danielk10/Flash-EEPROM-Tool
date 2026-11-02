@@ -2,7 +2,7 @@
 
 Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash SPI** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo para la validación y pruebas de **Flash SPI Tool v1.9.12** (versionCode 98).
 
-El emulador permite simular dispositivos programadores reales contra una memoria SPI de prueba (**GigaDevice GD25Q80** de 1 MB) en un entorno local, ideal para desarrollo, validación y depuración rápida sin hardware real. La misma instalación incluye `libftdi1` para validar el programador **FTDI FT232H**.
+El emulador permite simular dispositivos programadores reales contra una memoria SPI de prueba (**GigaDevice GD25Q80** de 1 MB por defecto, o **Macronix MX25L128** de 16 MB con `--mx25l128`) en un entorno local, ideal para desarrollo, validación y depuración rápida sin hardware real. La misma instalación incluye `libftdi1` para validar el programador **FTDI FT232H**.
 
 ---
 
@@ -10,18 +10,20 @@ El emulador permite simular dispositivos programadores reales contra una memoria
 
 El emulador es un **simulador de hardware en software** que cumple dos funciones principales para probar la aplicación Android localmente sin necesidad de conectar ningún programador o chip físico:
 
-### Función 1: Simulación del Chip de Memoria SPI (GD25Q80 / GD25080PCP)
+### Función 1: Simulación del Chip de Memoria SPI (GD25Q80 por defecto / MX25L128 opcional)
 
-El chip físico GigaDevice `GD25Q80` (también conocido como GD25080PCP, 1 Megabyte, interfaz SPI) se simula dentro de la clase `SpiFlashGD25Q80` usando una máquina de estados C++:
+El chip virtual se simula dentro de la clase `SpiFlashChip` usando una máquina de estados C++ configurable:
 
-*   **Memoria Virtual**: Mantiene un buffer en RAM de 1,048,576 bytes (1MB), inicializado a `0xFF` (estado erased).
+*   **Chip por defecto**: GigaDevice `GD25Q80` (también conocido como GD25080PCP, 1 Megabyte, JEDEC `C8 40 14`).
+*   **Chip del issue #101**: con `--mx25l128`, Macronix `MX25L128` (16 MB, JEDEC `C2 20 18`), que hace que `flashrom` encuentre cinco definiciones compatibles.
+*   **Memoria Virtual**: Mantiene un buffer en RAM de 1,048,576 bytes (1 MB) o 16,777,216 bytes (16 MB), inicializado a `0xFF` (estado erased).
 *   **Instrucciones SPI soportadas**: Interpreta y ejecuta los comandos estándar de memorias Flash NOR:
 
 | Código | Comando | Descripción |
 |--------|---------|-------------|
-| `0x9F` | Read JEDEC ID (RDID) | Devuelve los identificadores del fabricante (`C8 40 14`) para que `flashrom` reconozca el chip exacto como GD25Q80(B). |
-| `0x90` | Read Electronic Manufacturer/Device ID (REMS) | Devuelve el par Manufacturer ID (`C8`) y Device ID (`13`). |
-| `0xAB` | Release Power-down / Device ID (RES) | Devuelve Device ID (`13`). |
+| `0x9F` | Read JEDEC ID (RDID) | Devuelve `C8 40 14` (GD25Q80) o `C2 20 18` (MX25L128 con `--mx25l128`) para que `flashrom` reconozca el modelo. |
+| `0x90` | Read Electronic Manufacturer/Device ID (REMS) | Devuelve `C8 13` (GD25Q80) o `C2 18` (MX25L128). |
+| `0xAB` | Release Power-down / Device ID (RES) | Devuelve Device ID `13` (GD25Q80) o `18` (MX25L128). |
 | `0x03` | Read Data | Lee datos secuenciales de la memoria virtual a partir de la dirección de 24 bits indicada. |
 | `0x0B` | Fast Read | Igual que Read Data pero con un byte dummy adicional antes de los datos de salida. |
 | `0x06` | Write Enable (WREN) | Habilita el flag interno `write_enable`, requerido antes de cualquier operación de borrado o escritura. |
@@ -31,7 +33,7 @@ El chip físico GigaDevice `GD25Q80` (también conocido como GD25080PCP, 1 Megab
 | `0x20` | Sector Erase (SE, 4KB) | Borra un sector de 4096 bytes rellenándolo con `0xFF`. |
 | `0x52` | Block Erase 32KB (BE32) | Borra un bloque de 32768 bytes. |
 | `0xD8` | Block Erase 64KB (BE64) | Borra un bloque de 65536 bytes. |
-| `0xC7` / `0x60` | Chip Erase (CE) | Borra toda la memoria completa (1MB → `0xFF`). |
+| `0xC7` / `0x60` | Chip Erase (CE) | Borra toda la memoria completa (1 MB o 16 MB → `0xFF`). |
 | `0x02` | Page Program (PP) | Programa hasta 256 bytes en una página. Respeta la semántica real del hardware: solo puede limpiar bits (AND con datos existentes). |
 
 ### Función 2: Simulación de los Programadores (El Puente de Comunicación)
@@ -256,7 +258,42 @@ El FT232H es un puente USB-SPI basado en MPSSE. El emulador simula sus transfere
     ```bash
     ./emulador_flashrom --ftdi ./flashrom_local.sh -p ft2232_spi:type=232H -VVV
     ```
-    *Nota: el emulador crea el canal socket, exporta `ANDROID_USB_FD` y lanza automáticamente `flashrom`. `libftdi1` construye las tramas MPSSE y el emulador las traduce a operaciones SPI sobre el chip virtual.*
+    *Nota: el emulador crea el canal socket, exporta `ANDROID_USB_FD` y lanza automáticamente `flashrom`. `libftdi1` construye las tramas MPSSE y el emulador las traduce a operaciones SPI sobre el chip virtual. Las respuestas MISO usan paquetes de 512 bytes (2 de estado + 510 de datos), el `max_packet_size` que `libftdi` obtiene del endpoint high-speed del FT232H.*
+
+### F. Reproducción del issue #101 (MX25L128 de 16 MB)
+
+La opción `--mx25l128` sustituye el GD25Q80 por un **Macronix MX25L128 de 16 MB** que responde al RDID con `C2 20 18`. Ese JEDEC ID coincide con cinco definiciones de `flashrom`, reproduciendo exactamente la ambigüedad reportada en el issue #101:
+
+```bash
+./emulador_flashrom --ftdi --mx25l128 ./flashrom_local.sh -p ft2232_spi:type=232H
+```
+
+Salida esperada:
+
+```text
+Found Macronix flash chip "MX25L12805D" (16384 kB, SPI) on ft2232_spi.
+Found Macronix flash chip "MX25L12833F" (16384 kB, SPI) on ft2232_spi.
+Found Macronix flash chip "MX25L12835F/MX25L12873F" (16384 kB, SPI) on ft2232_spi.
+Found Macronix flash chip "MX25L12845E/MX25L12865E" (16384 kB, SPI) on ft2232_spi.
+Found Macronix flash chip "MX25L12850F" (16384 kB, SPI) on ft2232_spi.
+Multiple flash chip definitions match the detected chip(s): "MX25L12805D", "MX25L12833F", "MX25L12835F/MX25L12873F", "MX25L12845E/MX25L12865E", "MX25L12850F"
+Please specify which chip definition to use with the -c <chipname> option.
+```
+
+La validación completa (probe, lectura de 16.777.216 bytes y escritura con `VERIFIED.`) está automatizada en:
+
+```bash
+./test_issue_101.sh
+```
+
+Salida correcta:
+
+```text
+✅ Probe: 5 definiciones MX25L128 + mensaje de ambigüedad (exit=1)
+✅ Lectura: 16777216 bytes idénticos al contenido emulado
+✅ Escritura: 16 MB programados y VERIFIED.
+=== TODO OK: issue #101 reproducible con el emulador ===
+```
 
 ---
 
