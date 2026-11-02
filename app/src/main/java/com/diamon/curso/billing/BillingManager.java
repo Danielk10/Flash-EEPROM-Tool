@@ -1,10 +1,8 @@
 package com.diamon.curso.billing;
 
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -35,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Gestor de facturación y compras in-app para Flash SPI Tool utilizando Google Play Billing Library 9.1.0.
+ * Gestor de facturación y compras in-app para Flash SPI Tool utilizando Google Play Billing Library 8.3.0.
  * Maneja la compra del producto permanente no consumible "remove_ads_pro"
  * (con retrocompatibilidad para "remove_ads" y "donacion_pizza") para eliminar publicidad de por vida
  * y desbloquear la suite Flash SPI Tool Pro.
@@ -274,15 +272,6 @@ public class BillingManager implements PurchasesUpdatedListener {
             return false;
         }
 
-        if (!isBillingFlowCompatible()) {
-            String errorMsg = "In-app billing is not available on this OS build. Please update your device.";
-            Log.e(TAG, errorMsg);
-            if (listener != null) {
-                listener.onBillingError(errorMsg);
-            }
-            return false;
-        }
-
         if (!billingClient.isReady()) {
             String errorMsg = "Billing service is not connected. Reconnecting...";
             Log.w(TAG, errorMsg);
@@ -363,15 +352,6 @@ public class BillingManager implements PurchasesUpdatedListener {
             return;
         }
 
-        if (!isBillingFlowCompatible()) {
-            String errorMsg = "In-app billing is not available on this OS build. Please update your device.";
-            Log.e(TAG, errorMsg);
-            if (listener != null) {
-                listener.onPurchaseError(errorMsg);
-            }
-            return;
-        }
-
         if (!billingClient.isReady()) {
             startConnection();
             if (listener != null) {
@@ -439,29 +419,6 @@ public class BillingManager implements PurchasesUpdatedListener {
             String testLabSetting = Settings.System.getString(ctx.getContentResolver(), "firebase.test.lab");
             return "true".equalsIgnoreCase(testLabSetting);
         } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Play Billing 9.1.0 llama sin comprobación adicional a
-     * {@code ActivityOptions.setPendingIntentBackgroundActivityStartMode} desde
-     * {@code ProxyBillingActivity.onCreate} en Android 14+. Algunas compilaciones de
-     * Android 14 no exponen ese método y el flujo de compra termina en
-     * {@code NoSuchMethodError} (issue Crashlytics a6e619dc...). Comprobamos la
-     * disponibilidad real del método antes de abrir el flujo para degradar a un
-     * error controlado en lugar de un crash.
-     */
-    private static boolean isBillingFlowCompatible() {
-        if (Build.VERSION.SDK_INT < 34) {
-            return true;
-        }
-        try {
-            return ActivityOptions.class
-                    .getMethod("setPendingIntentBackgroundActivityStartMode", int.class)
-                    .getReturnType() == ActivityOptions.class;
-        } catch (NoSuchMethodException | SecurityException | LinkageError e) {
-            Log.w(TAG, "ActivityOptions API unavailable for Play Billing: " + e.getMessage());
             return false;
         }
     }

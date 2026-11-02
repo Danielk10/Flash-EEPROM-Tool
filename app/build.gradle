@@ -25,8 +25,8 @@ android {
         applicationId "com.diamon.curso"
         minSdk 24
         targetSdk 37
-        versionCode 98
-        versionName "1.9.12"
+        versionCode 99
+        versionName "1.9.13"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -108,6 +108,10 @@ dependencies {
     implementation libs.appcenter.analytics
     implementation libs.appcenter.crashes
     implementation libs.play.services.ads
+    // play-services-ads-api 25.5.0 arrastra hsdp 2.0.1, que lanza
+    // "targetPackageName is null" en HsdpShimActivity. 2.2.0 cierra la
+    // actividad limpiamente cuando el intent no trae los extras.
+    implementation libs.hsdp
     implementation libs.play.billing
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.firestore
