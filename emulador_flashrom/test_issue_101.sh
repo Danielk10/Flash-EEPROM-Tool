@@ -2,9 +2,12 @@
 # Reproducción automatizada del issue #101:
 # FT232H + Macronix MX25L128 de 16 MB (JEDEC C2 20 18).
 #
-# 1. El probe sin -c debe listar las cinco definiciones MX25L128 y el mensaje
-#    "Multiple flash chip definitions match".
-# 2. La lectura con -c debe devolver exactamente 16.777.216 bytes.
+# 1. Primer intento de lectura SIN -c (lo que ejecuta la app antes del
+#    diálogo): flashrom debe listar las cinco definiciones MX25L128 y abortar
+#    con "Multiple flash chip definitions match".
+# 2. El usuario selecciona un chip en el diálogo y la app reintenta el MISMO
+#    comando insertando -c tras -p (FlashromExecutor.withChipArgument). La
+#    lectura debe devolver exactamente 16.777.216 bytes.
 # 3. La escritura con -c debe terminar con "VERIFIED." y el contenido debe
 #    coincidir byte a byte con la imagen escrita.
 set -uo pipefail
@@ -28,12 +31,12 @@ echo "=== Issue #101: MX25L128 16 MB (JEDEC C2 20 18) sobre FT232H ==="
 make -C "$SCRIPT_DIR" >/dev/null || fail "No se pudo compilar el emulador"
 
 # ---------------------------------------------------------------------------
-# 1. Probe sin -c: flashrom debe encontrar las cinco definiciones y abortar
-#    pidiendo el parámetro -c.
+# 1. Primer intento de lectura SIN -c. Es el comando que lanza la app antes
+#    del diálogo: flashrom detecta cinco definiciones y aborta sin leer.
 # ---------------------------------------------------------------------------
 "$EMULATOR" --ftdi --mx25l128 "$FLASHROM" -p "$PROGRAMMER" \
-    > "$TMP_DIR/probe.log" 2>&1
-PROBE_RC=$?
+    -r "$TMP_DIR/read.bin" > "$TMP_DIR/first_attempt.log" 2>&1
+FIRST_RC=$?
 
 for CHIP in \
     "MX25L12805D" \
@@ -41,24 +44,28 @@ for CHIP in \
     "MX25L12835F/MX25L12873F" \
     "MX25L12845E/MX25L12865E" \
     "MX25L12850F"; do
-    grep -Fq "Found Macronix flash chip \"$CHIP\"" "$TMP_DIR/probe.log" \
+    grep -Fq "Found Macronix flash chip \"$CHIP\"" "$TMP_DIR/first_attempt.log" \
         || fail "No se detectó la definición $CHIP"
 done
 
-grep -Fq "Multiple flash chip definitions match" "$TMP_DIR/probe.log" \
+grep -Fq "Multiple flash chip definitions match" "$TMP_DIR/first_attempt.log" \
     || fail "No apareció el mensaje 'Multiple flash chip definitions match'"
-grep -Fq "Please specify which chip definition to use with the -c" "$TMP_DIR/probe.log" \
+grep -Fq "Please specify which chip definition to use with the -c" "$TMP_DIR/first_attempt.log" \
     || fail "No apareció la petición de -c"
+[ ! -s "$TMP_DIR/read.bin" ] \
+    || fail "El primer intento sin -c no debía generar un volcado válido"
 
-echo "✅ Probe: 5 definiciones MX25L128 + mensaje de ambigüedad (exit=$PROBE_RC)"
+echo "✅ Primer intento sin -c: 5 definiciones + ambigüedad, la app mostraría el diálogo (exit=$FIRST_RC)"
 
 # ---------------------------------------------------------------------------
-# 2. Lectura de 16 MB con -c. Se compara contra la memoria emulada (--save).
+# 2. El usuario elige un chip en el diálogo: la app reintenta el MISMO comando
+#    insertando -c justo después de -p (FlashromExecutor.withChipArgument).
+#    La lectura se compara contra la memoria emulada (--save).
 # ---------------------------------------------------------------------------
 "$EMULATOR" --ftdi --mx25l128 --fill count --save "$TMP_DIR/expected.bin" \
     "$FLASHROM" -p "$PROGRAMMER" -c "$SELECTED_CHIP" -r "$TMP_DIR/read.bin" \
     > "$TMP_DIR/read.log" 2>&1 \
-    || fail "La lectura de 16 MB falló"
+    || fail "La lectura de 16 MB con -c falló"
 
 READ_SIZE=$(stat -c%s "$TMP_DIR/read.bin")
 [ "$READ_SIZE" -eq "$EXPECTED_SIZE" ] \

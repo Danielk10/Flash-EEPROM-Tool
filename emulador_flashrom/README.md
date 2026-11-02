@@ -87,7 +87,7 @@ kill %1
 # Suite completa de los cinco programadores (chip GD25Q80 por defecto):
 ./test_all_devices.sh
 
-# Reproducción automatizada del issue #101 (probe + lectura + escritura/VERIFIED):
+# Reproducción automatizada del issue #101 (intento sin -c, reintento con -c y escritura/VERIFIED):
 ./test_issue_101.sh
 ```
 
@@ -107,11 +107,11 @@ Multiple flash chip definitions match the detected chip(s): "MX25L12805D", "MX25
 Please specify which chip definition to use with the -c <chipname> option.
 ```
 
-El script `test_issue_101.sh` automatiza la validación completa:
+El script `test_issue_101.sh` reproduce el mismo ciclo que la app:
 
-1. **Probe:** comprueba las cinco definiciones y el mensaje de ambigüedad.
-2. **Lectura:** ejecuta `-c MX25L12835F/MX25L12873F -r` y verifica 16.777.216 bytes idénticos a la memoria emulada.
-3. **Escritura:** ejecuta `-w` sobre los 16 MB y exige `VERIFIED.` y contenido idéntico.
+1. **Primer intento sin `-c`:** lanza una lectura como lo haría la app; comprueba las cinco definiciones y el mensaje de ambigüedad, y que no se genera un volcado válido. En la app, este resultado dispara el diálogo de selección.
+2. **Reintento con `-c`:** simula que el usuario elige `MX25L12835F/MX25L12873F`; la app reintenta el mismo comando insertando `-c` tras `-p` (`FlashromExecutor.withChipArgument`). Verifica 16.777.216 bytes idénticos a la memoria emulada.
+3. **Escritura:** ejecuta `-w` sobre los 16 MB con el chip ya seleccionado y exige `VERIFIED.` y contenido idéntico.
 
 ---
 

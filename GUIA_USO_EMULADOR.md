@@ -280,7 +280,7 @@ Multiple flash chip definitions match the detected chip(s): "MX25L12805D", "MX25
 Please specify which chip definition to use with the -c <chipname> option.
 ```
 
-La validación completa (probe, lectura de 16.777.216 bytes y escritura con `VERIFIED.`) está automatizada en:
+En la app, ese mensaje de ambigüedad dispara el diálogo de selección de chip. Al elegir una definición, la app reintenta el mismo comando insertando `-c <chip>` justo después de `-p` (`FlashromExecutor.withChipArgument`) y la operación continúa. La validación completa de ese ciclo (intento sin `-c`, reintento con `-c`, lectura de 16.777.216 bytes y escritura con `VERIFIED.`) está automatizada en:
 
 ```bash
 ./test_issue_101.sh
@@ -289,7 +289,7 @@ La validación completa (probe, lectura de 16.777.216 bytes y escritura con `VER
 Salida correcta:
 
 ```text
-✅ Probe: 5 definiciones MX25L128 + mensaje de ambigüedad (exit=1)
+✅ Primer intento sin -c: 5 definiciones + ambigüedad, la app mostraría el diálogo (exit=1)
 ✅ Lectura: 16777216 bytes idénticos al contenido emulado
 ✅ Escritura: 16 MB programados y VERIFIED.
 === TODO OK: issue #101 reproducible con el emulador ===
