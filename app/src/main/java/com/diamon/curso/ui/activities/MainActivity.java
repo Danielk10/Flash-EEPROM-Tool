@@ -1,6 +1,7 @@
 package com.diamon.curso.ui.activities;
 
 import com.diamon.curso.R;
+import com.diamon.curso.ads.ConsentManager;
 import com.diamon.curso.ads.MostrarPublicidad;
 import com.diamon.curso.billing.BillingManager;
 import com.diamon.curso.core.PtyBridge;
@@ -527,12 +528,9 @@ public class MainActivity extends AppCompatActivity {
         UsbController.setSerprogBaud(UsbController.DEFAULT_SERPROG_BAUD);
 
         mostrarPublicidad = new MostrarPublicidad(this);
-        mostrarPublicidad.setAdsDisabledChecker(() -> proPassManager.isProActive(billingManager));
         adContainer = findViewById(R.id.adContainer);
         if (adContainer != null) {
             adContainer.addView(mostrarPublicidad.getBanner());
-            mostrarPublicidad.cargarBanner();
-            mostrarPublicidad.cargarInterstial();
         }
 
         billingManager = new BillingManager(this, new BillingManager.BillingListener() {
@@ -556,6 +554,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // El checker se configura después de crear BillingManager para que
+        // isProActive() pueda leer la compra permanente cacheada en disco.
+        mostrarPublicidad.setAdsDisabledChecker(() -> proPassManager.isProActive(billingManager));
+        if (adContainer != null && !mostrarPublicidad.isAdDisabled()) {
+            mostrarPublicidad.cargarBanner();
+        }
 
         log(getString(R.string.str_log_started));
 
@@ -1076,6 +1081,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (mostrarPublicidad != null) {
+            if (mostrarPublicidad.isAdDisabled()) {
+                mostrarPublicidad.ocultarBanner();
+            } else {
+                mostrarPublicidad.mostrarBanner();
+            }
             mostrarPublicidad.resumenBanner();
         }
         // Recargar preferencias al volver si hubo cambios (ej: se cambio el chip o se
@@ -1440,6 +1450,11 @@ public class MainActivity extends AppCompatActivity {
                 proItem.setTitle(R.string.menu_pro_mode);
             }
         }
+
+        MenuItem privacyItem = menu.findItem(R.id.action_privacy_options);
+        if (privacyItem != null) {
+            privacyItem.setVisible(ConsentManager.isPrivacyOptionsRequired());
+        }
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -1486,6 +1501,23 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_policy) {
             startActivity(new Intent(this, PolicyActivity.class));
+            return true;
+        } else if (id == R.id.action_privacy_options) {
+            ConsentManager.showPrivacyOptionsForm(
+                    this,
+                    error -> {
+                        if (error != null) {
+                            Toast.makeText(
+                                            this,
+                                            getString(R.string.privacy_options_error),
+                                            Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                        if (mostrarPublicidad != null) {
+                            mostrarPublicidad.onConsentChanged();
+                        }
+                        invalidateOptionsMenu();
+                    });
             return true;
         } else if (id == R.id.action_export_serprog) {
             exportSerprogFirmware();

@@ -76,6 +76,12 @@ public class ProAccessDialog {
             billingManager.queryProducts();
         }
 
+        // Calentar el rewarded mientras el usuario lee el diálogo. Si no está
+        // listo al pulsar el botón, se mostrará en cuanto termine de cargar.
+        if (publicidad != null) {
+            publicidad.cargarRewardedAd();
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         float density = activity.getResources().getDisplayMetrics().density;
 
@@ -168,21 +174,30 @@ public class ProAccessDialog {
         btnRewarded.setPadding(dp(12, density), dp(12, density), dp(12, density), dp(12, density));
 
         btnRewarded.setOnClickListener(v -> {
-            if (publicidad != null) {
-                publicidad.mostrarRewardedAd(activity, rewardItem -> {
-                    proPassManager.activarPase12Horas();
-                    publicidad.ocultarBanner();
-                    Toast.makeText(activity, activity.getString(R.string.pro_pass_activated_toast, appName), Toast.LENGTH_LONG).show();
-                    if (onProUnlocked != null) {
-                        onProUnlocked.run();
-                    }
-                    dialog.dismiss();
-                }, () -> {
-                    // Cerrado sin recompensa
-                });
-            } else {
+            if (publicidad == null) {
                 Toast.makeText(activity, activity.getString(R.string.pro_ads_not_available), Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Evita doble pulsación y muestra estado de carga si aún no está listo.
+            btnRewarded.setEnabled(false);
+            if (!publicidad.isRewardedAdLoaded()) {
+                btnRewarded.setText(activity.getString(R.string.pro_loading_rewarded_video));
+            }
+
+            publicidad.mostrarRewardedAd(activity, rewardItem -> {
+                proPassManager.activarPase12Horas();
+                publicidad.ocultarBanner();
+                Toast.makeText(activity, activity.getString(R.string.pro_pass_activated_toast, appName), Toast.LENGTH_LONG).show();
+                if (onProUnlocked != null) {
+                    onProUnlocked.run();
+                }
+                dialog.dismiss();
+            }, () -> {
+                // Cerrado sin recompensa o fallo de carga: restaurar el botón.
+                btnRewarded.setEnabled(true);
+                btnRewarded.setText(activity.getString(R.string.pro_btn_watch_rewarded_video));
+            });
         });
         rootLayout.addView(btnRewarded);
 

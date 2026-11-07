@@ -68,6 +68,12 @@
         android:title="@string/str_polticas_de_pri"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_privacy_options"
+        android:title="@string/menu_privacy_options"
+        android:visible="false"
+        app:showAsAction="never" />
+
 
     <item
         android:id="@+id/action_about"

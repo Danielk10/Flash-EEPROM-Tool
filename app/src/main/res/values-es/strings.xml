@@ -36,6 +36,8 @@
     <string name="str_comparar_hex">Comparar Hex</string>
     <string name="str_configuracin_de">Configuración del Programador</string>
     <string name="str_polticas_de_pri">Políticas de Privacidad</string>
+    <string name="menu_privacy_options">Opciones de privacidad</string>
+    <string name="privacy_options_error">No se pudieron abrir las opciones de privacidad. Inténtalo de nuevo.</string>
     <string name="str_pinouts_de_hard">Pinouts de Hardware</string>
     <string name="str_acerca_de">Acerca de / Licencias</string>
     <string name="menu_export_serprog">Exportar Firmware serprog Arduino</string>
@@ -239,6 +241,7 @@
     <string name="pro_feature_delta_flashing">Flasheo Delta Selectivo de Sectores de 4KB de Alta Velocidad</string>
     <string name="pro_feature_zero_ads">Sin anuncios de por vida</string>
     <string name="pro_btn_watch_rewarded_video">🎬 Ver Video - Pase Gratis de 12 Horas</string>
+    <string name="pro_loading_rewarded_video">🎬 Cargando video…</string>
     <string name="pro_pass_activated_toast">⭐ ¡Pase %1$s Pro activado por 12 horas!</string>
     <string name="pro_ads_not_available">Publicidad no disponible en este momento</string>
     <string name="pro_btn_buy_permanent">👑 Comprar %1$s Pro Permanente%2$s</string>
