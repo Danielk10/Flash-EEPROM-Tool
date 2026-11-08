@@ -99,6 +99,8 @@ public class BillingManagerTest {
         });
 
         billingManager = new BillingManager(mockContext, mockListener, mockBillingClient);
+        // Los tests de lanzamiento simulan una instalación de Play Store.
+        billingManager.setPlayInstallOverride(true);
     }
 
     @After
@@ -299,6 +301,46 @@ public class BillingManagerTest {
         billingManager.onPurchasesUpdated(result, null);
 
         verify(mockListener).onBillingError(eq("Purchase failed (6): Fatal billing error"));
+    }
+
+    @Test
+    public void isPlayInstaller_onlyAcceptsGooglePlay() {
+        assertTrue(BillingManager.isPlayInstaller("com.android.vending"));
+        assertFalse(BillingManager.isPlayInstaller(null));
+        assertFalse(BillingManager.isPlayInstaller("com.android.packageinstaller"));
+        assertFalse(BillingManager.isPlayInstaller("com.github.android"));
+    }
+
+    @Test
+    public void isPlayInstallAvailable_usesOverride() {
+        billingManager.setPlayInstallOverride(false);
+        assertFalse(billingManager.isPlayInstallAvailable());
+
+        billingManager.setPlayInstallOverride(true);
+        assertTrue(billingManager.isPlayInstallAvailable());
+    }
+
+    @Test
+    public void launchPurchaseFlow_whenNotPlayInstall_doesNotLaunchFlow() {
+        billingManager.setPlayInstallOverride(false);
+        Activity mockActivity = mock(Activity.class);
+        when(mockBillingClient.isReady()).thenReturn(true);
+        ProductDetails mockDetails = mock(ProductDetails.class);
+        when(mockDetails.zza()).thenReturn("dummy_product_json");
+        billingManager.setRemoveAdsDetails(mockDetails);
+
+        assertFalse(billingManager.launchPurchaseFlow(mockActivity));
+        verify(mockBillingClient, never()).launchBillingFlow(any(), any());
+    }
+
+    @Test
+    public void launchPurchaseFlow_productOverload_whenNotPlayInstall_doesNotLaunchFlow() {
+        billingManager.setPlayInstallOverride(false);
+        Activity mockActivity = mock(Activity.class);
+
+        billingManager.launchPurchaseFlow(mockActivity, BillingManager.PRODUCT_ID_REMOVE_ADS);
+
+        verify(mockBillingClient, never()).launchBillingFlow(any(), any());
     }
 
     @Test

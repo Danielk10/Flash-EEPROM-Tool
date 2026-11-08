@@ -232,7 +232,10 @@ public class ProAccessDialog {
                 if (launched) {
                     dialog.dismiss();
                 } else {
-                    Toast.makeText(activity, activity.getString(R.string.pro_billing_not_available), Toast.LENGTH_SHORT).show();
+                    int messageRes = billingManager.isPlayInstallAvailable()
+                            ? R.string.pro_billing_not_available
+                            : R.string.str_billing_not_play_install;
+                    Toast.makeText(activity, activity.getString(messageRes), Toast.LENGTH_LONG).show();
                 }
             } else {
                 Toast.makeText(activity, activity.getString(R.string.pro_billing_not_available), Toast.LENGTH_SHORT).show();

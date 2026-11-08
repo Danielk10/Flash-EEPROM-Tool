@@ -3,6 +3,10 @@ package com.diamon.curso.billing;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.InstallSourceInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -55,6 +59,15 @@ public class BillingManager implements PurchasesUpdatedListener {
     private static final long LAUNCH_DEBOUNCE_MS = 2000L;
 
     /**
+     * Google Play es el único instalador que responde correctamente al flujo
+     * de compra. En instalaciones sideloaded (APK de GitHub, ADB, etc.) Play
+     * Store puede devolver un PendingIntent nulo y ProxyBillingActivity de
+     * billing 8.3.0 lanza NullPointerException en onCreate.
+     */
+    @VisibleForTesting
+    static final String PLAY_STORE_PACKAGE = "com.android.vending";
+
+    /**
      * Interfaz de escucha para eventos de compra y estado de facturación.
      */
     public interface BillingListener {
@@ -79,6 +92,10 @@ public class BillingManager implements PurchasesUpdatedListener {
     private boolean isAdsRemovedCached = false;
     private long lastLaunchTimeMs = 0L;
     private volatile boolean destroyed = false;
+    @Nullable
+    private Boolean playInstallOverride;
+    @Nullable
+    private Boolean playInstallAvailableCache;
 
     public BillingManager(@NonNull Context context, @Nullable BillingListener listener) {
         this(context, listener, null);
@@ -253,6 +270,76 @@ public class BillingManager implements PurchasesUpdatedListener {
     }
 
     /**
+     * Indica si el flujo de Play Billing es seguro en esta instalación.
+     *
+     * <p>Google Play es el único instalador que responde con un
+     * {@code PendingIntent} válido. En APK sideloaded el servicio de billing
+     * puede devolver un {@code PendingIntent} nulo y
+     * {@code ProxyBillingActivity.onCreate} de billing 8.3.0 lanza
+     * {@code NullPointerException} antes de que la app pueda capturarlo.</p>
+     */
+    public boolean isPlayInstallAvailable() {
+        if (playInstallOverride != null) {
+            return playInstallOverride;
+        }
+        if (playInstallAvailableCache == null) {
+            playInstallAvailableCache = detectPlayInstallAvailable();
+        }
+        return playInstallAvailableCache;
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean detectPlayInstallAvailable() {
+        try {
+            PackageManager pm = context.getPackageManager();
+            if (pm == null) {
+                return false;
+            }
+
+            String installer = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                InstallSourceInfo info = pm.getInstallSourceInfo(context.getPackageName());
+                if (info != null) {
+                    installer = info.getInstallingPackageName();
+                    if (installer == null) {
+                        installer = info.getInitiatingPackageName();
+                    }
+                }
+            } else {
+                installer = pm.getInstallerPackageName(context.getPackageName());
+            }
+
+            if (!isPlayInstaller(installer)) {
+                Log.w(TAG, "Play Billing blocked: installer is " + installer
+                        + ", not " + PLAY_STORE_PACKAGE);
+                return false;
+            }
+
+            ApplicationInfo playStore = pm.getApplicationInfo(PLAY_STORE_PACKAGE, 0);
+            boolean enabled = playStore != null && playStore.enabled;
+            // Queda como breadcrumb en Crashlytics para diagnosticar futuros
+            // eventos: solo se llega al flujo si el instalador es Play Store.
+            Log.i(TAG, "Play Billing install source verified: " + installer
+                    + ", Play Store enabled=" + enabled);
+            return enabled;
+        } catch (Exception e) {
+            Log.w(TAG, "Play Billing blocked: unable to verify install source", e);
+            return false;
+        }
+    }
+
+    @VisibleForTesting
+    static boolean isPlayInstaller(@Nullable String installerPackage) {
+        return PLAY_STORE_PACKAGE.equals(installerPackage);
+    }
+
+    @VisibleForTesting
+    public void setPlayInstallOverride(@Nullable Boolean playInstallOverride) {
+        this.playInstallOverride = playInstallOverride;
+        this.playInstallAvailableCache = playInstallOverride;
+    }
+
+    /**
      * Lanza la compra del producto Pro principal "remove_ads_pro" (o disponible).
      */
     public boolean launchPurchaseFlow(@NonNull Activity activity) {
@@ -269,6 +356,11 @@ public class BillingManager implements PurchasesUpdatedListener {
             if (listener != null) {
                 listener.onBillingError("In-app billing is disabled in automated test environments.");
             }
+            return false;
+        }
+
+        if (!isPlayInstallAvailable()) {
+            Log.w(TAG, "Cannot launch purchase flow: app was not installed from Google Play.");
             return false;
         }
 
@@ -349,6 +441,11 @@ public class BillingManager implements PurchasesUpdatedListener {
             if (listener != null) {
                 listener.onPurchaseError("In-app billing is disabled in automated test environments.");
             }
+            return;
+        }
+
+        if (!isPlayInstallAvailable()) {
+            Log.w(TAG, "Cannot launch purchase flow: app was not installed from Google Play.");
             return;
         }
 

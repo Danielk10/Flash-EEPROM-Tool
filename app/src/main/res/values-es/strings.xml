@@ -170,6 +170,7 @@
     <string name="str_err_file_too_large_diff">El archivo es demasiado grande (&gt;16MB). Imposible comparar en memoria.</string>
     <string name="str_billing_connecting">Conectando con Google Play... Intenta de nuevo en unos segundos.</string>
     <string name="str_billing_not_ready">El producto no está listo o la consola aún lo está procesando.</string>
+    <string name="str_billing_not_play_install">Las compras solo están disponibles en la versión instalada desde Google Play. Instala o actualiza la app desde Play Store para comprar Pro.</string>
     <string name="str_log_process_aborted">\n[PROCESO ABORTADO POR EL USUARIO]\n</string>
     <string name="str_log_err_stop_native_process">[ERROR] No se pudo detener el proceso nativo: %1$s</string>
     <string name="str_log_err_start_native_process">[ERROR] Error al iniciar el proceso nativo.</string>
