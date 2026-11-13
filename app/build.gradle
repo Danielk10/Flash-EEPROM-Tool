@@ -25,8 +25,8 @@ android {
         applicationId "com.diamon.curso"
         minSdk 24
         targetSdk 37
-        versionCode 101
-        versionName "1.9.15"
+        versionCode 102
+        versionName "1.9.16"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

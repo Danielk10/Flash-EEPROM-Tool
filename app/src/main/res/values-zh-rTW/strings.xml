@@ -41,6 +41,7 @@
     <string name="menu_export_serprog">匯出 Arduino serprog 韌體</string>
     <string name="str_error">錯誤</string>
     <string name="str_cancelar">取消</string>
+    <string name="str_no_file_manager">找不到檔案管理員。請安裝一個（例如 Google 檔案）後再試。</string>
     <string name="str_detener">停止</string>
     <string name="str_file_a">檔案 A：%1$s</string>
     <string name="str_file_b">檔案 B：%1$s</string>

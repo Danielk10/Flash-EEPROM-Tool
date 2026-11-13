@@ -722,7 +722,20 @@ public class MainActivity extends AppCompatActivity {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/octet-stream");
             intent.putExtra(Intent.EXTRA_TITLE, exportName);
-            fileSaveLauncher.launch(intent);
+            try {
+                fileSaveLauncher.launch(intent);
+            } catch (android.content.ActivityNotFoundException e) {
+                // Fallback para ROMs sin gestor de archivos SAF (AOSP puro, Huawei sin GMS, etc.)
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.setType("application/octet-stream");
+                fallback.putExtra(Intent.EXTRA_TITLE, exportName);
+                try {
+                    fileSaveLauncher.launch(fallback);
+                } catch (android.content.ActivityNotFoundException e2) {
+                    Toast.makeText(this, getString(R.string.str_no_file_manager), Toast.LENGTH_LONG).show();
+                }
+            }
         });
 
         btnImport.setOnClickListener(v -> {
@@ -737,7 +750,19 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(savedDir));
             }
 
-            fileOpenLauncher.launch(intent);
+            try {
+                fileOpenLauncher.launch(intent);
+            } catch (android.content.ActivityNotFoundException e) {
+                // Fallback para ROMs sin gestor de archivos SAF (AOSP puro, Huawei sin GMS, etc.)
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.setType("*/*");
+                try {
+                    fileOpenLauncher.launch(fallback);
+                } catch (android.content.ActivityNotFoundException e2) {
+                    Toast.makeText(this, getString(R.string.str_no_file_manager), Toast.LENGTH_LONG).show();
+                }
+            }
         });
 
         btnQuickClear.setOnClickListener(v -> clearTransientRomState(true));
@@ -1485,7 +1510,12 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_set_working_dir) {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            directoryPickerLauncher.launch(intent);
+            try {
+                directoryPickerLauncher.launch(intent);
+            } catch (android.content.ActivityNotFoundException e) {
+                // Fallback: informar al usuario que no hay gestor de archivos SAF disponible
+                Toast.makeText(this, getString(R.string.str_no_file_manager), Toast.LENGTH_LONG).show();
+            }
             return true;
         } else if (id == R.id.action_dummy_test) {
             showDummyTestDialog();

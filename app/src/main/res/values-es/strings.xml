@@ -43,6 +43,7 @@
     <string name="menu_export_serprog">Exportar Firmware serprog Arduino</string>
     <string name="str_error">Error</string>
     <string name="str_cancelar">Cancelar</string>
+    <string name="str_no_file_manager">No se encontró ningún gestor de archivos. Por favor instala uno (ej. Archivos de Google) e intenta de nuevo.</string>
     <string name="str_detener">Detener</string>
     <string name="str_file_a">Archivo A: %1$s</string>
     <string name="str_file_b">Archivo B: %1$s</string>

@@ -43,6 +43,7 @@
     <string name="menu_export_serprog">Export Arduino serprog Firmware</string>
     <string name="str_error">Error</string>
     <string name="str_cancelar">Cancel</string>
+    <string name="str_no_file_manager">No file manager found. Please install a file manager app (e.g. Files by Google) and try again.</string>
     <string name="str_detener">Stop</string>
     <string name="str_file_a">File A: %1$s</string>
     <string name="str_file_b">File B: %1$s</string>

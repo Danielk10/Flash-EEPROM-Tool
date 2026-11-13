@@ -41,6 +41,7 @@
     <string name="menu_export_serprog">导出 Arduino serprog 固件</string>
     <string name="str_error">错误</string>
     <string name="str_cancelar">取消</string>
+    <string name="str_no_file_manager">未找到文件管理器。请安装一个文件管理器（如 Google 文件）后重试。</string>
     <string name="str_detener">停止</string>
     <string name="str_file_a">文件 A：%1$s</string>
     <string name="str_file_b">文件 B：%1$s</string>
