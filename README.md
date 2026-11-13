@@ -1,9 +1,9 @@
-# Flash SPI Tool v1.9.15
+# Flash SPI Tool v1.9.16
 
-[![Release](https://img.shields.io/badge/Release-v1.9.15%20(Build%20101)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.15)
+[![Release](https://img.shields.io/badge/Release-v1.9.16%20(Build%20102)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.16)
 [![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024%20a%20API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![minSdk](https://img.shields.io/badge/minSdk-24%20(Nougat)-brightgreen?logo=android)](https://developer.android.com/)
-[![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.15.md)
+[![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.16.md)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20(16KB%20Aligned)-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
 [![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
 [![AGP](https://img.shields.io/badge/AGP-9.5.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
@@ -22,9 +22,9 @@
 Diseñada tanto para ingenieros de hardware y laboratorios de reparación técnica como para entusiastas de la electrónica, la suite integra el poder del motor nativo de **flashrom** y una capa de transporte de alto rendimiento en C++ (`usb_bridge.cpp`) con una interfaz gráfica moderna, segura y optimizada para dispositivos táctiles.
 
 > **Información de la Versión Actual:**
-> - **Versión de la App:** `v1.9.15`
-> - **Código de Versión (`versionCode`):** `101`
-> - **Novedad principal:** Corrección del cierre inesperado al abrir el flujo de compra en instalaciones que no provienen de Google Play (PendingIntent nulo en Play Billing 8.3.0). Se mantienen Play Billing 8.3.0 y HSDP 2.2.0.
+> - **Versión de la App:** `v1.9.16`
+> - **Código de Versión (`versionCode`):** `102`
+> - **Novedad principal:** Corrección del cierre inesperado (`ActivityNotFoundException`) al importar, exportar o elegir carpeta en dispositivos sin gestor de archivos SAF. Se añade un fallback a `ACTION_GET_CONTENT` y un aviso claro cuando no hay ninguna app compatible (issue #102).
 > - **Rango de Compatibilidad:** Android 7.0 Nougat (API 24) hasta Android 17 (API 37)
 > - **Arquitectura de Procesador:** ARM64 (`arm64-v8a`) con alineación de páginas de memoria de 16KB para compatibilidad total con Android 15+.
 > - **Seguridad:** Operación 100% en espacio de usuario mediante Android USB Host API; no requiere root.
@@ -298,7 +298,7 @@ Para facilitar la auditoría, mantenimiento y extensión del proyecto, se detall
 | [**Reporte Optimización PTY Asíncrono**](./REPORTE_OPTIMIZACION_PTY_USB_ASYNC.md) | Implementación de `poll()` JNI, colas `UsbRequest` y beacons de sincronización `0xAA 0x55`. | Mitigación de timeouts de hardware. |
 | [**Guía de Uso del Emulador Flashrom**](./GUIA_USO_EMULADOR.md) | Manual interactivo para ejecutar la suite de emulación de hardware sin dispositivos físicos conectados. | Pruebas locales y CI/CD. |
 | [**Guía de Configuración de Monetización**](./GUIA_CONFIGURACION_PLAY_CONSOLE_MONETIZACION.md) | Pasos de Google Play Console para el producto `donacion_pizza`, AdMob Rewarded Video y persistencia Firestore. | Administración y publicación en Play Store. |
-| [**Notas de Lanzamiento v1.9.15**](./RELEASE_NOTES_v1.9.15.md) | Registro técnico de cambios, compatibilidad de firmware y pruebas de la versión 1.9.15 (Build 101). | Registro de versiones y auditoría de seguridad. |
+| [**Notas de Lanzamiento v1.9.16**](./RELEASE_NOTES_v1.9.16.md) | Registro técnico de cambios, compatibilidad de firmware y pruebas de la versión 1.9.16 (Build 102). | Registro de versiones y auditoría de seguridad. |
 
 ---
 
