@@ -38,14 +38,16 @@ El ejecutable `flashrom` necesita además `libpci.so.3`, que se empaqueta como `
 
 ---
 
-## 3. Árbol de compilación: rutas nuevas por ABI
+## 3. Árbol de compilación: rutas por ABI
 
-Los scripts de build (`build_flashrom_custom.sh`, `build_libusb_custom.sh`, `build_libftdi_custom.sh`, `build_libjaylink_custom.sh`, `build_pciutils_custom.sh`) aceptan la variable `ABI` y generan el árbol correspondiente:
+Solo `build_flashrom_custom.sh` se parametrizó por arquitectura. Acepta la variable `ABI` y genera el árbol correspondiente:
 
 ```bash
 ABI=64 ./build_flashrom_custom.sh   # por defecto
 ABI=32 ./build_flashrom_custom.sh
 ```
+
+Los otros cuatro scripts (`build_libusb_custom.sh`, `build_libftdi_custom.sh`, `build_libjaylink_custom.sh`, `build_pciutils_custom.sh`) **no se modificaron** y siguen usando `DESTDIR="$HOME/fake_root"`.
 
 | Ruta nueva | Contenido | Ruta antigua eliminada |
 |---|---|---|

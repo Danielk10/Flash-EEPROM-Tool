@@ -35,7 +35,7 @@ export PKG_CONFIG_PATH="$FAKE_USR/lib/pkgconfig:$TMX_PREFIX/lib/pkgconfig:${PKG_
 
 # Banderas de compilación y enlazado con alineación de 16KB y hardening
 COMMON_CFLAGS="-Oz -flto -fstack-protector-strong -D_FORTIFY_SOURCE=2 -ffile-prefix-map=$DESTDIR= -I$FAKE_INC -I$FAKE_INC/libusb-1.0 -I$FAKE_INC/libftdi1 -I$TMX_PREFIX/include"
-COMMON_LDFLAGS="-flto -Wl,-z,max-page-size=16384 -Wl,-z,relro,-z,now -L$FAKE_USR/lib -L$TMX_PREFIX/lib"
+COMMON_LDFLAGS="-flto -Wl,-z,max-page-size=16384 -Wl,-z,relro,-z,now -L$FAKE_USR/lib -L$TMX_PREFIX/lib -llog"
 
 # ==========================================
 # 2. PREPARACIÓN DEL ENTORNO Y CÓDIGO FUENTE
