@@ -42,6 +42,9 @@ import java.lang.ref.WeakReference;
  * Política de carga:
  * - El banner se pide una sola vez y se reutiliza (AdMob lo refresca solo).
  * - El interstitial y el rewarded se cargan bajo demanda, con caducidad de 60 min.
+ * - El interstitial se precarga al abrir el visor HEX; si al volver aún no ha
+ *   llegado, solo se muestra dentro de los 3 s siguientes y, si no, se descarta
+ *   para no aparecer por sorpresa mientras el usuario hace otra cosa.
  * - Si el usuario pulsa "Ver video" y el rewarded aún no está listo, se muestra
  *   automáticamente en cuanto termina la carga.
  */
@@ -59,8 +62,10 @@ public class MostrarPublicidad implements Publicidad {
     private static final long AD_TTL_MS = 60 * 60 * 1000;
     // Si el usuario pulsa "Ver video", esperamos como máximo esto a que cargue.
     private static final long REWARDED_PENDING_TIMEOUT_MS = 20 * 1000;
-    // Si el interstitial se pidió pero no llegó a mostrarse, no lo mostramos mucho después.
-    private static final long INTERSTITIAL_PENDING_TIMEOUT_MS = 20 * 1000;
+    // Si el interstitial se pidió pero no llegó a mostrarse, no lo mostramos
+    // mucho después: un anuncio que aparece 15 s más tarde, mientras el usuario
+    // ya está en otra tarea, parece un fallo de la app.
+    private static final long INTERSTITIAL_PENDING_TIMEOUT_MS = 3 * 1000;
     // Si un interstitial no se puede mostrar, reintentamos la carga más tarde.
     private static final long INTERSTITIAL_RETRY_MS = 45 * 1000;
 
@@ -310,6 +315,15 @@ public class MostrarPublicidad implements Publicidad {
         }
         cargarInterstial();
         return true;
+    }
+
+    /**
+     * Precarga el intersticial sin mostrarlo. Se llama al abrir el visor HEX:
+     * el usuario pasa unos segundos leyendo la memoria y, al volver, el anuncio
+     * ya está listo para mostrarse sin esperas ni apariciones tardías.
+     */
+    public void precargarInterstitial() {
+        cargarInterstial();
     }
 
     public void cargarInterstial() {

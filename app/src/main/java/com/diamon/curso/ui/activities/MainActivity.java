@@ -1509,6 +1509,11 @@ public class MainActivity extends AppCompatActivity {
             handleProFeature(getString(R.string.menu_verify_integrity), this::showIntegrityDialog);
             return true;
         } else if (id == R.id.action_hex_viewer) {
+            // Precargar mientras el usuario lee el HEX: al volver, el
+            // intersticial ya está listo y se muestra sin demora.
+            if (mostrarPublicidad != null) {
+                mostrarPublicidad.precargarInterstitial();
+            }
             hexViewerLauncher.launch(new Intent(this, HexViewerActivity.class));
             return true;
         } else if (id == R.id.action_programmer_settings) {
