@@ -530,7 +530,13 @@ public class MainActivity extends AppCompatActivity {
         mostrarPublicidad = new MostrarPublicidad(this);
         adContainer = findViewById(R.id.adContainer);
         if (adContainer != null) {
-            adContainer.addView(mostrarPublicidad.getBanner());
+            // El contenedor es de ancho completo; el AdView debe ocuparlo todo
+            // para que el banner adaptativo no quede alineado a la izquierda.
+            adContainer.addView(
+                    mostrarPublicidad.getBanner(),
+                    new android.widget.FrameLayout.LayoutParams(
+                            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT));
         }
 
         billingManager = new BillingManager(this, new BillingManager.BillingListener() {
