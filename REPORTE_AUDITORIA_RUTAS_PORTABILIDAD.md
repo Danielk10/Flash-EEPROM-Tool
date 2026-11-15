@@ -18,3 +18,11 @@ Este documento detalla los hallazgos críticos y las acciones correctivas aplica
 ### 4. Carga Dinámica de Dependencias JNI y Renombramiento - SOLUCIONADO
 **Acción:** Se implementó una resolución inteligente de dependencias nativas en la capa Java (`AssetHelper.java`), junto con el renombramiento de los binarios PIE (Position-Independent Executable). Google Play y Android requieren que todo lo contenido en `jniLibs` lleve el prefijo `lib` y extensión `.so`.
 **Resultado:** Binarios como `flashrom`, `lspci` o `ftdi_eeprom` fueron renombrados exitosamente (ej. `libflashrom_bin.so`). La aplicación recupera las versiones renombradas usando `getApplicationInfo().nativeLibraryDir` y crea symlinks en `usr/sbin` o `usr/bin` para reconstruir las rutas exactas. Adicionalmente, el chequeo automático mapea `.so.3` a versiones seguras como `_3.so`, solucionando problemas de dependencias compartidas no encontradas (UnsatisfiedLinkError simulado).
+
+### 5. Soporte de 32 bits (`armeabi-v7a`) - AGOSTO 2026
+
+**Acción:** Se replicó el conjunto completo de binarios para ARMv7 partiendo de `fake_root_32_bit/` y `libs_32/`, con los mismos 24 nombres de archivo que `jniLibs/arm64-v8a/`. `app/build.gradle` declara ahora `abiFilters "arm64-v8a", "armeabi-v7a"`.
+
+**Resultado:** Ambas carpetas contienen exactamente los mismos nombres, de modo que la lógica de resolución de `AssetHelper.java` (incluido `getNativeCandidates()`) funciona sin cambios en las dos arquitecturas: Android entrega a cada proceso únicamente el `nativeLibraryDir` correspondiente a su ABI. `analizar_dependencias.py` valida clase ELF, SONAME y `DT_NEEDED` para ambas ABIs y la verificación termina sin pendientes.
+
+> **Nota sobre `RUNPATH`:** los binarios de 32 bits se compilaron en Termux y conservan, igual que el conjunto de 64 bits ya publicado en v1.9.16, entradas `RUNPATH` hacia `/data/data/com.termux/files/usr/lib` y `.../home/fake_root/...`. Esas rutas no existen en el dispositivo Android, por lo que el enlazador las ignora: la resolución real la hace `LD_LIBRARY_PATH` (fijado en `native-lib.cpp`) junto con los symlinks que crea `AssetHelper` en `usr/lib`. No se introdujo ninguna ruta hardcoded nueva. Si se desea eliminar también ese residuo, basta con ejecutar `patchelf --remove-rpath` sobre **ambas** carpetas `jniLibs/<abi>/` en una pasada aparte.

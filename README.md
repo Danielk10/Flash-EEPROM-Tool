@@ -4,7 +4,7 @@
 [![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024%20a%20API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![minSdk](https://img.shields.io/badge/minSdk-24%20(Nougat)-brightgreen?logo=android)](https://developer.android.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.16.md)
-[![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20(16KB%20Aligned)-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
+[![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20%7C%20armeabi--v7a-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
 [![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
 [![AGP](https://img.shields.io/badge/AGP-9.5.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
 [![Flashrom](https://img.shields.io/badge/flashrom-integrado%20(Custom%20Engine)-orange)](https://github.com/flashrom/flashrom)
@@ -26,7 +26,7 @@ Diseñada tanto para ingenieros de hardware y laboratorios de reparación técni
 > - **Código de Versión (`versionCode`):** `102`
 > - **Novedad principal:** Corrección del cierre inesperado (`ActivityNotFoundException`) al importar, exportar o elegir carpeta en dispositivos sin gestor de archivos SAF. Se añade un fallback a `ACTION_GET_CONTENT` y un aviso claro cuando no hay ninguna app compatible (issue #102).
 > - **Rango de Compatibilidad:** Android 7.0 Nougat (API 24) hasta Android 17 (API 37)
-> - **Arquitectura de Procesador:** ARM64 (`arm64-v8a`) con alineación de páginas de memoria de 16KB para compatibilidad total con Android 15+.
+> - **Arquitectura de Procesador:** ARM de 64 bits (`arm64-v8a`) y de 32 bits (`armeabi-v7a`). La variante de 64 bits usa alineación de páginas de memoria de 16KB para compatibilidad total con Android 15+.
 > - **Seguridad:** Operación 100% en espacio de usuario mediante Android USB Host API; no requiere root.
 
 ---
@@ -74,7 +74,7 @@ Flash SPI Tool implementa una arquitectura de comunicación dual de alta fidelid
                                             ▼
                                ┌─────────────────────────┐
                                │   flashrom Native Core  │
-                               │    (GPLv3 - ARM64)      │
+                               │    (GPLv3 - ARM32/64)   │
                                └────────────┬────────────┘
                                             ▼
                                ┌─────────────────────────┐
@@ -184,7 +184,7 @@ Para garantizar que las librerías dinámicas y binarios nativos resuelvan sus d
 
 - **Ruta de compilación canónica:** `/data/data/com.diamon.curso/files/usr`
 - **Ruta en tiempo de ejecución:** `/data/user/0/com.diamon.curso/files/usr`
-- **Binarios nativos:** Empaquetados en `jniLibs/arm64-v8a` con nombres terminados en `.so` para satisfacer las políticas de empaquetado del instalador de paquetes de Android, compilados con alineación de páginas de 16KB (`-Wl,-z,max-page-size=16384`) para Android 15+.
+- **Binarios nativos:** Empaquetados en `jniLibs/arm64-v8a` y `jniLibs/armeabi-v7a` con nombres terminados en `.so` para satisfacer las políticas de empaquetado del instalador de paquetes de Android. La variante de 64 bits se compila con alineación de páginas de 16KB (`-Wl,-z,max-page-size=16384`) para Android 15+; la de 32 bits mantiene la alineación estándar de 4KB de ARMv7.
 
 ---
 

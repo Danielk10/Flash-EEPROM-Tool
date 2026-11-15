@@ -42,3 +42,13 @@ Los siguientes archivos se han considerado esenciales para la correcta operació
 *   **Peso Inicial Ahorrado:** Aproximadamente **9.6 MB** liberados en total.
 *   **Velocidad de Extracción:** El archivo `AssetHelper.java` de la aplicación recorrerá muchos menos ficheros durante su rutina `extractAssets()`, acelerando dramáticamente la velocidad del primer inicio tras instalar el APK.
 *   **Seguridad:** Eliminadas configuraciones absolutas a `com.termux` garantizando portabilidad absoluta y reduciendo superficie al quitar estáticos o código de inicialización ajeno a los binarios finales de producción.
+
+---
+
+## Nota de actualización (soporte de 32 bits)
+
+La limpieza descrita se aplicó sobre el árbol ARM64 (`arm64-v8a`). Con la incorporación de `armeabi-v7a` el mismo criterio se mantiene para ambas arquitecturas:
+
+*   Los binarios ELF y las librerías `.so` se empaquetan en `app/src/main/jniLibs/arm64-v8a/` y `app/src/main/jniLibs/armeabi-v7a/`, nunca en `assets/`.
+*   `assets/` contiene únicamente recursos independientes de la arquitectura (`pci.ids.gz`, los scripts shell `libftdi1-config` y `update-pciids`, y el resto de ficheros ya presentes).
+*   Los árboles de referencia para desarrollo son ahora `fake_root_64_bit/` y `fake_root_32_bit/` (antes `fake_root/`), y las librerías de Termux `libs_64/` y `libs_32/` (antes `libs/`).
