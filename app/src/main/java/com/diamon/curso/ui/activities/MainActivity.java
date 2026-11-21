@@ -48,6 +48,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+
+import androidx.annotation.NonNull;
 
 import com.diamon.curso.ads.ConsentManager;
 import com.google.android.gms.ads.AdListener;
