@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Professional Modern Theme Colors -->
-    <color name="primary">#0277BD</color>          <!-- Professional Tech Blue -->
-    <color name="primary_variant">#01579B</color>  <!-- Deeper Blue for Status bar -->
+    <color name="primary">#003366</color>          <!-- Azul oscuro estilo PIC k150 -->
+    <color name="primary_variant">#002244</color>  <!-- Deeper Blue for Status bar -->
     <color name="secondary">#00BFA5</color>        <!-- Teal accent for success/actions -->
     <color name="secondary_variant">#00897B</color>
     

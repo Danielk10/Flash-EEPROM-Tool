@@ -5,7 +5,7 @@
     <item
         android:id="@+id/action_pro_status"
         android:title="@string/menu_pro_mode"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_emergency_rollback"
