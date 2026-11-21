@@ -271,6 +271,9 @@ public class MainActivity extends AppCompatActivity {
             getWindow().getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.primary));
+        }
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_main);
 
@@ -1131,10 +1134,11 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Aplica los insets de ventana (status bar, navigation bar y recorte de camara display cutout)
-     * para asegurar que la barra superior y los botones nunca queden tapados (fix reporte POCO X6 / Android 15).
+     * asegurando que el AppBarLayout cubra hasta el borde fisico superior con color uniforme.
      */
-    private void aplicarWindowInsets(View view) {
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+    private void aplicarWindowInsets(View vistaPrincipal) {
+        View appBarLayout = findViewById(R.id.appBarLayout);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(vistaPrincipal, (v, windowInsets) -> {
             androidx.core.graphics.Insets insets;
             try {
                 insets = windowInsets.getInsets(
@@ -1142,7 +1146,10 @@ public class MainActivity extends AppCompatActivity {
             } catch (Throwable t) {
                 insets = androidx.core.graphics.Insets.NONE;
             }
-            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            v.setPadding(insets.left, 0, insets.right, insets.bottom);
+            if (appBarLayout != null) {
+                appBarLayout.setPadding(0, insets.top, 0, 0);
+            }
             return windowInsets;
         });
     }
@@ -1152,9 +1159,14 @@ public class MainActivity extends AppCompatActivity {
         WindowInsetsControllerCompat controller =
                 WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (controller != null) {
-            controller.hide(WindowInsetsCompat.Type.systemBars());
-            controller.setSystemBarsBehavior(
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            try {
+                controller.hide(WindowInsetsCompat.Type.systemBars());
+                controller.setSystemBarsBehavior(
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                controller.setAppearanceLightStatusBars(false);
+                controller.setAppearanceLightNavigationBars(false);
+            } catch (Throwable ignored) {
+            }
         }
     }
 
