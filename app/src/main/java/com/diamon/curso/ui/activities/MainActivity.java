@@ -48,6 +48,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.diamon.curso.ads.ConsentManager;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.nativead.NativeAd;
+import com.google.android.gms.ads.nativead.NativeAdOptions;
+import com.google.android.gms.ads.nativead.NativeAdView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.ImageButton;
@@ -173,6 +182,9 @@ public class MainActivity extends AppCompatActivity {
     private volatile boolean hasReadData = false; // true cuando hay datos LEÍDOS del chip
     private volatile String lastReadFile = "bios.bin"; // archivo del último read exitoso
     private MostrarPublicidad mostrarPublicidad;
+    private View nativeAdCard;
+    private NativeAdView nativeAdView;
+    private NativeAd currentNativeAd;
     private BillingManager billingManager;
     private ProPassManager proPassManager;
     private PowerManager.WakeLock operationWakeLock;
@@ -323,6 +335,8 @@ public class MainActivity extends AppCompatActivity {
         btnAbort = findViewById(R.id.btnAbort);
         cbVerifyWrite = findViewById(R.id.cbVerifyWrite);
         etCustomCommand = findViewById(R.id.etCustomCommand);
+        nativeAdCard = findViewById(R.id.nativeAdCard);
+        nativeAdView = findViewById(R.id.nativeAdView);
 
         tvSelectedChip = findViewById(R.id.tvSelectedChip);
         btnSetChip = findViewById(R.id.btnSetChip);
@@ -590,6 +604,9 @@ public class MainActivity extends AppCompatActivity {
         mostrarPublicidad.setAdsDisabledChecker(() -> proPassManager.isProActive(billingManager));
         if (adContainer != null && !mostrarPublicidad.isAdDisabled()) {
             mostrarPublicidad.cargarBanner();
+        }
+        if (!mostrarPublicidad.isAdDisabled()) {
+            loadNativeAd();
         }
 
         log(getString(R.string.str_log_started));
@@ -1133,23 +1150,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Aplica los insets de ventana (status bar, navigation bar y recorte de camara display cutout)
-     * asegurando que el AppBarLayout cubra hasta el borde fisico superior con color uniforme.
+     * Aplica los insets de ventana manteniendo la barra superior pegada al borde
+     * físico de la pantalla (igual que PIC k150).
+     *
+     * Importante: NO se usa displayCutout para el borde superior. En este
+     * dispositivo el recorte de cámara mide 72 px y aunque las barras del
+     * sistema estén ocultas (modo inmersivo) ese inset seguía aplicándose,
+     * dejando una franja azul vacía encima del título. El recorte solo se
+     * respeta en los laterales (modo horizontal).
      */
     private void aplicarWindowInsets(View vistaPrincipal) {
-        View appBarLayout = findViewById(R.id.appBarLayout);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(vistaPrincipal, (v, windowInsets) -> {
-            androidx.core.graphics.Insets insets;
+            androidx.core.graphics.Insets barras;
+            androidx.core.graphics.Insets recorte;
             try {
-                insets = windowInsets.getInsets(
-                        WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                barras = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                recorte = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
             } catch (Throwable t) {
-                insets = androidx.core.graphics.Insets.NONE;
+                barras = androidx.core.graphics.Insets.NONE;
+                recorte = androidx.core.graphics.Insets.NONE;
             }
-            v.setPadding(insets.left, 0, insets.right, insets.bottom);
-            if (appBarLayout != null) {
-                appBarLayout.setPadding(0, insets.top, 0, 0);
-            }
+            v.setPadding(
+                    Math.max(barras.left, recorte.left),
+                    barras.top,
+                    Math.max(barras.right, recorte.right),
+                    barras.bottom);
             return windowInsets;
         });
     }
@@ -1191,8 +1216,12 @@ public class MainActivity extends AppCompatActivity {
         if (mostrarPublicidad != null) {
             if (mostrarPublicidad.isAdDisabled()) {
                 mostrarPublicidad.ocultarBanner();
+                destroyNativeAd();
             } else {
                 mostrarPublicidad.mostrarBanner();
+                if (currentNativeAd == null) {
+                    loadNativeAd();
+                }
             }
             mostrarPublicidad.resumenBanner();
         }
@@ -1539,8 +1568,15 @@ public class MainActivity extends AppCompatActivity {
     private void actualizarEstadoProUI() {
         runOnUiThread(() -> {
             boolean isPro = proPassManager != null && proPassManager.isProActive(billingManager);
-            if (isPro && mostrarPublicidad != null) {
-                mostrarPublicidad.ocultarBanner();
+            if (isPro) {
+                if (mostrarPublicidad != null) {
+                    mostrarPublicidad.ocultarBanner();
+                }
+                destroyNativeAd();
+            } else {
+                if (mostrarPublicidad != null && !mostrarPublicidad.isAdDisabled()) {
+                    loadNativeAd();
+                }
             }
             invalidateOptionsMenu();
         });
@@ -1633,6 +1669,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if (mostrarPublicidad != null) {
                             mostrarPublicidad.onConsentChanged();
+                        }
+                        if (mostrarPublicidad != null && !mostrarPublicidad.isAdDisabled()
+                                && ConsentManager.canRequestAds()) {
+                            loadNativeAd();
+                        } else {
+                            destroyNativeAd();
                         }
                         invalidateOptionsMenu();
                     });
@@ -2264,6 +2306,7 @@ public class MainActivity extends AppCompatActivity {
         if (mostrarPublicidad != null) {
             mostrarPublicidad.disposeBanner();
         }
+        destroyNativeAd();
         if (billingManager != null) {
             billingManager.destroy();
         }
@@ -2275,6 +2318,115 @@ public class MainActivity extends AppCompatActivity {
             executor.shutdownNow(); // Finalizar todos los hilos
         }
         super.onDestroy();
+    }
+
+    private void destroyNativeAd() {
+        if (currentNativeAd != null) {
+            currentNativeAd.destroy();
+            currentNativeAd = null;
+        }
+        if (nativeAdCard != null) {
+            nativeAdCard.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadNativeAd() {
+        if (nativeAdView == null || nativeAdCard == null) return;
+        if (mostrarPublicidad != null && mostrarPublicidad.isAdDisabled()) {
+            destroyNativeAd();
+            return;
+        }
+        if (!ConsentManager.canRequestAds()) {
+            destroyNativeAd();
+            return;
+        }
+
+        AdLoader adLoader = new AdLoader.Builder(this, "ca-app-pub-5141499161332805/6748236478")
+                .forNativeAd(nativeAd -> {
+                    if (isDestroyed() || isFinishing()) {
+                        nativeAd.destroy();
+                        return;
+                    }
+                    if (mostrarPublicidad != null && mostrarPublicidad.isAdDisabled()) {
+                        nativeAd.destroy();
+                        destroyNativeAd();
+                        return;
+                    }
+                    if (currentNativeAd != null) {
+                        currentNativeAd.destroy();
+                    }
+                    currentNativeAd = nativeAd;
+                    populateNativeAdView(nativeAd, nativeAdView);
+                    nativeAdCard.setVisibility(View.VISIBLE);
+                })
+                .withAdListener(new AdListener() {
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError adError) {
+                        Log.e(TAG, "AdMob Nativo fallo al cargar: Código=" + adError.getCode()
+                                + ", Mensaje=" + adError.getMessage());
+                        nativeAdCard.setVisibility(View.GONE);
+                    }
+                })
+                .withNativeAdOptions(new NativeAdOptions.Builder().build())
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
+    private void populateNativeAdView(NativeAd nativeAd, NativeAdView adView) {
+        TextView headlineView = adView.findViewById(R.id.ad_headline);
+        TextView bodyView = adView.findViewById(R.id.ad_body);
+        Button ctaView = adView.findViewById(R.id.ad_call_to_action);
+        ImageView iconView = adView.findViewById(R.id.ad_app_icon);
+        TextView advertiserView = adView.findViewById(R.id.ad_advertiser);
+
+        adView.setHeadlineView(headlineView);
+        adView.setBodyView(bodyView);
+        adView.setCallToActionView(ctaView);
+        adView.setIconView(iconView);
+        adView.setAdvertiserView(advertiserView);
+
+        if (headlineView != null) {
+            headlineView.setText(nativeAd.getHeadline());
+        }
+
+        if (bodyView != null) {
+            if (nativeAd.getBody() == null) {
+                bodyView.setVisibility(View.GONE);
+            } else {
+                bodyView.setVisibility(View.VISIBLE);
+                bodyView.setText(nativeAd.getBody());
+            }
+        }
+
+        if (ctaView != null) {
+            if (nativeAd.getCallToAction() == null) {
+                ctaView.setVisibility(View.INVISIBLE);
+            } else {
+                ctaView.setVisibility(View.VISIBLE);
+                ctaView.setText(nativeAd.getCallToAction());
+            }
+        }
+
+        if (iconView != null) {
+            if (nativeAd.getIcon() == null || nativeAd.getIcon().getDrawable() == null) {
+                iconView.setVisibility(View.GONE);
+            } else {
+                iconView.setImageDrawable(nativeAd.getIcon().getDrawable());
+                iconView.setVisibility(View.VISIBLE);
+            }
+        }
+
+        if (advertiserView != null) {
+            if (nativeAd.getAdvertiser() == null) {
+                advertiserView.setVisibility(View.GONE);
+            } else {
+                advertiserView.setText(nativeAd.getAdvertiser());
+                advertiserView.setVisibility(View.VISIBLE);
+            }
+        }
+
+        adView.setNativeAd(nativeAd);
     }
 
     @SuppressWarnings("deprecation")

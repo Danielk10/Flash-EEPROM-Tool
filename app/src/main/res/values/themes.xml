@@ -10,6 +10,8 @@
 
         <!-- Theming colors -->
         <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="actionMenuTextColor">@color/white</item>
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
@@ -18,5 +20,13 @@
         <!-- Text Colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+    </style>
+
+    <!-- Título de la barra superior: 22sp como PIC k150 -->
+    <style name="TextAppearance.FlashSPITool.ToolbarTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 </resources>

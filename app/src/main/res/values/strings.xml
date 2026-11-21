@@ -364,4 +364,8 @@
     <string name="str_spi_speed_15">15 MHz (default, safe)</string>
     <string name="str_spi_speed_30">30 MHz (fast)</string>
     <string name="str_spi_speed_60">60 MHz (maximum)</string>
+
+    <!-- Google AdMob Native -->
+    <string name="ad_badge">Ad</string>
+    <string name="ad_icon_desc">Icono de anuncio</string>
 </resources>

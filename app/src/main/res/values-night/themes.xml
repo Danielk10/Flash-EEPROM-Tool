@@ -10,6 +10,8 @@
 
         <!-- Theming colors -->
         <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="actionMenuTextColor">@color/white</item>
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
