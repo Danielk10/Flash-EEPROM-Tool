@@ -188,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
     private View nativeAdCard;
     private NativeAdView nativeAdView;
     private NativeAd currentNativeAd;
+    private boolean isLoadingNativeAd = false;
     private BillingManager billingManager;
     private ProPassManager proPassManager;
     private PowerManager.WakeLock operationWakeLock;
@@ -569,6 +570,15 @@ public class MainActivity extends AppCompatActivity {
         UsbController.setSerprogBaud(UsbController.DEFAULT_SERPROG_BAUD);
 
         mostrarPublicidad = new MostrarPublicidad(this);
+        mostrarPublicidad.setOnConsentResolvedListener(canRequestAds -> {
+            runOnUiThread(() -> {
+                if (canRequestAds && !mostrarPublicidad.isAdDisabled()) {
+                    loadNativeAd();
+                } else {
+                    destroyNativeAd();
+                }
+            });
+        });
         adContainer = findViewById(R.id.adContainer);
         if (adContainer != null) {
             // El contenedor es de ancho completo; el AdView debe ocuparlo todo
@@ -1578,6 +1588,7 @@ public class MainActivity extends AppCompatActivity {
                 destroyNativeAd();
             } else {
                 if (mostrarPublicidad != null && !mostrarPublicidad.isAdDisabled()) {
+                    mostrarPublicidad.mostrarBanner();
                     loadNativeAd();
                 }
             }
@@ -1694,7 +1705,10 @@ public class MainActivity extends AppCompatActivity {
         if (proPassManager != null && proPassManager.isProActive(billingManager)) {
             onGranted.run();
         } else {
-            ProAccessDialog.show(this, mostrarPublicidad, billingManager, proPassManager, onGranted);
+            ProAccessDialog.show(this, mostrarPublicidad, billingManager, proPassManager, () -> {
+                actualizarEstadoProUI();
+                onGranted.run();
+            });
         }
     }
 
@@ -2324,6 +2338,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void destroyNativeAd() {
+        isLoadingNativeAd = false;
         if (currentNativeAd != null) {
             currentNativeAd.destroy();
             currentNativeAd = null;
@@ -2340,12 +2355,24 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         if (!ConsentManager.canRequestAds()) {
-            destroyNativeAd();
+            if (ConsentManager.isResolved()) {
+                destroyNativeAd();
+            }
+            return;
+        }
+        if (isLoadingNativeAd) {
+            return;
+        }
+        if (currentNativeAd != null) {
+            nativeAdCard.setVisibility(View.VISIBLE);
             return;
         }
 
+        isLoadingNativeAd = true;
+
         AdLoader adLoader = new AdLoader.Builder(this, "ca-app-pub-5141499161332805/6748236478")
                 .forNativeAd(nativeAd -> {
+                    isLoadingNativeAd = false;
                     if (isDestroyed() || isFinishing()) {
                         nativeAd.destroy();
                         return;
@@ -2365,9 +2392,12 @@ public class MainActivity extends AppCompatActivity {
                 .withAdListener(new AdListener() {
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError adError) {
+                        isLoadingNativeAd = false;
                         Log.e(TAG, "AdMob Nativo fallo al cargar: Código=" + adError.getCode()
                                 + ", Mensaje=" + adError.getMessage());
-                        nativeAdCard.setVisibility(View.GONE);
+                        if (currentNativeAd == null) {
+                            nativeAdCard.setVisibility(View.GONE);
+                        }
                     }
                 })
                 .withNativeAdOptions(new NativeAdOptions.Builder().build())

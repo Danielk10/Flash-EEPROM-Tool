@@ -104,6 +104,19 @@ public class MostrarPublicidad implements Publicidad {
     private boolean adsReady = false;
     private boolean bannerLoadPending = false;
 
+    public interface OnConsentResolvedListener {
+        void onConsentResolved(boolean canRequestAds);
+    }
+
+    private OnConsentResolvedListener onConsentResolvedListener;
+
+    public void setOnConsentResolvedListener(OnConsentResolvedListener listener) {
+        this.onConsentResolvedListener = listener;
+        if (consentResolved && listener != null) {
+            listener.onConsentResolved(adsAllowed);
+        }
+    }
+
     public MostrarPublicidad(Activity actividad) {
         this.actividadRef = new WeakReference<>(actividad);
 
@@ -112,6 +125,7 @@ public class MostrarPublicidad implements Publicidad {
         adView = new AdView(actividad);
         adView.setAdUnitId(BANNER_AD_UNIT_ID);
         adView.setAdSize(getAdaptiveBannerAdSize(actividad));
+        adView.setVisibility(View.GONE);
         adView.setAdListener(
                 new AdListener() {
                     @Override
@@ -122,6 +136,8 @@ public class MostrarPublicidad implements Publicidad {
                         Log.d(TAG, "Adaptive Banner cargado exitosamente.");
                         if (isAdDisabled() && adView != null) {
                             adView.setVisibility(View.GONE);
+                        } else if (adView != null) {
+                            adView.setVisibility(View.VISIBLE);
                         }
                     }
 
@@ -131,6 +147,9 @@ public class MostrarPublicidad implements Publicidad {
                         bannerLoading = false;
                         Log.w(TAG, "Error cargando Adaptive Banner: código " + loadAdError.getCode()
                                 + " - " + loadAdError.getMessage());
+                        if (adView != null) {
+                            adView.setVisibility(View.GONE);
+                        }
                     }
 
                     @Override
@@ -201,6 +220,14 @@ public class MostrarPublicidad implements Publicidad {
             ocultarBanner();
             if (dismissed != null) {
                 dismissed.run();
+            }
+        }
+
+        if (onConsentResolvedListener != null) {
+            try {
+                onConsentResolvedListener.onConsentResolved(canRequestAds);
+            } catch (Exception e) {
+                Log.e(TAG, "Error en onConsentResolvedListener", e);
             }
         }
     }
@@ -693,11 +720,11 @@ public class MostrarPublicidad implements Publicidad {
         if (bannerLoaded) {
             if (bannerLoadedAt > 0
                     && System.currentTimeMillis() - bannerLoadedAt < AD_TTL_MS) {
+                adView.setVisibility(View.VISIBLE);
                 return;
             }
             bannerLoaded = false;
         }
-        adView.setVisibility(View.VISIBLE);
         bannerLoading = true;
         adView.loadAd(this.adRequest);
     }
@@ -727,12 +754,9 @@ public class MostrarPublicidad implements Publicidad {
                         bannerLoadPending = true;
                         return;
                     }
-                    adView.setVisibility(View.VISIBLE);
-                    if (bannerLoaded && bannerLoadedAt > 0
-                            && System.currentTimeMillis() - bannerLoadedAt >= AD_TTL_MS) {
-                        bannerLoaded = false;
-                    }
-                    if (!bannerLoaded && !bannerLoading) {
+                    if (bannerLoaded) {
+                        adView.setVisibility(View.VISIBLE);
+                    } else if (!bannerLoading) {
                         cargarBanner();
                     }
                 });

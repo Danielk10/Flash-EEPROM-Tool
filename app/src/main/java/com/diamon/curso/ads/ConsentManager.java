@@ -93,13 +93,20 @@ public final class ConsentManager {
     private static void finishConsentFlow() {
         if (consentInformation == null) {
             resolved = true;
-            canRequestAds = false;
+            canRequestAds = true;
             privacyOptionsRequired = false;
         } else {
             canRequestAds = consentInformation.canRequestAds();
+            if (consentInformation.getConsentStatus() == ConsentInformation.ConsentStatus.NOT_REQUIRED) {
+                canRequestAds = true;
+            }
             privacyOptionsRequired =
                     consentInformation.getPrivacyOptionsRequirementStatus()
                             == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+            if (!privacyOptionsRequired && !canRequestAds
+                    && consentInformation.getConsentStatus() != ConsentInformation.ConsentStatus.REQUIRED) {
+                canRequestAds = true;
+            }
             resolved = true;
         }
 
