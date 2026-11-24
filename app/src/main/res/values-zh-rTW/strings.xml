@@ -269,8 +269,8 @@ flashrom -p dummy:emulate=VARIABLE_SIZE,size=16777216,image=bios_test.bin -r rea
     <string name="pro_feature_spi_registers">一鍵解除鎖定 SPI 狀態暫存器 (SR1、SR2 和 SR3 寫入保護)</string>
     <string name="pro_feature_delta_flashing">高速 4KB 磁區增量差分極速燒錄</string>
     <string name="pro_feature_zero_ads">終身徹底免除廣告</string>
-    <string name="pro_btn_watch_rewarded_video">🎬 觀看影片 - 免費取得 12 小時通行證</string>
-    <string name="pro_pass_activated_toast">⭐ %1$s 專業版通行證已啟用 12 小時！</string>
+    <string name="pro_btn_watch_rewarded_video">🎬 觀看影片 - 免費取得 15 分鐘通行證</string>
+    <string name="pro_pass_activated_toast">⭐ %1$s 專業版通行證已啟用 15 分鐘！</string>
     <string name="pro_ads_not_available">目前暫無可用的獎勵影片</string>
     <string name="pro_btn_buy_permanent">👑 購買 %1$s 永久專業版%2$s</string>
     <string name="pro_billing_not_available">Google Play 結帳服務無法使用</string>

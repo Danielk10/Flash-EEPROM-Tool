@@ -242,9 +242,9 @@
     <string name="pro_feature_spi_registers">1-Click SPI Status Register Unlock for SR1, SR2 and SR3</string>
     <string name="pro_feature_delta_flashing">High-Speed Selective 4KB Sector Delta Flashing</string>
     <string name="pro_feature_zero_ads">Ad-free for life</string>
-    <string name="pro_btn_watch_rewarded_video">🎬 Watch Video - 12-Hour Free Pass</string>
+    <string name="pro_btn_watch_rewarded_video">🎬 Watch Video - 15 min Free Pass</string>
     <string name="pro_loading_rewarded_video">🎬 Loading video…</string>
-    <string name="pro_pass_activated_toast">⭐ %1$s Pro pass activated for 12 hours!</string>
+    <string name="pro_pass_activated_toast">⭐ %1$s Pro pass activated for 15 min!</string>
     <string name="pro_ads_not_available">Rewarded video not available at this moment</string>
     <string name="pro_btn_buy_permanent">👑 Buy %1$s Pro Permanent%2$s</string>
     <string name="pro_billing_not_available">Google Play Billing not available</string>

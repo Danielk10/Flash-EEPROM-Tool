@@ -24,7 +24,7 @@ import com.diamon.curso.billing.BillingManager;
 /**
  * Diálogo modal para la suite Flash SPI Tool Pro.
  * Ofrece acceso a las herramientas técnicas avanzadas y eliminación total de publicidad mediante:
- * 1. 🎬 Ver un video recompensado de AdMob para activar el Pase Libre de 12 Horas.
+ * 1. 🎬 Ver un video recompensado de AdMob para activar el Pase Libre de 15 Minutos.
  * 2. 👑 Compra In-App Permanente mediante Google Play Billing.
  */
 public class ProAccessDialog {
@@ -161,7 +161,7 @@ public class ProAccessDialog {
 
         AlertDialog dialog = builder.setView(scrollView).create();
 
-        // 3. BOTÓN 1: VER VIDEO RECOMPENSADO (PASE 12 HORAS)
+        // 3. BOTÓN 1: VER VIDEO RECOMPENSADO (PASE 15 MINUTOS)
         Button btnRewarded = new Button(activity);
         btnRewarded.setText(activity.getString(R.string.pro_btn_watch_rewarded_video));
         btnRewarded.setTextSize(14);
@@ -186,7 +186,7 @@ public class ProAccessDialog {
             }
 
             publicidad.mostrarRewardedAd(activity, rewardItem -> {
-                proPassManager.activarPase12Horas();
+                proPassManager.activarPasePro();
                 publicidad.ocultarBanner();
                 Toast.makeText(activity, activity.getString(R.string.pro_pass_activated_toast, appName), Toast.LENGTH_LONG).show();
                 if (onProUnlocked != null) {

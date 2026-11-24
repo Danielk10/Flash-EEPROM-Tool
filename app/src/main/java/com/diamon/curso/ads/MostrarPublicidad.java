@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * Gestor unificado de publicidad para Flash SPI Tool.
  * Controla Banners Adaptativos, Interstitials y Rewarded Video con soporte para
- * omisión absoluta cuando el usuario tiene Pro activo (Pase 12h o Compra Permanente).
+ * omisión absoluta cuando el usuario tiene Pro activo (Pase 15min o Compra Permanente).
  *
  * Política de carga:
  * - El banner se pide una sola vez y se reutiliza (AdMob lo refresca solo).
@@ -515,7 +515,7 @@ public class MostrarPublicidad implements Publicidad {
     public void botonAtrasInterstitial() {
     }
 
-    // --- REWARDED VIDEO ADS (PASE 12 HORAS) ---
+    // --- REWARDED VIDEO ADS (PASE 15 MINUTOS) ---
 
     @Override
     public void cargarRewardedAd() {

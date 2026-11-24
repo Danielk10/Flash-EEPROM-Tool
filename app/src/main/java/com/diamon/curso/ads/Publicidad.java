@@ -6,7 +6,7 @@ import com.google.android.gms.ads.OnUserEarnedRewardListener;
 
 /**
  * Interfaz unificada de publicidad para Flash SPI Tool.
- * Soporta Banners adaptativos, Interstitials y Rewarded Videos para el Pase Pro de 12 horas.
+ * Soporta Banners adaptativos, Interstitials y Rewarded Videos para el Pase Pro de 15 minutos.
  */
 public interface Publicidad {
 

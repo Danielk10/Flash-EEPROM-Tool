@@ -242,9 +242,9 @@
     <string name="pro_feature_spi_registers">Desbloqueo de Registros SPI SR1, SR2 y SR3 en 1 Clic</string>
     <string name="pro_feature_delta_flashing">Flasheo Delta Selectivo de Sectores de 4KB de Alta Velocidad</string>
     <string name="pro_feature_zero_ads">Sin anuncios de por vida</string>
-    <string name="pro_btn_watch_rewarded_video">🎬 Ver Video - Pase Gratis de 12 Horas</string>
+    <string name="pro_btn_watch_rewarded_video">🎬 Ver Video - Pase Gratis de 15 min</string>
     <string name="pro_loading_rewarded_video">🎬 Cargando video…</string>
-    <string name="pro_pass_activated_toast">⭐ ¡Pase %1$s Pro activado por 12 horas!</string>
+    <string name="pro_pass_activated_toast">⭐ ¡Pase %1$s Pro activado por 15 min!</string>
     <string name="pro_ads_not_available">Publicidad no disponible en este momento</string>
     <string name="pro_btn_buy_permanent">👑 Comprar %1$s Pro Permanente%2$s</string>
     <string name="pro_billing_not_available">Google Play Billing no disponible</string>

@@ -26,11 +26,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Gestor del Pase Temporal Flash SPI Tool Pro (12 Horas).
+ * Gestor del Pase Temporal Flash SPI Tool Pro (15 Minutos).
  * Otorga acceso completo a todas las herramientas avanzadas Pro y elimina los anuncios tras
  * visualizar un anuncio de video recompensado (Rewarded Ad de AdMob).
  * Incluye respaldo firmado con SHA-256 en almacenamiento persistente local (.flash_spi_pro_pass.dat),
- * sincronización cloud en Firebase Firestore y Google Cloud Backup para que el usuario no pierda sus 12 horas
+ * sincronización cloud en Firebase Firestore y Google Cloud Backup para que el usuario no pierda sus 15 minutos
  * al limpiar datos de la app, desinstalar o reinstalar en el mismo dispositivo.
  */
 public class ProPassManager {
@@ -41,8 +41,8 @@ public class ProPassManager {
     private static final String BACKUP_FILENAME = ".flash_spi_pro_pass.dat";
     private static final String SALT = "FLASH_SPI_PRO_PASS_SALT";
 
-    /** Duración estándar del pase libre: 12 horas en milisegundos. */
-    public static final long DURACION_PASE_MS = 12 * 60 * 60 * 1000L;
+    /** Duración estándar del pase libre: 15 minutos en milisegundos. */
+    public static final long DURACION_PASE_MS = 15 * 60 * 1000L;
 
     public interface OnPassRestoredListener {
         void onPassRestored(long expireTime);
@@ -72,13 +72,24 @@ public class ProPassManager {
     }
 
     /**
-     * Activa el pase temporal por 12 horas a partir del momento actual.
+     * Activa el pase temporal Pro por 15 minutos a partir del momento actual.
+     * Si ya hay un pase activo con más tiempo restante, no se recorta: se conserva
+     * el vencimiento mayor para no perjudicar a los usuarios con un pase en curso.
      */
-    public void activarPase12Horas() {
-        long nuevoVencimiento = System.currentTimeMillis() + DURACION_PASE_MS;
+    public void activarPasePro() {
+        long nuevoVencimiento = Math.max(getExpireTime(),
+                System.currentTimeMillis() + DURACION_PASE_MS);
         prefs.edit().putLong(KEY_EXPIRE_TIME, nuevoVencimiento).apply();
         guardarRespaldoPersistente(nuevoVencimiento);
         guardarRespaldoEnFirestore(nuevoVencimiento);
+    }
+
+    /**
+     * @deprecated Usar {@link #activarPasePro()}. Se mantiene por compatibilidad.
+     */
+    @Deprecated
+    public void activarPase12Horas() {
+        activarPasePro();
     }
 
     private String getDeviceId() {
@@ -168,6 +179,8 @@ public class ProPassManager {
                 data.put("expireTime", expireTime);
                 data.put("updatedAt", FieldValue.serverTimestamp());
                 data.put("active", true);
+                // Permite distinguir qué app escribió el pase en la colección compartida.
+                data.put("app", "flash");
 
                 db.collection("pro_passes")
                         .document(getDeviceId())
@@ -181,7 +194,7 @@ public class ProPassManager {
     }
 
     /**
-     * Consulta Firestore en la nube para sincronizar o restaurar el pase de 12 horas.
+     * Consulta Firestore en la nube para sincronizar o restaurar el pase de 15 minutos.
      * Útil tras desinstalar y reinstalar la aplicación en el mismo dispositivo o tras limpieza de datos.
      */
     public void intentarRestaurarDesdeFirestore(@Nullable OnPassRestoredListener listener) {
@@ -216,7 +229,7 @@ public class ProPassManager {
     }
 
     /**
-     * Retorna true si el pase temporal de 12 horas está actualmente activo.
+     * Retorna true si el pase temporal de 15 minutos está actualmente activo.
      */
     public boolean hasActiveProPass() {
         return System.currentTimeMillis() < getExpireTime();
@@ -251,7 +264,7 @@ public class ProPassManager {
     }
 
     /**
-     * Retorna un texto formateado del tiempo restante (ej: "11h 45m" o "Expirado").
+     * Retorna un texto formateado del tiempo restante (ej: "14m 30s" o "Expirado").
      */
     public String getTiempoRestanteFormateado() {
         long restante = getTiempoRestanteMs();
@@ -281,7 +294,7 @@ public class ProPassManager {
 
     /**
      * Evalúa si las funciones Pro están habilitadas, ya sea por compra permanente
-     * de Google Play Billing o por un pase temporal de 12 horas activo.
+     * de Google Play Billing o por un pase temporal de 15 minutos activo.
      *
      * @param billingManager Gestor de facturación permanente (opcional).
      * @return true si el usuario tiene acceso Pro activo.
