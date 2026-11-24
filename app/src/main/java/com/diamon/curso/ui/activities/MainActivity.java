@@ -189,6 +189,8 @@ public class MainActivity extends AppCompatActivity {
     private NativeAdView nativeAdView;
     private NativeAd currentNativeAd;
     private boolean isLoadingNativeAd = false;
+    private int nativeRetryCount = 0;
+    private static final int MAX_NATIVE_RETRIES = 1;
     private BillingManager billingManager;
     private ProPassManager proPassManager;
     private PowerManager.WakeLock operationWakeLock;
@@ -1237,6 +1239,9 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 mostrarPublicidad.mostrarBanner();
                 if (currentNativeAd == null) {
+                    // Al volver a la app se da una oportunidad nueva: los "No fill"
+                    // anteriores no deben bloquear una petición futura.
+                    nativeRetryCount = 0;
                     loadNativeAd();
                 }
             }
@@ -2390,6 +2395,7 @@ public class MainActivity extends AppCompatActivity {
                         currentNativeAd.destroy();
                     }
                     currentNativeAd = nativeAd;
+                    nativeRetryCount = 0;
                     populateNativeAdView(nativeAd, nativeAdView);
                     if (nativeAdCard.isAttachedToWindow()) {
                         nativeAdCard.setVisibility(View.VISIBLE);
@@ -2420,12 +2426,15 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if (!isDestroyed() && !isFinishing() && currentNativeAd == null
                                 && (mostrarPublicidad == null || !mostrarPublicidad.isAdDisabled())
-                                && ConsentManager.canRequestAds()) {
+                                && ConsentManager.canRequestAds()
+                                && adError.getCode() != AdRequest.ERROR_CODE_NO_FILL
+                                && nativeRetryCount < MAX_NATIVE_RETRIES) {
+                            nativeRetryCount++;
                             nativeAdCard.postDelayed(() -> {
                                 if (!isDestroyed() && !isFinishing() && currentNativeAd == null) {
                                     loadNativeAd();
                                 }
-                            }, 4000);
+                            }, 5000);
                         }
                     }
                 })

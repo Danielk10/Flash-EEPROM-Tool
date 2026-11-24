@@ -83,6 +83,8 @@ public class MostrarPublicidad implements Publicidad {
     private boolean bannerLoading = false;
     private boolean bannerLoaded = false;
     private long bannerLoadedAt = 0;
+    private int bannerRetryCount = 0;
+    private static final int MAX_BANNER_RETRIES = 1;
 
     private InterstitialAd mInterstitialAd;
     private boolean isLoadingInterstitial = false;
@@ -137,6 +139,7 @@ public class MostrarPublicidad implements Publicidad {
                         bannerLoaded = true;
                         bannerLoadedAt = System.currentTimeMillis();
                         bannerLoading = false;
+                        bannerRetryCount = 0;
                         Log.d(TAG, "Adaptive Banner cargado exitosamente.");
                         if (isAdDisabled() && adView != null) {
                             adView.setVisibility(View.GONE);
@@ -154,13 +157,16 @@ public class MostrarPublicidad implements Publicidad {
                         if (adView != null) {
                             adView.setVisibility(View.GONE);
                         }
-                        if (!destroyed && !activityPaused && !isAdDisabled()) {
+                        if (!destroyed && !activityPaused && !isAdDisabled()
+                                && loadAdError.getCode() != AdRequest.ERROR_CODE_NO_FILL
+                                && bannerRetryCount < MAX_BANNER_RETRIES) {
+                            bannerRetryCount++;
                             mainHandler.postDelayed(() -> {
                                 if (!destroyed && !activityPaused && !isAdDisabled()
                                         && !bannerLoaded && !bannerLoading) {
                                     cargarBanner();
                                 }
-                            }, 3000);
+                            }, 5000);
                         }
                     }
 
