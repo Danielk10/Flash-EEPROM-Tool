@@ -670,6 +670,10 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     layoutLoading.setVisibility(View.GONE);
                     layoutMainUI.setVisibility(View.VISIBLE);
+                    if (currentNativeAd == null && (mostrarPublicidad == null || !mostrarPublicidad.isAdDisabled())
+                            && ConsentManager.canRequestAds()) {
+                        loadNativeAd();
+                    }
 
                     boolean isUpdate = (lastVersion != -1 && currentVersion != lastVersion);
                     if (!wasExtracted) {
@@ -2387,7 +2391,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                     currentNativeAd = nativeAd;
                     populateNativeAdView(nativeAd, nativeAdView);
-                    nativeAdCard.setVisibility(View.VISIBLE);
+                    if (nativeAdCard.isAttachedToWindow()) {
+                        nativeAdCard.setVisibility(View.VISIBLE);
+                    } else {
+                        nativeAdCard.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                            @Override
+                            public void onViewAttachedToWindow(@NonNull View v) {
+                                nativeAdCard.removeOnAttachStateChangeListener(this);
+                                if (!isDestroyed() && !isFinishing() && currentNativeAd != null) {
+                                    nativeAdCard.setVisibility(View.VISIBLE);
+                                }
+                            }
+
+                            @Override
+                            public void onViewDetachedFromWindow(@NonNull View v) {}
+                        });
+                        nativeAdCard.setVisibility(View.VISIBLE);
+                    }
                 })
                 .withAdListener(new AdListener() {
                     @Override
@@ -2397,6 +2417,15 @@ public class MainActivity extends AppCompatActivity {
                                 + ", Mensaje=" + adError.getMessage());
                         if (currentNativeAd == null) {
                             nativeAdCard.setVisibility(View.GONE);
+                        }
+                        if (!isDestroyed() && !isFinishing() && currentNativeAd == null
+                                && (mostrarPublicidad == null || !mostrarPublicidad.isAdDisabled())
+                                && ConsentManager.canRequestAds()) {
+                            nativeAdCard.postDelayed(() -> {
+                                if (!isDestroyed() && !isFinishing() && currentNativeAd == null) {
+                                    loadNativeAd();
+                                }
+                            }, 4000);
                         }
                     }
                 })

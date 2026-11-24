@@ -33,6 +33,8 @@ import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Gestor unificado de publicidad para Flash SPI Tool.
@@ -70,6 +72,8 @@ public class MostrarPublicidad implements Publicidad {
     private static final long INTERSTITIAL_RETRY_MS = 45 * 1000;
 
     private static volatile boolean mobileAdsInitialized = false;
+    private static volatile boolean mobileAdsInitializing = false;
+    private static final List<Runnable> pendingInitCallbacks = new ArrayList<>();
 
     private final WeakReference<Activity> actividadRef;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -150,6 +154,14 @@ public class MostrarPublicidad implements Publicidad {
                         if (adView != null) {
                             adView.setVisibility(View.GONE);
                         }
+                        if (!destroyed && !activityPaused && !isAdDisabled()) {
+                            mainHandler.postDelayed(() -> {
+                                if (!destroyed && !activityPaused && !isAdDisabled()
+                                        && !bannerLoaded && !bannerLoading) {
+                                    cargarBanner();
+                                }
+                            }, 3000);
+                        }
                     }
 
                     @Override
@@ -199,11 +211,22 @@ public class MostrarPublicidad implements Publicidad {
         if (canRequestAds) {
             Activity context = activity != null ? activity : actividadRef.get();
             if (context != null) {
-                initializeMobileAds(context);
-            }
-            if (bannerLoadPending) {
-                bannerLoadPending = false;
-                cargarBanner();
+                initializeMobileAds(context, () -> {
+                    if (destroyed || isAdDisabled()) {
+                        return;
+                    }
+                    if (bannerLoadPending) {
+                        bannerLoadPending = false;
+                        cargarBanner();
+                    }
+                    if (onConsentResolvedListener != null) {
+                        try {
+                            onConsentResolvedListener.onConsentResolved(true);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error en onConsentResolvedListener", e);
+                        }
+                    }
+                });
             }
             if (interstitialShowPending) {
                 cargarInterstial();
@@ -221,29 +244,59 @@ public class MostrarPublicidad implements Publicidad {
             if (dismissed != null) {
                 dismissed.run();
             }
-        }
-
-        if (onConsentResolvedListener != null) {
-            try {
-                onConsentResolvedListener.onConsentResolved(canRequestAds);
-            } catch (Exception e) {
-                Log.e(TAG, "Error en onConsentResolvedListener", e);
+            if (onConsentResolvedListener != null) {
+                try {
+                    onConsentResolvedListener.onConsentResolved(false);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error en onConsentResolvedListener", e);
+                }
             }
         }
     }
 
-    private static void initializeMobileAds(Context context) {
+    public static boolean isMobileAdsInitialized() {
+        return mobileAdsInitialized;
+    }
+
+    public static void initializeMobileAds(Context context, @Nullable Runnable onComplete) {
         if (mobileAdsInitialized) {
+            if (onComplete != null) {
+                new Handler(Looper.getMainLooper()).post(onComplete);
+            }
             return;
         }
-        mobileAdsInitialized = true;
+        synchronized (pendingInitCallbacks) {
+            if (onComplete != null) {
+                pendingInitCallbacks.add(onComplete);
+            }
+            if (mobileAdsInitializing) {
+                return;
+            }
+            mobileAdsInitializing = true;
+        }
         MobileAds.initialize(
-                context,
+                context.getApplicationContext(),
                 new OnInitializationCompleteListener() {
                     @Override
                     public void onInitializationComplete(
                             @NonNull InitializationStatus initializationStatus) {
-                        Log.d(TAG, "MobileAds inicializado.");
+                        mobileAdsInitialized = true;
+                        mobileAdsInitializing = false;
+                        Log.d(TAG, "MobileAds inicializado con éxito.");
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            List<Runnable> callbacks;
+                            synchronized (pendingInitCallbacks) {
+                                callbacks = new ArrayList<>(pendingInitCallbacks);
+                                pendingInitCallbacks.clear();
+                            }
+                            for (Runnable cb : callbacks) {
+                                try {
+                                    cb.run();
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error en callback de inicialización", e);
+                                }
+                            }
+                        });
                     }
                 });
     }
@@ -712,6 +765,14 @@ public class MostrarPublicidad implements Publicidad {
         if (!adsReady) {
             // El consentimiento se está gestionando; se carga al terminar.
             bannerLoadPending = true;
+            return;
+        }
+        if (!mobileAdsInitialized) {
+            bannerLoadPending = true;
+            Activity context = actividadRef.get();
+            if (context != null) {
+                initializeMobileAds(context, this::cargarBanner);
+            }
             return;
         }
         if (adView == null || bannerLoading) {
