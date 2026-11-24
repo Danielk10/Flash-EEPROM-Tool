@@ -70,6 +70,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Lifecycle;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -617,12 +618,9 @@ public class MainActivity extends AppCompatActivity {
         // El checker se configura después de crear BillingManager para que
         // isProActive() pueda leer la compra permanente cacheada en disco.
         mostrarPublicidad.setAdsDisabledChecker(() -> proPassManager.isProActive(billingManager));
-        if (adContainer != null && !mostrarPublicidad.isAdDisabled()) {
-            mostrarPublicidad.cargarBanner();
-        }
-        if (!mostrarPublicidad.isAdDisabled()) {
-            loadNativeAd();
-        }
+        // Los anuncios se piden en onResume(), cuando la actividad ya está
+        // visible, igual que C-PIC y PIC K150. Pedirlos aquí provocaba que el
+        // primer intento se hiciera con la UI aún no mostrada.
 
         log(getString(R.string.str_log_started));
 
@@ -2357,8 +2355,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Igual que PIC K150: no se piden anuncios si la actividad ya no está
+     * visible. Evita peticiones en segundo plano y WebViews de AdMob durante
+     * el arranque.
+     */
+    private boolean isActivityVisible() {
+        return !isFinishing()
+                && !isDestroyed()
+                && getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
+    }
+
     private void loadNativeAd() {
         if (nativeAdView == null || nativeAdCard == null) return;
+        if (!isActivityVisible()) {
+            return;
+        }
         if (mostrarPublicidad != null && mostrarPublicidad.isAdDisabled()) {
             destroyNativeAd();
             return;
@@ -2367,6 +2379,19 @@ public class MainActivity extends AppCompatActivity {
             if (ConsentManager.isResolved()) {
                 destroyNativeAd();
             }
+            return;
+        }
+        if (!MostrarPublicidad.isMobileAdsInitialized()) {
+            // Igual que C-PIC y PIC K150: no pedir el nativo hasta que el SDK
+            // de Google Mobile Ads haya terminado de inicializarse.
+            Log.d(TAG, "Nativo: esperando inicialización de MobileAds...");
+            MostrarPublicidad.initializeMobileAds(
+                    this,
+                    () -> {
+                        if (!isDestroyed() && !isFinishing()) {
+                            loadNativeAd();
+                        }
+                    });
             return;
         }
         if (isLoadingNativeAd) {
@@ -2396,6 +2421,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     currentNativeAd = nativeAd;
                     nativeRetryCount = 0;
+                    Log.d(TAG, "AdMob Nativo cargado exitosamente.");
                     populateNativeAdView(nativeAd, nativeAdView);
                     if (nativeAdCard.isAttachedToWindow()) {
                         nativeAdCard.setVisibility(View.VISIBLE);
