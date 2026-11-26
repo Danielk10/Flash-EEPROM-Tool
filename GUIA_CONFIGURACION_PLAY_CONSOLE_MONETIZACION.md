@@ -34,6 +34,18 @@ El usuario puede desbloquear las herramientas Pro de dos formas:
 1. 🎬 **Ver un Video Recompensado (Pase Libre de 15 Minutos):** Al terminar de ver el video de Google AdMob, se otorga acceso ilimitado a todas las funciones Pro y se ocultan los anuncios durante 15 minutos completos. La activación usa `max(vencimiento actual, ahora + 15 min)`, por lo que un pase activo de mayor duración (por ejemplo, uno heredado de 12 horas) nunca se recorta.
 2. 👑 **Compra In-App Permanente:** Pago único que desbloquea para siempre todas las herramientas Pro y otorga **Sin anuncios de por vida** en toda la aplicación sin volver a requerir anuncios.
 
+### 📦 Dependencias Gradle de Monetización y Privacidad en el Proyecto
+
+Las dependencias exactas declaradas en `gradle/libs.versions.toml` y `app/build.gradle` son:
+
+| Componente | Artefacto Gradle | Versión en Proyecto | Función y Consideraciones Técnicas |
+| :--- | :--- | :--- | :--- |
+| **Google Play Billing** | `com.android.billingclient:billing` | `8.3.0` | Satisface la exigencia de Play Console (v8.0+) con soporte hasta 2027. Se utiliza `8.3.0` porque la serie 9.x (`9.1.0`) invoca `ActivityOptions.setPendingIntentBackgroundActivityStartMode` desde `ProxyBillingActivity`, provocando `NoSuchMethodError` en builds de Android 14 sin dicho método. |
+| **Google Mobile Ads (AdMob)** | `com.google.android.gms:play-services-ads` | `25.5.0` | Motor de anuncios para banner adaptativo, tarjeta nativa y videos recompensados para el Pase Pro. |
+| **Consentimiento UMP** | `com.google.android.ump:user-messaging-platform` | `4.0.0` | Marco oficial de consentimiento de privacidad para RGPD en la UE y normativas de privacidad en EE. UU. |
+| **Play HSDP Shim** | `com.google.android.play:hsdp` | `2.2.0` | Cierra limpiamente `HsdpShimActivity` ante intents sin extras (`targetPackageName is null`), resolviendo el bug arrastrado transitivamente por AdMob. |
+| **Firebase BoM** | `com.google.firebase:firebase-bom` | `35.2.0` | Gestión centralizada de versiones de Firebase. Incluye `firebase-firestore` (persistencia multinivel de pases Pro), `firebase-crashlytics` (`21.1.0`), `firebase-crashlytics-ndk` y `firebase-analytics`. |
+
 ---
 
 ## 🛒 2. Configuración del Producto en Google Play Console

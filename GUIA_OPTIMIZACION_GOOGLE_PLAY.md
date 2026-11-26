@@ -10,7 +10,7 @@ Google Play Console reporta dos tipos de avisos con niveles de prioridad muy dis
 
 | Aviso en Play Console | Estado de Obligatoriedad | Fecha Límite | Estado en Flash-SPI-Tool |
 | :--- | :--- | :--- | :--- |
-| **Biblioteca de Facturación (Play Billing v8.0+ / v9.0+)** | **Bloqueante** (Impide publicar/actualizar si no se cumple) | Inmediata | ✅ **Resuelto** (Actualizado a v9.1.0) |
+| **Biblioteca de Facturación (Play Billing v8.0+)** | **Bloqueante** (Impide publicar/actualizar si no se cumple) | Inmediata | ✅ **Resuelto** (Alineado a v8.3.0; última 8.x estable soportada por Play hasta 2027 y sin crashes en Android 14) |
 | **Optimización / Ofuscación (< 25%)** | **Informativo / Calidad** (Recomendación de catálogo) | **Febrero de 2027** | ⚠️ Atendido mediante esta guía |
 
 > [!IMPORTANT]
@@ -125,19 +125,33 @@ buildTypes {
 -keepclassmembers class com.microsoft.appcenter.** { *; }
 -dontwarn com.microsoft.appcenter.**
 
-# 8. Google Play Billing Library v9.1.0
+# 8. Google Play Billing Library v8.3.0
 -keep class com.android.billingclient.** { *; }
 -keepclassmembers class com.android.billingclient.** { *; }
 -keep class com.diamon.curso.billing.** { *; }
 -keepclassmembers class com.diamon.curso.billing.** { *; }
 -dontwarn com.android.billingclient.**
 
-# 9. Google Mobile Ads (AdMob)
+# 9. Google Mobile Ads (AdMob v25.5.0)
 -keep class com.google.android.gms.ads.** { *; }
 -keepclassmembers class com.google.android.gms.ads.** { *; }
 -keep class com.diamon.curso.ads.** { *; }
 -keepclassmembers class com.diamon.curso.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
+
+# 10. User Messaging Platform (UMP v4.0.0 - Consentimiento de Privacidad)
+-keep class com.google.android.ump.** { *; }
+-keepclassmembers class com.google.android.ump.** { *; }
+
+# 11. Google Play HSDP Shim v2.2.0 (Prevención de crash por targetPackageName null)
+-keep class com.google.android.play.core.** { *; }
+-keep class com.google.android.play.hsdp.** { *; }
+-dontwarn com.google.android.play.hsdp.**
+
+# 12. Firebase BoM v35.2.0 (Firestore, Crashlytics v21.1.0, Analytics)
+-keep class com.google.firebase.** { *; }
+-keepclassmembers class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
 ```
 
 ---
@@ -174,6 +188,6 @@ Antes de subir cualquier archivo a Google Play, se ejecutan las siguientes compr
 4. Sube el paquete:
    `/tmp/flashrom/outputs/bundle/release/app-release.aab`
 5. Google Play analizará el AAB:
-   * Detectará la librería Google Play Billing v9.1.0 (requisito obligatorio superado).
+   * Detectará la librería Google Play Billing v8.3.0 (requisito obligatorio superado; compatible con Play Console hasta 2027 sin errores en Android 14).
    * Detectará los metadatos de ofuscación R8 generados en el bundle.
 6. Guarda y envía a revisión.

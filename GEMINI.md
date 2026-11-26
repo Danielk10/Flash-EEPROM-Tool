@@ -15,6 +15,12 @@ bash setup-sdk.sh
 ```
 
 - **Ubicación del SDK:** Todas las descargas y herramientas del SDK (incluyendo NDK y CMake) se instalan temporalmente en el directorio `/tmp/android-sdk`.
+- **Componentes del Toolchain requeridos:**
+  - `platforms;android-37.0` y `platforms;android-24` (`compileSdk 37`, `targetSdk 37`, `minSdk 24`).
+  - `build-tools;37.0.0`.
+  - `cmake;4.1.2`.
+  - `ndk;30.0.14904198` (NDK r30-rc1).
+  - Gradle `9.9.1` con Android Gradle Plugin (AGP) `9.5.1` y Java 11.
 
 > **Nota:** si ya dispones de un SDK/NDK compatible en otra ruta, no es necesario ejecutar `setup-sdk.sh`; basta con apuntar `sdk.dir` en `local.properties` a esa instalación.
 

@@ -7,6 +7,11 @@
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20%7C%20armeabi--v7a-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
 [![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
 [![AGP](https://img.shields.io/badge/AGP-9.5.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
+[![Gradle](https://img.shields.io/badge/Gradle-9.9.1-02303A?logo=gradle&logoColor=white)](https://gradle.org/)
+[![CMake](https://img.shields.io/badge/CMake-4.1.2-orange?logo=cmake&logoColor=white)](https://cmake.org/)
+[![Play Billing](https://img.shields.io/badge/Play%20Billing-8.3.0-4285F4?logo=googleplay&logoColor=white)](https://developer.android.com/google/play/billing)
+[![AdMob](https://img.shields.io/badge/AdMob-25.5.0-EA4335?logo=googleadmob&logoColor=white)](https://admob.google.com/)
+[![Firebase](https://img.shields.io/badge/Firebase%20BoM-35.2.0-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![Flashrom](https://img.shields.io/badge/flashrom-integrado%20(Custom%20Engine)-orange)](https://github.com/flashrom/flashrom)
 [![Build](https://img.shields.io/badge/Build-Passing-success?logo=githubactions&logoColor=white)](#)
 [![Licencia](https://img.shields.io/badge/Licencia-GPLv3-blue.svg)](./LICENSE.txt)
@@ -304,7 +309,34 @@ Para facilitar la auditoría, mantenimiento y extensión del proyecto, se detall
 
 Este proyecto es software libre y de código abierto distribuido bajo la licencia **GNU General Public License v3.0**. Consulta el archivo [`LICENSE.txt`](./LICENSE.txt) para más información.
 
-### Proyectos y Bibliotecas de Terceros
+### Pila Tecnológica y Dependencias Gradle
+
+Las dependencias y versiones oficiales del proyecto se gestionan centralizadamente mediante Gradle Version Catalogs ([`gradle/libs.versions.toml`](./gradle/libs.versions.toml)) y [`app/build.gradle`](./app/build.gradle):
+
+| Componente / Herramienta | Versión | Declaración / Artefacto | Propósito |
+| :--- | :--- | :--- | :--- |
+| **Gradle Wrapper** | `9.9.1` | `gradle-9.9.1-bin.zip` | Motor de construcción del proyecto |
+| **Android Gradle Plugin (AGP)** | `9.5.1` | `com.android.application` | Plugin oficial de compilación para Android |
+| **Android NDK** | `30.0.14904198 rc1` | `ndkVersion` (NDK r30-rc1) | Compilación nativa C/C++ con soporte de páginas de 16 KB |
+| **CMake** | `4.1.2` | `externalNativeBuild.cmake` | Sistema de compilación de `usb_bridge.cpp` |
+| **Compilador SDK (`compileSdk`)** | `API 37` | `compileSdk { version = release(37) }` | Compatibilidad total con Android 17 |
+| **SDK Objetivo (`targetSdk`)** | `API 37` | `targetSdk 37` | Últimas políticas de Google Play Store |
+| **SDK Mínimo (`minSdk`)** | `API 24` | `minSdk 24` | Android 7.0 Nougat en adelante |
+| **Java Compatibility** | `Java 11` | `JavaVersion.VERSION_11` | Compatibilidad de bytecode Java |
+| **Google Play Billing** | `8.3.0` | `com.android.billingclient:billing` | Compras in-app permanentes (8.x estable hasta 2027 sin errores en Android 14) |
+| **Google Mobile Ads (AdMob)** | `25.5.0` | `com.google.android.gms:play-services-ads` | Banner adaptativo, anuncios nativos y videos bonificados del Pase Pro |
+| **User Messaging Platform (UMP)** | `4.0.0` | `com.google.android.ump:user-messaging-platform` | Gestión de consentimiento RGPD y normativas de privacidad en EE. UU. |
+| **Google Play HSDP Shim** | `2.2.0` | `com.google.android.play:hsdp` | Resuelve crash por `targetPackageName is null` en `HsdpShimActivity` |
+| **Firebase BoM** | `35.2.0` | `com.google.firebase:firebase-bom` | BoM unificado (Firestore, Crashlytics 21.1.0, Crashlytics NDK y Analytics) |
+| **USB Serial for Android** | `3.12.0` | `com.github.mik3y:usb-serial-for-android` | Comunicación con dispositivos serie USB (FTDI, CH34x, CP210x, CDC) |
+| **AndroidX AppCompat** | `1.8.0` | `androidx.appcompat:appcompat` | Soporte de UI retrocompatible |
+| **Google Material Design** | `1.14.0` | `com.google.android.material:material` | Componentes visuales Material Design |
+| **AndroidX ConstraintLayout** | `2.2.2` | `androidx.constraintlayout:constraintlayout` | Disposición de vistas reactiva |
+| **AndroidX DocumentFile** | `1.1.0` | `androidx.documentfile:documentfile` | Soporte para Android Storage Access Framework (SAF) |
+| **Microsoft AppCenter** | `5.0.6` | `com.microsoft.appcenter:appcenter-*` | Telemetría y diagnóstico |
+| **Testing** | `JUnit 4.13.2`, `Mockito 5.24.0`, `Espresso 3.7.0`, `Ext JUnit 1.3.0` | `libs.*` | Suite de pruebas unitarias e instrumentadas |
+
+### Proyectos y Bibliotecas Nativas de Terceros
 - **[flashrom](https://github.com/flashrom/flashrom)** — Licencia GPL-2.0+
 - **[libusb](https://github.com/libusb/libusb)** — Licencia LGPL-2.1+
 - **[usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android)** — Licencia MIT
