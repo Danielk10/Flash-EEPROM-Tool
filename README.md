@@ -1,6 +1,11 @@
 # Flash SPI Tool v1.9.27
 
+<a href="https://play.google.com/store/apps/details?id=com.diamon.curso">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" height="50">
+</a>
+
 [![Release](https://img.shields.io/badge/Release-v1.9.27%20(Build%20113)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.27)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Disponible-414141?logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.diamon.curso)
 [![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024%20a%20API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![minSdk](https://img.shields.io/badge/minSdk-24%20(Nougat)-brightgreen?logo=android)](https://developer.android.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.27.md)
@@ -27,6 +32,7 @@
 Diseñada tanto para ingenieros de hardware y laboratorios de reparación técnica como para entusiastas de la electrónica, la suite integra el poder del motor nativo de **flashrom** y una capa de transporte de alto rendimiento en C++ (`usb_bridge.cpp`) con una interfaz gráfica moderna, segura y optimizada para dispositivos táctiles.
 
 > **Información de la Versión Actual:**
+> - **Descarga oficial:** [Google Play Store](https://play.google.com/store/apps/details?id=com.diamon.curso)
 > - **Versión de la App:** `v1.9.27`
 > - **Código de Versión (`versionCode`):** `113`
 > - **Novedad principal:** Pase Pro temporal de **15 minutos** con conservación de pases activos de mayor duración, activación mediante `max(vencimiento actual, ahora + 15 min)` y registro del campo `app: "flash"` en la colección compartida `pro_passes` de Firestore. La publicidad se consolida con inicialización de AdMob antes de solicitar el anuncio nativo, con banner y nativo pedidos en `onResume`, sin reintentos ante `No fill` y con como máximo un reintento ante errores transitorios.
