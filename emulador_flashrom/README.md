@@ -1,6 +1,6 @@
-# Emulador de Flashrom (GD25Q80 / MX25L128) — Flash SPI Tool v1.9.12
+# Emulador de Flashrom (GD25Q80 / MX25L128) — Flash SPI Tool v1.9.27
 
-Entorno de simulación de hardware y silicio para desarrollo, pruebas unitarias y validación local de **Flash SPI Tool v1.9.12** sin necesidad de conectar programadores físicos o chips reales.
+Entorno de simulación de hardware y silicio para desarrollo, pruebas unitarias y validación local de **Flash SPI Tool v1.9.27** sin necesidad de conectar programadores físicos o chips reales.
 
 El emulador implementa un modelo de silicio en C++ configurable: por defecto simula el chip **GigaDevice GD25Q80** (1 Megabyte / 1024 KB) y, con la opción `--mx25l128`, el **Macronix MX25L128** (16 MB, JEDEC `C2 20 18`) del issue #101. Incluye la emulación de protocolo para los cinco tipos de programadores compatibles con la aplicación.
 
@@ -120,7 +120,7 @@ El script `test_issue_101.sh` reproduce el mismo ciclo que la app:
 Los archivos `.bin` generados durante las pruebas con el emulador pueden auditarse de inmediato:
 - **Verificación Criptográfica:** Mediante `md5sum backup.bin` y `sha256sum backup.bin` en terminal o con la opción **"🔒 Verificar Integridad MD5 / SHA-256"** de la app.
 - **Comparador Hex Diff con Hashes MD5:** Comparación side-by-side de archivos en **"Comparar Archivos Hex (Diff)"**, mostrando sumas MD5, discrepancias byte a byte y mapa de calor visual por sectores de 4 KB.
-- **Suite Pro:** Los volcados son compatibles con las herramientas de la suite Pro (Bóveda Antibrick, Editor Hexadecimal en Vivo con parcheo in-place, inyector MAC Intel GbE `0xBABA`, extractor Windows MSDM y registros SPI), disponibles con el Pase Libre de 12 horas o compra permanente con **"Sin anuncios de por vida"**.
+- **Suite Pro:** Los volcados son compatibles con las herramientas de la suite Pro (Bóveda Antibrick, Editor Hexadecimal en Vivo con parcheo in-place, inyector MAC Intel GbE `0xBABA`, extractor Windows MSDM y registros SPI), disponibles con el Pase Libre de 15 minutos o compra permanente con **"Sin anuncios de por vida"**.
 
 ---
 

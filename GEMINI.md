@@ -2,6 +2,10 @@
 
 Este documento describe cómo instalar el SDK de Android y compilar el proyecto **Flash-SPI-Tool**.
 
+> **Versión vigente:** `v1.9.27` (`versionCode 113`). La nota de lanzamiento activa es
+> [`RELEASE_NOTES_v1.9.27.md`](./RELEASE_NOTES_v1.9.27.md); no deben quedar notas de
+> versiones anteriores en el repositorio.
+
 ## 1. Instalación del SDK
 
 El SDK de Android necesario para compilar este proyecto se instala automáticamente ejecutando el script proporcionado:
@@ -11,6 +15,8 @@ bash setup-sdk.sh
 ```
 
 - **Ubicación del SDK:** Todas las descargas y herramientas del SDK (incluyendo NDK y CMake) se instalan temporalmente en el directorio `/tmp/android-sdk`.
+
+> **Nota:** si ya dispones de un SDK/NDK compatible en otra ruta, no es necesario ejecutar `setup-sdk.sh`; basta con apuntar `sdk.dir` en `local.properties` a esa instalación.
 
 ## 2. Compilación
 
@@ -34,7 +40,7 @@ Siempre que se prepare un lanzamiento o se suba una actualización a **Google Pl
 
 ### Ciclo de vida de las notas de versión
 
-- **Solo se conserva la nota de la última versión.** El repositorio debe contener un único archivo `RELEASE_NOTES_vX.Y.Z.md`, correspondiente a la versión que se está publicando.
+- **Solo se conserva la nota de la última versión.** El repositorio debe contener un único archivo `RELEASE_NOTES_vX.Y.Z.md`, correspondiente a la versión que se está publicando. Para la versión actual es `RELEASE_NOTES_v1.9.27.md`.
 - **Eliminar las notas obsoletas.** Al preparar un nuevo lanzamiento, borra las notas de versiones anteriores (`RELEASE_NOTES_v*.md`) en lugar de acumularlas.
 - **No crear históricos de notas.** El historial completo ya queda en Git, en las releases de GitHub y en Google Play; no hace falta mantener copias antiguas en el árbol de trabajo.
 - **Verificar enlaces antes de borrar.** Comprueba que `README.md` y la documentación no enlacen a la nota que vas a eliminar; actualiza esos enlaces a la nota vigente.

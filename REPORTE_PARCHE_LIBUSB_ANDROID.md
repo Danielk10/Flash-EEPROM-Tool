@@ -1,6 +1,6 @@
 # Reporte Técnico: Parche para Libusb en Android (Portabilidad Nativa)
 
-> **Versión Actual:** Flash SPI Tool v1.9.2 (Build 88)  
+> **Versión del informe:** Flash SPI Tool v1.9.2 (Build 88) — arquitectura vigente en v1.9.27 (Build 113)  
 > **Guía Completa Detallada:** Para una explicación exhaustiva con diagramas de flujo y análisis de páginas de memoria de 16KB, consulta la [Guía Técnica del Parche Libusb en Android](file:///home/danielpdiamon/Flash-EEPROM-Tool/GUIA_TECNICA_PARCHE_LIBUSB_ANDROID.md).
 
 Este documento explica de manera detallada y técnica la arquitectura del parche aplicado a `libusb-1.0` en los scripts de compilación de este proyecto. Este parche es el responsable de que herramientas de línea de comandos diseñadas originalmente para Linux de escritorio (como `flashrom` y `minipro`) puedan ejecutarse de manera nativa y directa dentro de Android sin requerir acceso root, utilizando el File Descriptor (FD) proveído por la API Java de Android.

@@ -1,7 +1,8 @@
 # Guía Técnica: Parche Quirúrgico de Libusb en Android (Operación USB sin Root)
 
 > **Proyecto:** Flash SPI Tool  
-> **Versión:** `v1.9.2` (Código de Versión `88`)  
+> **Versión vigente:** `v1.9.27` (Código de Versión `113`)  
+> **Parche introducido en:** `v1.9.2` (Código de Versión `88`)  
 > **Área:** Biblioteca Nativa `libusb-1.0` / Subsistema Linux USBFS / Android NDK C++  
 > **Herramientas Beneficiadas:** `flashrom`, `ftdi_eeprom`, programadores USB directos (CH341A, CH347, ST-LINK v2/v3, J-Link, FT2232H, Dediprog SF100/SF600).
 

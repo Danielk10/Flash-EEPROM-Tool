@@ -1,7 +1,7 @@
 # Guía y Especificación de Optimización: Máximo Rendimiento, Latencia Cero y Memoria Directa
 
 > [!NOTE]
-> **ESTADO DE LA GUÍA: 100% IMPLEMENTADO Y VALIDADO (v1.9.2 - Build 88)**
+> **ESTADO DE LA GUÍA: 100% IMPLEMENTADO Y VALIDADO (v1.9.2 - Build 88; vigente en v1.9.27 - Build 113)**
 > Todas las propuestas técnicas descritas en este documento fueron implementadas y validadas en el proyecto:
 > - **Motor nativo C++**: [`usb_bridge.cpp`](file:///home/danielpdiamon/Flash-EEPROM-Tool/app/src/main/cpp/usb_bridge.cpp)
 > - **Transporte Socket Loopback / PTY**: [`PtyBridge.java`](file:///home/danielpdiamon/Flash-EEPROM-Tool/app/src/main/java/com/diamon/curso/core/PtyBridge.java) y [`UsbController.java`](file:///home/danielpdiamon/Flash-EEPROM-Tool/app/src/main/java/com/diamon/curso/core/UsbController.java)

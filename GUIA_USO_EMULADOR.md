@@ -1,6 +1,6 @@
-# Guía de Uso del Emulador Flashrom (CH341A, Serprog, Bus Pirate, SPIDriver y FTDI FT232H) — Flash SPI Tool v1.9.12
+# Guía de Uso del Emulador Flashrom (CH341A, Serprog, Bus Pirate, SPIDriver y FTDI FT232H) — Flash SPI Tool v1.9.27
 
-Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash SPI** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo para la validación y pruebas de **Flash SPI Tool v1.9.12** (versionCode 98).
+Esta guía explica en detalle cómo compilar, configurar y usar el **Emulador de Memorias Flash SPI** desarrollado en C++ junto con la versión parchada de **`libusb`** y **`flashrom`** nativo para la validación y pruebas de **Flash SPI Tool v1.9.27** (versionCode 113).
 
 El emulador permite simular dispositivos programadores reales contra una memoria SPI de prueba (**GigaDevice GD25Q80** de 1 MB por defecto, o **Macronix MX25L128** de 16 MB con `--mx25l128`) en un entorno local, ideal para desarrollo, validación y depuración rápida sin hardware real. La misma instalación incluye `libftdi1` para validar el programador **FTDI FT232H**.
 
@@ -332,7 +332,7 @@ Una vez realizada una operación de lectura o flasheo con el emulador (ej. `./fl
    - El visor de diferencias realiza un cálculo simultáneo de las **sumas de verificación MD5** de ambos archivos, reportando el porcentaje de discrepancia exacto, los bytes agregados o removidos (`XX→--` / `--→XX`), y mapeando las divergencias sobre una cinta de calor interactiva (`DiffHeatmapView`) dividida en sectores de 4 KB.
 
 3. **Integración con la Suite Pro**:
-   - Los volcados obtenidos del emulador son 100% compatibles con las utilidades de laboratorio de la suite Pro (Bóveda Antibrick con snapshot previo, Editor Hexadecimal en Vivo con modificación in-place, inyector MAC Intel GbE con checksum NVM `0xBABA`, extractor de licencias OEM Windows MSDM y desbloqueo de registros SPI SR1/SR2/SR3), disponibles mediante el Pase Libre de 12 horas o la compra in-app permanente con **"Sin anuncios de por vida"**.
+   - Los volcados obtenidos del emulador son 100% compatibles con las utilidades de laboratorio de la suite Pro (Bóveda Antibrick con snapshot previo, Editor Hexadecimal en Vivo con modificación in-place, inyector MAC Intel GbE con checksum NVM `0xBABA`, extractor de licencias OEM Windows MSDM y desbloqueo de registros SPI SR1/SR2/SR3), disponibles mediante el Pase Libre de 15 minutos o la compra in-app permanente con **"Sin anuncios de por vida"**.
 
 ---
 

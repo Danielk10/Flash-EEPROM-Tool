@@ -21,7 +21,7 @@ El Pase Pro temporal pasa de 12 horas a 15 minutos. Los pases que ya estaban act
 
 ### ✅ Validación
 • `:app:assembleRelease` y `:app:bundleRelease` correctos con `compileSdk 37`, `buildTools 37.0.0`, `NDK 30.0.14904198`, `targetSdk 37` y `minSdk 24`.
-• APK y AAB firmados con `firma_flash_spi_tool.jks`.
+• APK y AAB firmados para producción.
 • `versionCode 113` y `versionName 1.9.27`; ABIs `arm64-v8a` y `armeabi-v7a`.
 • Pruebas unitarias `ProPassManagerTest`: correctas.
 • AAB publicado en Google Play, track `production`, estado `completed` (100 %).
@@ -50,7 +50,7 @@ The temporary Pro Pass changes from 12 hours to 15 minutes. Passes that were alr
 
 ### ✅ Validation
 • `:app:assembleRelease` and `:app:bundleRelease` succeed with `compileSdk 37`, `buildTools 37.0.0`, `NDK 30.0.14904198`, `targetSdk 37` and `minSdk 24`.
-• APK and AAB signed with `firma_flash_spi_tool.jks`.
+• APK and AAB signed for production.
 • `versionCode 113` and `versionName 1.9.27`; ABIs `arm64-v8a` and `armeabi-v7a`.
 • `ProPassManagerTest` unit tests: passing.
 • AAB published to Google Play, `production` track, `completed` status (100%).

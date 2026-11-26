@@ -1,6 +1,6 @@
 # Reporte de Solución: Problemas de PTY (Line Discipline) y Desalineación de Bytes
 
-> **Versión Actual:** Flash SPI Tool v1.9.2 (Build 88)  
+> **Versión del informe:** Flash SPI Tool v1.9.2 (Build 88) — arquitectura vigente en v1.9.27 (Build 113)  
 > **Guía Técnica de Referencia:** Para un desglose exhaustivo de la capa de transporte en C++, consulta la [Guía Técnica del Parche PTY USB](file:///home/danielpdiamon/Flash-EEPROM-Tool/GUIA_TECNICA_PARCHE_PTY_USB.md).
 
 Este documento detalla el análisis y la solución definitiva a un bug crítico que afectaba a todos los programadores de `flashrom` basados en puerto serie (como **Serprog / Arduino**, **Bus Pirate** y **SPIDriver**) que se comunican a través del puente PTY (Pseudo-Terminal) en la aplicación Android.

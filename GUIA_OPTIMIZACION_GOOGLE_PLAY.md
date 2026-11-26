@@ -159,7 +159,7 @@ Antes de subir cualquier archivo a Google Play, se ejecutan las siguientes compr
    * Conectar un programador USB (CH341A / FTDI) y pulsar **Connect / Detectar**.
    * Verificar que la terminal PTY / C++ muestre texto y que la extracción de assets funcione.
    * Abrir el menú de opciones y verificar las herramientas avanzadas:
-     - Comprobar que el diálogo de la suite Pro (**Flash SPI Tool Pro**) se despliegue con la opción de Pase Libre de 12 horas y compra permanente con **"Sin anuncios de por vida"**.
+     - Comprobar que el diálogo de la suite Pro (**Flash SPI Tool Pro**) se despliegue con la opción de Pase Libre de 15 minutos y compra permanente con **"Sin anuncios de por vida"**.
      - Comprobar la opción **"🔒 Verificar Integridad MD5 / SHA-256"** para el cálculo multialgoritmo en streaming y cotejo con el portapapeles.
      - Comprobar la herramienta **"Comparar Archivos Hex (Diff)"** con detección estricta, cotejo side-by-side de hashes MD5 y mapa de calor visual por sectores de 4 KB.
      - Comprobar el diálogo de **Desbloqueo de Registros SPI SR1/SR2/SR3**, **Quad Enable (QE)** y **Bóveda Antibrick con Rollback de Emergencia**.

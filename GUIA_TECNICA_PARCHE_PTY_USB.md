@@ -1,7 +1,8 @@
 # Guía Técnica: Arquitectura del Parche PTY USB y Puente Serie Nativo
 
 > **Proyecto:** Flash SPI Tool  
-> **Versión:** `v1.9.2` (Código de Versión `88`)  
+> **Versión vigente:** `v1.9.27` (Código de Versión `113`)  
+> **Parche introducido en:** `v1.9.2` (Código de Versión `88`)  
 > **Área:** Capa de Transporte de Bajo Nivel (JNI C++ / Kernel Linux / Android USB Host)  
 > **Dispositivos Afectados:** Programadores basados en interfaz serie USB (**Serprog / Arduino**, **Bus Pirate**, **SPIDriver**, microcontroladores FTDI/CH340/CP2102/PL2303).
 

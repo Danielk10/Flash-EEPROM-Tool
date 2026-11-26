@@ -1,6 +1,6 @@
 # Reporte de Optimización: PTY Nativo No Bloqueante y USB Asíncrono
 
-> **Versión Actual:** Flash SPI Tool v1.9.2 (Build 88)  
+> **Versión del informe:** Flash SPI Tool v1.9.2 (Build 88) — arquitectura vigente en v1.9.27 (Build 113)  
 > **Guía Técnica de Referencia:** Para la arquitectura completa de transporte en C++, consulta la [Guía Técnica del Parche PTY USB](file:///home/danielpdiamon/Flash-EEPROM-Tool/GUIA_TECNICA_PARCHE_PTY_USB.md).
 
 Este reporte detalla las mejoras críticas implementadas en el proyecto **Flash SPI Tool** para resolver problemas de latencia, bloqueos de hilos y desincronización de protocolo cuando se utiliza con programadores basados en serprog (Arduino UNO / CH340G).

@@ -1,9 +1,9 @@
-# Flash SPI Tool v1.9.17
+# Flash SPI Tool v1.9.27
 
-[![Release](https://img.shields.io/badge/Release-v1.9.17%20(Build%20103)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.17)
+[![Release](https://img.shields.io/badge/Release-v1.9.27%20(Build%20113)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.27)
 [![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024%20a%20API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![minSdk](https://img.shields.io/badge/minSdk-24%20(Nougat)-brightgreen?logo=android)](https://developer.android.com/)
-[![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.17.md)
+[![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.27.md)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20%7C%20armeabi--v7a-0091EA?logo=arm&logoColor=white)](https://developer.android.com/ndk/guides/abis)
 [![NDK](https://img.shields.io/badge/NDK-r30--rc1-4CAF50?logo=android&logoColor=white)](https://developer.android.com/ndk)
 [![AGP](https://img.shields.io/badge/AGP-9.5.1-blue?logo=android)](https://developer.android.com/studio/releases/gradle-plugin)
@@ -22,9 +22,9 @@
 Diseñada tanto para ingenieros de hardware y laboratorios de reparación técnica como para entusiastas de la electrónica, la suite integra el poder del motor nativo de **flashrom** y una capa de transporte de alto rendimiento en C++ (`usb_bridge.cpp`) con una interfaz gráfica moderna, segura y optimizada para dispositivos táctiles.
 
 > **Información de la Versión Actual:**
-> - **Versión de la App:** `v1.9.17`
-> - **Código de Versión (`versionCode`):** `103`
-> - **Novedad principal:** Soporte nativo de 32 bits (`armeabi-v7a`) junto a 64 bits (`arm64-v8a`): los binarios de flashrom, pciutils, libftdi, libjaylink y libusb se empaquetan para ambas arquitecturas y la app selecciona automáticamente la del dispositivo. El motor flashrom se enlaza además con `-llog` para integrarse con el registro de Android.
+> - **Versión de la App:** `v1.9.27`
+> - **Código de Versión (`versionCode`):** `113`
+> - **Novedad principal:** Pase Pro temporal de **15 minutos** con conservación de pases activos de mayor duración, activación mediante `max(vencimiento actual, ahora + 15 min)` y registro del campo `app: "flash"` en la colección compartida `pro_passes` de Firestore. La publicidad se consolida con inicialización de AdMob antes de solicitar el anuncio nativo, con banner y nativo pedidos en `onResume`, sin reintentos ante `No fill` y con como máximo un reintento ante errores transitorios.
 > - **Rango de Compatibilidad:** Android 7.0 Nougat (API 24) hasta Android 17 (API 37)
 > - **Arquitectura de Procesador:** ARM de 64 bits (`arm64-v8a`) y de 32 bits (`armeabi-v7a`). La variante de 64 bits usa alineación de páginas de memoria de 16KB para compatibilidad total con Android 15+.
 > - **Seguridad:** Operación 100% en espacio de usuario mediante Android USB Host API; no requiere root.
@@ -102,28 +102,32 @@ Todas las funciones indispensables para el trabajo con chips flash y recuperaci�
 - 📥 **Lectura Completa (Read / Dump)**: Volcado íntegro de la memoria SPI hacia el almacenamiento local o hacia una ruta elegida mediante Android Storage Access Framework (SAF).
 - ⚡ **Escritura y Flasheo Seguro (Write / Flash)**: Programación de bloques de memoria con verificación rigurosa byte a byte (`-v`) para certificar que el contenido grabado coincide exactamente con el archivo de origen.
 - 🧹 **Borrado Completo de Chip (`--erase`)**: Limpieza de todos los sectores del silicio a estado inicial (`0xFF`) con confirmación de seguridad previa para prevenir borrados accidentales.
-- 🔓 **Desbloqueo de Registros de Protección de Estado SPI**: Desactivación con un solo clic de los bits de protección contra escritura (`--wp-disable` en registros SR1, SR2 y SR3).
-- 🚀 **Activación y Verificación de Quad Enable (Bit QE)**: Habilitación y consulta del bit QE en el registro SR2 para memorias Quad-SPI de alta velocidad requeridas por BIOS y GPUs modernas.
+- 🧮 **Visor Hexadecimal Mapeado (mmap)**: Inspección de volcados completos con desplazamiento rápido, búsqueda y navegación por offsets sin cargar todo el archivo en la memoria RAM.
+- 🔥 **Comparador Hex Diff con Detección Estricta y Mapa de Calor**:
+  - **Detección Estricta en Tamaños Diferentes**: Identificación rigurosa byte a byte al comparar volcados de diferente tamaño (ej. 16 MB frente a 1 MB relleno de `0xFF`), descartando falsos positivos de archivos idénticos y señalando bytes excedentes con notación explícita (`XX→--` / `--→XX`).
+  - **Cotejo Side-by-Side de Hashes MD5**: Cálculo simultáneo y visualización en paralelo de sumas de verificación MD5 y tamaños exactos en bytes de ambos archivos seleccionados.
+  - **Cinta de Calor Visual (`DiffHeatmapView`)**: Mapeo dinámico por sectores de 4 KB con navegación instantánea hacia las diferencias exactas de firmware (`A → B`).
 - 📐 **Guía Interactiva de Pinouts de Hardware**: Diagramas visuales en pantalla con asignación de pines y jumpers para encapsulados **DIP-8**, **SOIC-8** y **WSON-8**, así como diagramas para CH341A, Arduino Serprog, Bus Pirate y SPIDriver.
 - 🎛️ **Consola de Comandos flashrom**: Terminal interactiva integrada con soporte para cualquier parámetro avanzado de flashrom (`flashrom -p ...`).
 - 🧪 **Modo Dummy de Pruebas**: Simulación de chips virtuales (ej. `W25Q128FV`, `MX25L6436`, `SST25VF040`) para pruebas de software sin necesidad de conectar hardware real.
+- 📤 **Exportación de Firmware Serprog**: Extracción del firmware `serprog` incluido en los assets para grabarlo en Arduino, ESP32, RP2040 u otros microcontroladores compatibles.
 
 ---
 
 ## 💎 Flash SPI Tool Pro Suite (Monetización Ética & Híbrida)
 
-Para respaldar el mantenimiento continuo del proyecto sin comprometer las operaciones básicas de silicio, la suite de ingeniería avanzada **Flash SPI Tool PRO** está disponible desde la versión 1.9.2 con un esquema de monetización justo, transparente y accesible:
+Para respaldar el mantenimiento continuo del proyecto sin comprometer las operaciones básicas de silicio, la suite de ingeniería avanzada **Flash SPI Tool PRO** está disponible desde la versión 1.9.0 con un esquema de monetización justo, transparente y accesible:
 
 ### Esquema de Acceso Flexible y Justo
-1. **Pase Pro Gratuito de 12 Horas con Nube Firebase**: Cualquier usuario puede desbloquear la suite Pro completa de forma 100% gratuita durante 12 horas continuas con solo visualizar un anuncio de video bonificado (Rewarded Video de Google AdMob). El pase cuenta con **persistencia multinivel en Firebase Firestore (colección `pro_passes`)**, respaldo local firmado con SHA-256 (`.flash_spi_pro_pass.dat`) y Google Cloud Backup para que no se pierda al reinstalar la app o limpiar datos. Puede renovarse indefinidamente.
-2. **Desbloqueo Permanente In-App ($5.00 USD)**: Compra única de por vida mediante Google Play Billing (`donacion_pizza` / `remove_ads_pro`) con reconocimiento permanente de licencia (`acknowledgePurchase`) para técnicos profesionales.
-3. **Sin anuncios de por vida**: Tanto con el Pase de 12 horas como con la compra de por vida, se suprimen en su totalidad los banners e intersticiales publicitarios.
+1. **Pase Pro Gratuito de 15 Minutos con Nube Firebase**: Cualquier usuario puede desbloquear la suite Pro completa de forma 100% gratuita durante 15 minutos continuos con solo visualizar un anuncio de video bonificado (Rewarded Video de Google AdMob). El pase cuenta con **persistencia multinivel en Firebase Firestore (colección `pro_passes`)**, respaldo local firmado con SHA-256 (`.flash_spi_pro_pass.dat`) y Google Cloud Backup para que no se pierda al reinstalar la app o limpiar datos. Puede renovarse indefinidamente. La activación usa `max(vencimiento actual, ahora + 15 min)`: un pase activo de mayor duración (por ejemplo, uno heredado de 12 horas) nunca se recorta.
+2. **Desbloqueo Permanente In-App ($5.00 USD)**: Compra única de por vida mediante Google Play Billing (`remove_ads_pro`, con compatibilidad para los identificadores legacy `remove_ads` y `donacion_pizza`) con reconocimiento permanente de licencia (`acknowledgePurchase`) para técnicos profesionales.
+3. **Sin anuncios de por vida**: Tanto con el Pase de 15 minutos como con la compra de por vida, se suprimen en su totalidad los banners, anuncios nativos e intersticiales publicitarios.
 
 ### Herramientas Avanzadas de la Suite Pro
 - 🛡️ **Bóveda de Seguridad y Respaldo Pre-Flash Antibrick**:
   - **Snapshot Automático Pre-Flash**: Respaldo instantáneo del chip con hash SHA-256 en la bóveda de seguridad antes de cualquier operación destructiva de escritura (`-w`) o borrado (`--erase`).
   - **Rollback de Emergencia en 1 Clic**: Restauración instantánea del último volcado funcional garantizado en caso de interrupción de energía o corrupción de firmware.
-- 🔐 **Verificador Criptográfico de Integridad MD5, SHA-256 y CRC32 (Streaming Zero-OOM)**:
+- 🔐 **Verificador Criptográfico de Integridad MD5, SHA-1, SHA-256 y CRC32 (Streaming Zero-OOM)**:
   - **Acceso Directo desde el Menú Principal**: Opción dedicada **"Verificar Integridad MD5 / SHA-256"** para auditar y certificar el volcado cargado en cualquier instante.
   - **Cálculo multialgoritmo en streaming**: Generación en streaming (MD5, SHA-1, SHA-256 y CRC32) sobre canales NIO para archivos de hasta 64 MB o más sin sobrecargar la memoria RAM del teléfono.
   - **Cotejo inteligente con portapapeles**: Comparación automática en tiempo real contra hashes del portapapeles con confirmación visual de coincidencia.
@@ -140,19 +144,12 @@ Para respaldar el mantenimiento continuo del proyecto sin comprometer las operac
 - 🔑 **Extractor de Clave Windows OEM desde Tablas MSDM ACPI**:
   - Escaneo automático de tablas ACPI en el firmware de la BIOS.
   - Decodificación del algoritmo Base24 para recuperar la clave de producto original de 25 caracteres de Windows instalada de fábrica.
-- 🏷️ **Modificador de Números de Serie y UUID SMBIOS y DMI**:
-  - Búsqueda y reemplazo quirúrgico de cadenas de número de serie y UUID GUID de 16 bytes (en formato little-endian SMBIOS o RFC-4122) para clonación o restauración de tarjetas madre.
-- 🧩 **Analizador de Particiones Intel ME y CSME**:
-  - Decodificación profunda de la tabla de particiones `$FPT` del Intel Management Engine.
-  - Verificación de versiones, integridad y estado de los módulos ME.
 - 🔓 **Desbloqueo de Registros SPI SR1, SR2 y SR3 en 1 Clic**:
   - Desactivación con un solo clic de los bits de protección contra escritura de hardware (`--wp-disable`) en registros de estado.
+- 🚀 **Activación y Verificación de Quad Enable (Bit QE)**:
+  - Habilitación y consulta del bit QE en el registro SR2 para memorias Quad-SPI de alta velocidad requeridas por BIOS y GPUs modernas.
 - ⚡ **Flasheo Delta Selectivo de Sectores de 4KB de Alta Velocidad**:
   - Reprogramación optimizada que actualiza únicamente los bloques con cambios detectados, minimizando tiempos de escritura y desgaste del silicio.
-- 🔥 **Comparador Hex Diff con Detección Estricta y Mapa de Calor**:
-  - **Detección Estricta en Tamaños Diferentes**: Identificación rigurosa byte a byte al comparar volcados de diferente tamaño (ej. 16 MB frente a 1 MB relleno de `0xFF`), descartando falsos positivos de archivos idénticos y señalando bytes excedentes con notación explícita (`XX→--` / `--→XX`).
-  - **Cotejo Side-by-Side de Hashes MD5**: Cálculo simultáneo y visualización en paralelo de sumas de verificación MD5 y tamaños exactos en bytes de ambos archivos seleccionados.
-  - **Cinta de Calor Visual (`DiffHeatmapView`)**: Mapeo dinámico por sectores de 4 KB con navegación instantánea hacia las diferencias exactas de firmware (`A → B`).
 
 ---
 
@@ -297,8 +294,9 @@ Para facilitar la auditoría, mantenimiento y extensión del proyecto, se detall
 | [**Reporte Parche Libusb Android**](./REPORTE_PARCHE_LIBUSB_ANDROID.md) | Informe técnico del cambio de enfoque destructivo (`*ctx = NULL`) a quirúrgico (`core.c` + `usbi_alloc_device`). | Historial de portabilidad nativa. |
 | [**Reporte Optimización PTY Asíncrono**](./REPORTE_OPTIMIZACION_PTY_USB_ASYNC.md) | Implementación de `poll()` JNI, colas `UsbRequest` y beacons de sincronización `0xAA 0x55`. | Mitigación de timeouts de hardware. |
 | [**Guía de Uso del Emulador Flashrom**](./GUIA_USO_EMULADOR.md) | Manual interactivo para ejecutar la suite de emulación de hardware sin dispositivos físicos conectados. | Pruebas locales y CI/CD. |
-| [**Guía de Configuración de Monetización**](./GUIA_CONFIGURACION_PLAY_CONSOLE_MONETIZACION.md) | Pasos de Google Play Console para el producto `donacion_pizza`, AdMob Rewarded Video y persistencia Firestore. | Administración y publicación en Play Store. |
-| [**Notas de Lanzamiento v1.9.17**](./RELEASE_NOTES_v1.9.17.md) | Registro técnico de cambios, compatibilidad de firmware y pruebas de la versión 1.9.17 (Build 103), con soporte ARM de 32 y 64 bits. | Registro de versiones y auditoría de seguridad. |
+| [**Guía de Configuración de Monetización**](./GUIA_CONFIGURACION_PLAY_CONSOLE_MONETIZACION.md) | Pasos de Google Play Console para el producto `remove_ads_pro` (y IDs legacy), AdMob Rewarded Video/Nativo/Banner, consentimiento UMP y persistencia Firestore del Pase Pro de 15 minutos. | Administración y publicación en Play Store. |
+| [**Guía de Optimización para Google Play**](./GUIA_OPTIMIZACION_GOOGLE_PLAY.md) | Buenas prácticas de compilación, ofuscación R8, firma y verificación del AAB/APK antes de publicar. | Preparación de lanzamientos y control de calidad. |
+| [**Notas de Lanzamiento v1.9.27**](./RELEASE_NOTES_v1.9.27.md) | Registro técnico de cambios, compatibilidad de firmware y pruebas de la versión 1.9.27 (Build 113), con Pase Pro de 15 minutos y publicidad consolidada. | Registro de versiones y auditoría de seguridad. |
 
 ---
 
