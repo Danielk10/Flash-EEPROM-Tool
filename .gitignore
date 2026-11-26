@@ -50,3 +50,6 @@ mock_usb.bin
 
 __pycache__/
 *.pyc
+
+# Artefactos descargados de InMobi (solo inspección local)
+.inmobi-sdk/

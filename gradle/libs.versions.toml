@@ -10,6 +10,9 @@ usbSerialForAndroid = "3.12.0"
 documentfile = "1.1.0"
 appCenterSdkVersion = "5.0.6"
 playServicesAds = "25.5.0"
+# Adapter oficial de InMobi para AdMob Mediation (bidding + waterfall).
+# 11.5.1.0 está compilado contra play-services-ads 25.5.0 y exige API 24+.
+inmobiAdapter = "11.5.1.0"
 # Billing 9.1.0 llama a ActivityOptions.setPendingIntentBackgroundActivityStartMode
 # desde ProxyBillingActivity en builds de Android 14 que no exponen el método
 # (NoSuchMethodError). 8.3.0 es la última 8.x soportada por Play hasta 2027.
@@ -32,6 +35,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 usb-serial-for1-android = { module = "com.github.mik3y:usb-serial-for-android", version.ref = "usbSerialForAndroid" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+inmobi-mediation = { module = "com.google.ads.mediation:inmobi", version.ref = "inmobiAdapter" }
 play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
 hsdp = { module = "com.google.android.play:hsdp", version.ref = "hsdp" }
 appcenter-analytics = { module = "com.microsoft.appcenter:appcenter-analytics", version.ref = "appCenterSdkVersion" }
