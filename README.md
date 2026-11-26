@@ -1,11 +1,10 @@
+<div align="center">
+
 # Flash SPI Tool v1.9.27
 
-<a href="https://play.google.com/store/apps/details?id=com.diamon.curso">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" height="50">
-</a>
+### Herramienta profesional para lectura, flasheo y recuperación de memorias Flash SPI, LPC/FWH y EEPROM vía USB OTG en Android
 
 [![Release](https://img.shields.io/badge/Release-v1.9.27%20(Build%20113)-007ACC?logo=github&logoColor=white)](https://github.com/danielk10/Flash-EEPROM-Tool/releases/tag/v1.9.27)
-[![Google Play](https://img.shields.io/badge/Google%20Play-Disponible-414141?logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.diamon.curso)
 [![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024%20a%20API%2037)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
 [![minSdk](https://img.shields.io/badge/minSdk-24%20(Nougat)-brightgreen?logo=android)](https://developer.android.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-Pro%20Suite%20%7C%20Zero--OOM-FF6F00?logo=materialdesignicons&logoColor=white)](./RELEASE_NOTES_v1.9.27.md)
@@ -23,7 +22,13 @@
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat-square&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/danielpdiai)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/danieleliasdiamonvazquez)
 
+<br/>
+
+[![Get it on Google Play](https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg)](https://play.google.com/store/apps/details?id=com.diamon.curso)
+
 ---
+
+</div>
 
 ## 📌 Descripción del Proyecto
 
