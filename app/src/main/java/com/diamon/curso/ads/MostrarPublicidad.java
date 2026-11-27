@@ -522,7 +522,10 @@ public class MostrarPublicidad implements Publicidad {
         mainHandler.post(
                 () -> {
                     try {
-                        if (destroyed || !adsReady || isAdDisabled()) {
+                        if (destroyed || !adsReady) {
+                            return;
+                        }
+                        if (consentResolved && !ConsentManager.canRequestAds()) {
                             return;
                         }
                         if (isRewardedAdLoaded() || isRewardedLoading) {
@@ -604,8 +607,14 @@ public class MostrarPublicidad implements Publicidad {
                 (activity != null && !activity.isFinishing() && !activity.isDestroyed())
                         ? activity
                         : actividadRef.get();
-        if (destroyed || isAdDisabled() || targetActivity == null
+        if (destroyed || targetActivity == null
                 || targetActivity.isFinishing() || targetActivity.isDestroyed()) {
+            if (onDismissedListener != null) {
+                onDismissedListener.run();
+            }
+            return;
+        }
+        if (consentResolved && !ConsentManager.canRequestAds()) {
             if (onDismissedListener != null) {
                 onDismissedListener.run();
             }
@@ -684,7 +693,7 @@ public class MostrarPublicidad implements Publicidad {
                     @Override
                     public void onAdDismissedFullScreenContent() {
                         Log.d(TAG, "RewardedAd cerrado por el usuario.");
-                        if (!destroyed && !isAdDisabled()) {
+                        if (!destroyed && (!consentResolved || ConsentManager.canRequestAds())) {
                             cargarRewardedAd();
                         }
                         if (onDismissedListener != null) {
@@ -695,7 +704,7 @@ public class MostrarPublicidad implements Publicidad {
                     @Override
                     public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
                         Log.w(TAG, "Fallo al mostrar RewardedAd: " + adError.getMessage());
-                        if (!destroyed && !isAdDisabled()) {
+                        if (!destroyed && (!consentResolved || ConsentManager.canRequestAds())) {
                             cargarRewardedAd();
                         }
                         if (onDismissedListener != null) {

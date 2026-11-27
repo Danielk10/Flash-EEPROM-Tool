@@ -36,6 +36,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.view.WindowManager;
@@ -195,6 +196,19 @@ public class MainActivity extends AppCompatActivity {
     private BillingManager billingManager;
     private ProPassManager proPassManager;
     private PowerManager.WakeLock operationWakeLock;
+    private Menu optionsMenu;
+    private final Handler proTimerHandler = new Handler(Looper.getMainLooper());
+    private final Runnable proTimerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (proPassManager != null && proPassManager.hasActiveProPass()) {
+                actualizarProTimerText();
+                proTimerHandler.postDelayed(this, 1000);
+            } else {
+                actualizarEstadoProUI();
+            }
+        }
+    };
 
     // API para Visor Hexadecimal (Anuncio al regresar y disparo de grabación)
     private final ActivityResultLauncher<Intent> hexViewerLauncher = registerForActivityResult(
@@ -1262,10 +1276,12 @@ public class MainActivity extends AppCompatActivity {
                 log(getString(R.string.str_log_dummy_mode_active));
             }
         }
+        gestionarProTimer();
     }
 
     @Override
     protected void onPause() {
+        proTimerHandler.removeCallbacks(proTimerRunnable);
         if (mostrarPublicidad != null) {
             mostrarPublicidad.pausarBanner();
         }
@@ -1581,8 +1597,32 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.optionsMenu = menu;
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
+    }
+
+    private void actualizarProTimerText() {
+        if (optionsMenu != null && proPassManager != null) {
+            MenuItem proItem = optionsMenu.findItem(R.id.action_pro_status);
+            if (proItem != null) {
+                if (billingManager != null && billingManager.isProPurchased()) {
+                    proItem.setTitle(R.string.menu_pro_permanent);
+                } else if (proPassManager.hasActiveProPass()) {
+                    proItem.setTitle(getString(R.string.menu_pro_timer, proPassManager.getTiempoRestanteFormateado()));
+                } else {
+                    proItem.setTitle(R.string.menu_pro_mode);
+                }
+            }
+        }
+    }
+
+    private void gestionarProTimer() {
+        proTimerHandler.removeCallbacks(proTimerRunnable);
+        if (proPassManager != null && proPassManager.hasActiveProPass() && !isFinishing() && !isDestroyed()) {
+            actualizarProTimerText();
+            proTimerHandler.postDelayed(proTimerRunnable, 1000);
+        }
     }
 
     private void actualizarEstadoProUI() {
@@ -1600,6 +1640,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             invalidateOptionsMenu();
+            gestionarProTimer();
         });
     }
 
@@ -2326,6 +2367,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        proTimerHandler.removeCallbacks(proTimerRunnable);
+        optionsMenu = null;
         releaseWakeLockAndScreenOn();
         if (mostrarPublicidad != null) {
             mostrarPublicidad.disposeBanner();
