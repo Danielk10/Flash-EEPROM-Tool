@@ -16,33 +16,27 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.diamon.curso.R;
-import com.google.android.gms.ads.AdError;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdSize;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.FullScreenContentCallback;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.OnUserEarnedRewardListener;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
-import com.google.android.gms.ads.rewarded.RewardedAd;
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.wortise.ads.AdError;
+import com.wortise.ads.AdSize;
+import com.wortise.ads.WortiseSdk;
+import com.wortise.ads.banner.BannerAd;
+import com.wortise.ads.interstitial.InterstitialAd;
+import com.wortise.ads.rewarded.RewardedAd;
+import com.wortise.ads.rewarded.models.Reward;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import kotlin.Unit;
+
 /**
- * Gestor unificado de publicidad para Flash SPI Tool.
+ * Gestor unificado de publicidad para Flash SPI Tool sobre el SDK de Wortise.
  * Controla Banners Adaptativos, Interstitials y Rewarded Video con soporte para
  * omisión absoluta cuando el usuario tiene Pro activo (Pase 15min o Compra Permanente).
  *
  * Política de carga:
- * - El banner se pide una sola vez y se reutiliza (AdMob lo refresca solo).
+ * - El banner se pide una sola vez y Wortise lo refresca solo.
  * - El interstitial y el rewarded se cargan bajo demanda, con caducidad de 60 min.
  * - El interstitial se precarga al abrir el visor HEX; si al volver aún no ha
  *   llegado, solo se muestra dentro de los 3 s siguientes y, si no, se descarta
@@ -53,10 +47,6 @@ import java.util.List;
 public class MostrarPublicidad implements Publicidad {
 
     private static final String TAG = "MostrarPublicidad";
-    public static final String BANNER_AD_UNIT_ID = "ca-app-pub-5141499161332805/1518371626";
-    public static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-5141499161332805/8275351662";
-    /** ID Real AdMob oficial de producción para Rewarded Video de Flash SPI Tool: */
-    public static final String REWARDED_AD_UNIT_ID = "ca-app-pub-5141499161332805/9025351389";
 
     // Cooldown mínimo de 3 minutos entre interstitials para proteger la experiencia del usuario.
     private static final long COOLDOWN_DEFAULT_MS = 3 * 60 * 1000;
@@ -71,15 +61,13 @@ public class MostrarPublicidad implements Publicidad {
     // Si un interstitial no se puede mostrar, reintentamos la carga más tarde.
     private static final long INTERSTITIAL_RETRY_MS = 45 * 1000;
 
-    private static volatile boolean mobileAdsInitialized = false;
-    private static volatile boolean mobileAdsInitializing = false;
+    private static volatile boolean sdkWaitRegistered = false;
     private static final List<Runnable> pendingInitCallbacks = new ArrayList<>();
 
     private final WeakReference<Activity> actividadRef;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    private AdView adView;
-    private final AdRequest adRequest;
+    private BannerAd bannerAd;
     private boolean bannerLoading = false;
     private boolean bannerLoaded = false;
     private long bannerLoadedAt = 0;
@@ -99,8 +87,10 @@ public class MostrarPublicidad implements Publicidad {
     private boolean rewardedShowPending = false;
     private long rewardedPendingSince = 0;
     private Activity pendingRewardedActivity;
-    private OnUserEarnedRewardListener pendingRewardListener;
+    private OnRewardEarnedListener pendingRewardListener;
     private Runnable pendingRewardedDismissListener;
+    private OnRewardEarnedListener activeRewardListener;
+    private Runnable activeDismissListener;
 
     private AdsDisabledChecker adsDisabledChecker;
     private boolean destroyed = false;
@@ -128,37 +118,34 @@ public class MostrarPublicidad implements Publicidad {
 
         requestConsent(actividad);
 
-        adView = new AdView(actividad);
-        adView.setAdUnitId(BANNER_AD_UNIT_ID);
-        adView.setAdSize(getAdaptiveBannerAdSize(actividad));
-        adView.setVisibility(View.GONE);
-        adView.setAdListener(
-                new AdListener() {
+        bannerAd = new BannerAd(actividad);
+        bannerAd.setAdSize(getAdaptiveBannerAdSize(actividad));
+        bannerAd.setAdUnitId(WortiseAdUnits.BANNER);
+        bannerAd.setVisibility(View.GONE);
+        bannerAd.setListener(
+                new BannerAd.Listener() {
                     @Override
-                    public void onAdLoaded() {
+                    public void onBannerLoaded(@NonNull BannerAd ad) {
                         bannerLoaded = true;
                         bannerLoadedAt = System.currentTimeMillis();
                         bannerLoading = false;
                         bannerRetryCount = 0;
-                        Log.d(TAG, "Adaptive Banner cargado exitosamente.");
-                        if (isAdDisabled() && adView != null) {
-                            adView.setVisibility(View.GONE);
-                        } else if (adView != null) {
-                            adView.setVisibility(View.VISIBLE);
+                        Log.d(TAG, "Banner adaptativo cargado exitosamente.");
+                        if (isAdDisabled()) {
+                            ad.setVisibility(View.GONE);
+                        } else {
+                            ad.setVisibility(View.VISIBLE);
                         }
                     }
 
                     @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    public void onBannerFailedToLoad(@NonNull BannerAd ad, @NonNull AdError error) {
                         bannerLoaded = false;
                         bannerLoading = false;
-                        Log.w(TAG, "Error cargando Adaptive Banner: código " + loadAdError.getCode()
-                                + " - " + loadAdError.getMessage());
-                        if (adView != null) {
-                            adView.setVisibility(View.GONE);
-                        }
+                        Log.w(TAG, "Error cargando banner: " + error.getMessage());
+                        ad.setVisibility(View.GONE);
                         if (!destroyed && !activityPaused && !isAdDisabled()
-                                && loadAdError.getCode() != AdRequest.ERROR_CODE_NO_FILL
+                                && error != AdError.NO_FILL
                                 && bannerRetryCount < MAX_BANNER_RETRIES) {
                             bannerRetryCount++;
                             mainHandler.postDelayed(() -> {
@@ -171,11 +158,10 @@ public class MostrarPublicidad implements Publicidad {
                     }
 
                     @Override
-                    public void onAdImpression() {
+                    public void onBannerImpression(@NonNull BannerAd ad) {
                         Log.d(TAG, "Impresión de banner registrada.");
                     }
                 });
-        adRequest = new AdRequest.Builder().build();
 
         // El rewarded NO se precarga aquí: se hace cuando el usuario abre el
         // diálogo Pro o pulsa el botón. Así no se desperdician peticiones.
@@ -193,8 +179,8 @@ public class MostrarPublicidad implements Publicidad {
 
     /**
      * Reaplica el estado después de que el usuario cambie su decisión en
-     * "Opciones de privacidad". Si concede el consentimiento, se inicializa
-     * MobileAds y se cargan los anuncios pendientes.
+     * "Opciones de privacidad". Si concede el consentimiento, se cargan los
+     * anuncios pendientes.
      */
     public void onConsentChanged() {
         if (!destroyed) {
@@ -225,6 +211,13 @@ public class MostrarPublicidad implements Publicidad {
                         bannerLoadPending = false;
                         cargarBanner();
                     }
+                    if (interstitialShowPending) {
+                        cargarInterstial();
+                    }
+                    if (rewardedShowPending) {
+                        cargarRewardedAd();
+                        schedulePendingRewardedTimeout();
+                    }
                     if (onConsentResolvedListener != null) {
                         try {
                             onConsentResolvedListener.onConsentResolved(true);
@@ -233,13 +226,6 @@ public class MostrarPublicidad implements Publicidad {
                         }
                     }
                 });
-            }
-            if (interstitialShowPending) {
-                cargarInterstial();
-            }
-            if (rewardedShowPending) {
-                cargarRewardedAd();
-                schedulePendingRewardedTimeout();
             }
         } else {
             bannerLoadPending = false;
@@ -261,49 +247,47 @@ public class MostrarPublicidad implements Publicidad {
     }
 
     public static boolean isMobileAdsInitialized() {
-        return mobileAdsInitialized;
+        return WortiseSdk.isReady();
     }
 
     public static void initializeMobileAds(Context context, @Nullable Runnable onComplete) {
-        if (mobileAdsInitialized) {
+        if (WortiseSdk.isReady()) {
             if (onComplete != null) {
                 new Handler(Looper.getMainLooper()).post(onComplete);
             }
             return;
         }
+
         synchronized (pendingInitCallbacks) {
             if (onComplete != null) {
                 pendingInitCallbacks.add(onComplete);
             }
-            if (mobileAdsInitializing) {
+            if (sdkWaitRegistered) {
                 return;
             }
-            mobileAdsInitializing = true;
+            sdkWaitRegistered = true;
         }
-        MobileAds.initialize(
-                context.getApplicationContext(),
-                new OnInitializationCompleteListener() {
-                    @Override
-                    public void onInitializationComplete(
-                            @NonNull InitializationStatus initializationStatus) {
-                        mobileAdsInitialized = true;
-                        mobileAdsInitializing = false;
-                        Log.d(TAG, "MobileAds inicializado con éxito.");
-                        new Handler(Looper.getMainLooper()).post(() -> {
-                            List<Runnable> callbacks;
-                            synchronized (pendingInitCallbacks) {
-                                callbacks = new ArrayList<>(pendingInitCallbacks);
-                                pendingInitCallbacks.clear();
-                            }
-                            for (Runnable cb : callbacks) {
-                                try {
-                                    cb.run();
-                                } catch (Exception e) {
-                                    Log.e(TAG, "Error en callback de inicialización", e);
-                                }
-                            }
-                        });
-                    }
+
+        WortiseSdk.wait(
+                () -> {
+                    new Handler(Looper.getMainLooper())
+                            .post(
+                                    () -> {
+                                        List<Runnable> callbacks;
+                                        synchronized (pendingInitCallbacks) {
+                                            sdkWaitRegistered = false;
+                                            callbacks = new ArrayList<>(pendingInitCallbacks);
+                                            pendingInitCallbacks.clear();
+                                        }
+                                        for (Runnable cb : callbacks) {
+                                            try {
+                                                cb.run();
+                                            } catch (Exception e) {
+                                                Log.e(TAG, "Error en callback de inicialización", e);
+                                            }
+                                        }
+                                    });
+                    return Unit.INSTANCE;
                 });
     }
 
@@ -326,12 +310,12 @@ public class MostrarPublicidad implements Publicidad {
     }
 
     /**
-     * Calcula el tamaño óptimo de Anchored Adaptive Banner según el ancho de pantalla del dispositivo.
+     * Calcula el tamaño óptimo de banner adaptativo anclado según el ancho de pantalla.
      */
     @SuppressWarnings("deprecation")
     private AdSize getAdaptiveBannerAdSize(Activity activity) {
         if (activity == null) {
-            return AdSize.BANNER;
+            return AdSize.HEIGHT_50;
         }
         try {
             int adWidthPixels;
@@ -344,10 +328,10 @@ public class MostrarPublicidad implements Publicidad {
             }
             float density = displayMetrics.density;
             int adWidth = (int) (adWidthPixels / density);
-            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth);
+            return AdSize.getAnchoredAdaptiveBannerAdSize(activity, adWidth);
         } catch (Exception e) {
-            Log.e(TAG, "Error calculando adaptive banner size, fallback a estándar", e);
-            return AdSize.BANNER;
+            Log.e(TAG, "Error calculando banner adaptativo, fallback a 320x50", e);
+            return AdSize.HEIGHT_50;
         }
     }
 
@@ -379,7 +363,7 @@ public class MostrarPublicidad implements Publicidad {
             Activity actividad = actividadRef.get();
             if (actividad != null && !actividad.isFinishing() && !actividad.isDestroyed()) {
                 ultimoTiempoInterstitial = ahora;
-                mInterstitialAd.show(actividad);
+                mInterstitialAd.showAd(actividad);
                 return true;
             }
             return false;
@@ -417,14 +401,19 @@ public class MostrarPublicidad implements Publicidad {
             return;
         }
 
+        if (!WortiseSdk.isReady()) {
+            Activity context = actividadRef.get();
+            if (context != null) {
+                initializeMobileAds(context, this::cargarInterstial);
+            }
+            return;
+        }
+
         if (isLoadingInterstitial || isInterstitialFresh()) {
             return;
         }
 
-        if (mInterstitialAd != null) {
-            mInterstitialAd = null;
-            interstitialLoadedAt = 0;
-        }
+        cleanupInterstitial();
 
         Activity actividad = actividadRef.get();
         if (actividad == null || actividad.isFinishing() || actividad.isDestroyed()) {
@@ -432,69 +421,90 @@ public class MostrarPublicidad implements Publicidad {
         }
 
         isLoadingInterstitial = true;
-        InterstitialAd.load(
-                actividad,
-                INTERSTITIAL_AD_UNIT_ID,
-                adRequest,
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                        mInterstitialAd = interstitialAd;
-                        isLoadingInterstitial = false;
-                        interstitialLoadedAt = System.currentTimeMillis();
+        mInterstitialAd = new InterstitialAd(actividad, WortiseAdUnits.INTERSTITIAL);
+        mInterstitialAd.setListener(interstitialListener);
+        mInterstitialAd.loadAd();
+    }
 
-                        mInterstitialAd.setFullScreenContentCallback(
-                                new FullScreenContentCallback() {
-                                    @Override
-                                    public void onAdDismissedFullScreenContent() {
-                                        mInterstitialAd = null;
-                                        interstitialLoadedAt = 0;
-                                        scheduleInterstitialReload(INTERSTITIAL_RETRY_MS);
-                                    }
+    private final InterstitialAd.Listener interstitialListener =
+            new InterstitialAd.Listener() {
+                @Override
+                public void onInterstitialLoaded(@NonNull InterstitialAd ad) {
+                    isLoadingInterstitial = false;
+                    interstitialLoadedAt = System.currentTimeMillis();
 
-                                    @Override
-                                    public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
-                                        Log.w(TAG, "Fallo al mostrar Interstitial: " + adError.getMessage());
-                                        mInterstitialAd = null;
-                                        interstitialLoadedAt = 0;
-                                        scheduleInterstitialReload(INTERSTITIAL_RETRY_MS);
-                                    }
-
-                                    @Override
-                                    public void onAdShowedFullScreenContent() {
-                                        Log.d(TAG, "Interstitial mostrado en pantalla completa.");
-                                    }
-                                });
-
-                        if (interstitialShowPending) {
-                            long edad = System.currentTimeMillis() - interstitialPendingSince;
-                            interstitialShowPending = false;
-                            if (edad <= INTERSTITIAL_PENDING_TIMEOUT_MS) {
-                                Activity actual = actividadRef.get();
-                                if (actual != null && !actual.isFinishing() && !actual.isDestroyed()) {
-                                    ultimoTiempoInterstitial = System.currentTimeMillis();
-                                    interstitialAd.show(actual);
-                                }
+                    if (interstitialShowPending) {
+                        long edad = System.currentTimeMillis() - interstitialPendingSince;
+                        interstitialShowPending = false;
+                        if (edad <= INTERSTITIAL_PENDING_TIMEOUT_MS) {
+                            Activity actual = actividadRef.get();
+                            if (actual != null && !actual.isFinishing() && !actual.isDestroyed()) {
+                                ultimoTiempoInterstitial = System.currentTimeMillis();
+                                ad.showAd(actual);
                             }
                         }
                     }
+                }
 
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        Log.w(TAG, "Fallo al cargar Interstitial: código " + loadAdError.getCode()
-                                + " - " + loadAdError.getMessage());
+                @Override
+                public void onInterstitialFailedToLoad(
+                        @NonNull InterstitialAd ad, @NonNull AdError error) {
+                    Log.w(TAG, "Fallo al cargar Interstitial: " + error.getMessage());
+                    interstitialLoadedAt = 0;
+                    isLoadingInterstitial = false;
+                    interstitialShowPending = false;
+                    if (mInterstitialAd == ad) {
                         mInterstitialAd = null;
-                        interstitialLoadedAt = 0;
-                        isLoadingInterstitial = false;
-                        interstitialShowPending = false;
                     }
-                });
-    }
+                    ad.destroy();
+                }
+
+                @Override
+                public void onInterstitialDismissed(@NonNull InterstitialAd ad) {
+                    Log.d(TAG, "Interstitial cerrado por el usuario.");
+                    interstitialLoadedAt = 0;
+                    isLoadingInterstitial = false;
+                    if (mInterstitialAd == ad) {
+                        mInterstitialAd = null;
+                    }
+                    ad.destroy();
+                    scheduleInterstitialReload(INTERSTITIAL_RETRY_MS);
+                }
+
+                @Override
+                public void onInterstitialFailedToShow(
+                        @NonNull InterstitialAd ad, @NonNull AdError error) {
+                    Log.w(TAG, "Fallo al mostrar Interstitial: " + error.getMessage());
+                    interstitialLoadedAt = 0;
+                    isLoadingInterstitial = false;
+                    if (mInterstitialAd == ad) {
+                        mInterstitialAd = null;
+                    }
+                    ad.destroy();
+                    scheduleInterstitialReload(INTERSTITIAL_RETRY_MS);
+                }
+
+                @Override
+                public void onInterstitialShown(@NonNull InterstitialAd ad) {
+                    Log.d(TAG, "Interstitial mostrado en pantalla completa.");
+                }
+            };
 
     private boolean isInterstitialFresh() {
         return mInterstitialAd != null
+                && mInterstitialAd.isAvailable()
                 && interstitialLoadedAt > 0
                 && (System.currentTimeMillis() - interstitialLoadedAt < AD_TTL_MS);
+    }
+
+    private void cleanupInterstitial() {
+        InterstitialAd ad = mInterstitialAd;
+        mInterstitialAd = null;
+        interstitialLoadedAt = 0;
+        isLoadingInterstitial = false;
+        if (ad != null) {
+            ad.destroy();
+        }
     }
 
     private void scheduleInterstitialReload(long delayMs) {
@@ -525,6 +535,13 @@ public class MostrarPublicidad implements Publicidad {
                         if (destroyed || !adsReady || isAdDisabled()) {
                             return;
                         }
+                        if (!WortiseSdk.isReady()) {
+                            Activity context = actividadRef.get();
+                            if (context != null) {
+                                initializeMobileAds(context, this::cargarRewardedAd);
+                            }
+                            return;
+                        }
                         if (isRewardedAdLoaded() || isRewardedLoading) {
                             return;
                         }
@@ -535,41 +552,16 @@ public class MostrarPublicidad implements Publicidad {
                         }
 
                         if (rewardedAd != null) {
+                            rewardedAd.destroy();
                             rewardedAd = null;
                             rewardedLoadedAt = 0;
                         }
 
                         isRewardedLoading = true;
                         Log.d(TAG, "Iniciando carga de RewardedAd...");
-                        RewardedAd.load(
-                                actividad,
-                                REWARDED_AD_UNIT_ID,
-                                adRequest,
-                                new RewardedAdLoadCallback() {
-                                    @Override
-                                    public void onAdLoaded(@NonNull RewardedAd ad) {
-                                        rewardedAd = ad;
-                                        rewardedLoadedAt = System.currentTimeMillis();
-                                        isRewardedLoading = false;
-                                        Log.d(TAG, "RewardedAd cargado con éxito.");
-                                        showPendingRewardedIfReady();
-                                    }
-
-                                    @Override
-                                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                                        rewardedAd = null;
-                                        rewardedLoadedAt = 0;
-                                        isRewardedLoading = false;
-                                        Log.w(TAG, "Error cargando RewardedAd: código "
-                                                + loadAdError.getCode() + " - "
-                                                + loadAdError.getMessage());
-                                        if (rewardedShowPending) {
-                                            Runnable dismissed = pendingRewardedDismissListener;
-                                            clearPendingRewarded();
-                                            notifyRewardedLoadFailed(dismissed);
-                                        }
-                                    }
-                                });
+                        rewardedAd = new RewardedAd(actividad, WortiseAdUnits.REWARDED);
+                        rewardedAd.setListener(rewardedListener);
+                        rewardedAd.loadAd();
                     } catch (Exception e) {
                         isRewardedLoading = false;
                         Log.e(TAG, "Excepción cargando RewardedAd: " + e.getMessage(), e);
@@ -584,12 +576,16 @@ public class MostrarPublicidad implements Publicidad {
     @Override
     public boolean isRewardedAdLoaded() {
         return rewardedAd != null
+                && rewardedAd.isAvailable()
                 && rewardedLoadedAt > 0
                 && (System.currentTimeMillis() - rewardedLoadedAt < AD_TTL_MS);
     }
 
     @VisibleForTesting
     public void setRewardedAd(@Nullable RewardedAd rewardedAd) {
+        if (this.rewardedAd != null && this.rewardedAd != rewardedAd) {
+            this.rewardedAd.destroy();
+        }
         this.rewardedAd = rewardedAd;
         this.rewardedLoadedAt = rewardedAd != null ? System.currentTimeMillis() : 0;
     }
@@ -597,7 +593,7 @@ public class MostrarPublicidad implements Publicidad {
     @Override
     public void mostrarRewardedAd(
             Activity activity,
-            OnUserEarnedRewardListener rewardListener,
+            OnRewardEarnedListener rewardListener,
             Runnable onDismissedListener) {
 
         Activity targetActivity =
@@ -649,7 +645,7 @@ public class MostrarPublicidad implements Publicidad {
 
         Activity activity =
                 pendingRewardedActivity != null ? pendingRewardedActivity : actividadRef.get();
-        OnUserEarnedRewardListener rewardListener = pendingRewardListener;
+        OnRewardEarnedListener rewardListener = pendingRewardListener;
         Runnable dismissed = pendingRewardedDismissListener;
         clearPendingRewarded();
 
@@ -665,56 +661,97 @@ public class MostrarPublicidad implements Publicidad {
 
     private void showLoadedRewarded(
             Activity activity,
-            OnUserEarnedRewardListener rewardListener,
+            OnRewardEarnedListener rewardListener,
             Runnable onDismissedListener) {
 
         RewardedAd adParaMostrar = rewardedAd;
         rewardedAd = null;
         rewardedLoadedAt = 0;
 
-        if (adParaMostrar == null) {
+        if (adParaMostrar == null || !adParaMostrar.isAvailable()) {
             if (onDismissedListener != null) {
                 onDismissedListener.run();
             }
             return;
         }
 
-        adParaMostrar.setFullScreenContentCallback(
-                new FullScreenContentCallback() {
-                    @Override
-                    public void onAdDismissedFullScreenContent() {
-                        Log.d(TAG, "RewardedAd cerrado por el usuario.");
-                        if (!destroyed && !isAdDisabled()) {
-                            cargarRewardedAd();
-                        }
-                        if (onDismissedListener != null) {
-                            onDismissedListener.run();
-                        }
-                    }
-
-                    @Override
-                    public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
-                        Log.w(TAG, "Fallo al mostrar RewardedAd: " + adError.getMessage());
-                        if (!destroyed && !isAdDisabled()) {
-                            cargarRewardedAd();
-                        }
-                        if (onDismissedListener != null) {
-                            onDismissedListener.run();
-                        }
-                    }
-
-                    @Override
-                    public void onAdShowedFullScreenContent() {
-                        Log.d(TAG, "RewardedAd presentado en pantalla completa.");
-                    }
-                });
-
-        adParaMostrar.show(
-                activity,
-                rewardListener != null
-                        ? rewardListener
-                        : reward -> Log.d(TAG, "Recompensa otorgada sin listener explícito."));
+        activeRewardListener = rewardListener;
+        activeDismissListener = onDismissedListener;
+        adParaMostrar.showAd(activity);
     }
+
+    private final RewardedAd.Listener rewardedListener =
+            new RewardedAd.Listener() {
+                @Override
+                public void onRewardedLoaded(@NonNull RewardedAd ad) {
+                    isRewardedLoading = false;
+                    rewardedLoadedAt = System.currentTimeMillis();
+                    Log.d(TAG, "RewardedAd cargado con éxito.");
+                    showPendingRewardedIfReady();
+                }
+
+                @Override
+                public void onRewardedFailedToLoad(
+                        @NonNull RewardedAd ad, @NonNull AdError error) {
+                    isRewardedLoading = false;
+                    rewardedLoadedAt = 0;
+                    if (rewardedAd == ad) {
+                        rewardedAd = null;
+                    }
+                    Log.w(TAG, "Error cargando RewardedAd: " + error.getMessage());
+                    if (rewardedShowPending) {
+                        Runnable dismissed = pendingRewardedDismissListener;
+                        clearPendingRewarded();
+                        notifyRewardedLoadFailed(dismissed);
+                    }
+                }
+
+                @Override
+                public void onRewardedCompleted(
+                        @NonNull RewardedAd ad, @NonNull Reward reward) {
+                    OnRewardEarnedListener listener = activeRewardListener;
+                    activeRewardListener = null;
+                    if (listener != null) {
+                        listener.onRewardEarned();
+                    }
+                }
+
+                @Override
+                public void onRewardedDismissed(@NonNull RewardedAd ad) {
+                    Log.d(TAG, "RewardedAd cerrado por el usuario.");
+                    activeRewardListener = null;
+                    Runnable dismissed = activeDismissListener;
+                    activeDismissListener = null;
+                    ad.destroy();
+                    if (!destroyed && !isAdDisabled()) {
+                        cargarRewardedAd();
+                    }
+                    if (dismissed != null) {
+                        dismissed.run();
+                    }
+                }
+
+                @Override
+                public void onRewardedFailedToShow(
+                        @NonNull RewardedAd ad, @NonNull AdError error) {
+                    Log.w(TAG, "Fallo al mostrar RewardedAd: " + error.getMessage());
+                    activeRewardListener = null;
+                    Runnable dismissed = activeDismissListener;
+                    activeDismissListener = null;
+                    ad.destroy();
+                    if (!destroyed && !isAdDisabled()) {
+                        cargarRewardedAd();
+                    }
+                    if (dismissed != null) {
+                        dismissed.run();
+                    }
+                }
+
+                @Override
+                public void onRewardedShown(@NonNull RewardedAd ad) {
+                    Log.d(TAG, "RewardedAd presentado en pantalla completa.");
+                }
+            };
 
     private void schedulePendingRewardedTimeout() {
         if (rewardedShowPending) {
@@ -759,8 +796,8 @@ public class MostrarPublicidad implements Publicidad {
 
     // --- BANNERS ---
 
-    public AdView getBanner() {
-        return adView;
+    public BannerAd getBanner() {
+        return bannerAd;
     }
 
     public void cargarBanner() {
@@ -773,7 +810,7 @@ public class MostrarPublicidad implements Publicidad {
             bannerLoadPending = true;
             return;
         }
-        if (!mobileAdsInitialized) {
+        if (!WortiseSdk.isReady()) {
             bannerLoadPending = true;
             Activity context = actividadRef.get();
             if (context != null) {
@@ -781,27 +818,27 @@ public class MostrarPublicidad implements Publicidad {
             }
             return;
         }
-        if (adView == null || bannerLoading) {
+        if (bannerAd == null || bannerLoading) {
             return;
         }
         if (bannerLoaded) {
             if (bannerLoadedAt > 0
                     && System.currentTimeMillis() - bannerLoadedAt < AD_TTL_MS) {
-                adView.setVisibility(View.VISIBLE);
+                bannerAd.setVisibility(View.VISIBLE);
                 return;
             }
             bannerLoaded = false;
         }
         bannerLoading = true;
-        adView.loadAd(this.adRequest);
+        bannerAd.loadAd();
     }
 
     @Override
     public void ocultarBanner() {
         mainHandler.post(
                 () -> {
-                    if (adView != null) {
-                        adView.setVisibility(View.GONE);
+                    if (bannerAd != null) {
+                        bannerAd.setVisibility(View.GONE);
                     }
                 });
     }
@@ -814,7 +851,7 @@ public class MostrarPublicidad implements Publicidad {
         }
         mainHandler.post(
                 () -> {
-                    if (adView == null) {
+                    if (bannerAd == null) {
                         return;
                     }
                     if (!adsReady) {
@@ -822,30 +859,26 @@ public class MostrarPublicidad implements Publicidad {
                         return;
                     }
                     if (bannerLoaded) {
-                        adView.setVisibility(View.VISIBLE);
+                        bannerAd.setVisibility(View.VISIBLE);
                     } else if (!bannerLoading) {
                         cargarBanner();
                     }
                 });
     }
 
-    public AdRequest getAdReques() {
-        return this.adRequest;
-    }
-
     @Override
     public void resumenBanner() {
         activityPaused = false;
-        if (adView != null) {
-            adView.resume();
+        if (bannerAd != null) {
+            bannerAd.resume();
         }
     }
 
     @Override
     public void pausarBanner() {
         activityPaused = true;
-        if (adView != null) {
-            adView.pause();
+        if (bannerAd != null) {
+            bannerAd.pause();
         }
     }
 
@@ -853,14 +886,18 @@ public class MostrarPublicidad implements Publicidad {
     public void disposeBanner() {
         destroyed = true;
         mainHandler.removeCallbacksAndMessages(null);
-        if (adView != null) {
-            adView.destroy();
-            adView = null;
+        if (bannerAd != null) {
+            bannerAd.destroy();
+            bannerAd = null;
         }
-        mInterstitialAd = null;
-        interstitialLoadedAt = 0;
-        rewardedAd = null;
+        cleanupInterstitial();
+        if (rewardedAd != null) {
+            rewardedAd.destroy();
+            rewardedAd = null;
+        }
         rewardedLoadedAt = 0;
+        activeRewardListener = null;
+        activeDismissListener = null;
         clearPendingRewarded();
     }
 
@@ -869,6 +906,9 @@ public class MostrarPublicidad implements Publicidad {
     }
 
     public void setMInterstitialAd(InterstitialAd mInterstitialAd) {
+        if (this.mInterstitialAd != null && this.mInterstitialAd != mInterstitialAd) {
+            this.mInterstitialAd.destroy();
+        }
         this.mInterstitialAd = mInterstitialAd;
         this.interstitialLoadedAt = mInterstitialAd != null ? System.currentTimeMillis() : 0;
     }

@@ -17,6 +17,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Wortise: SDK de mediación y redes que trae consigo.
+        maven { url 'https://maven.wortise.com/artifactory/public' }
+        maven { url 'https://artifact.bytedance.com/repository/pangle' }
+        maven { url 'https://artifactory.bidmachine.io/bidmachine' }
         maven { url 'https://jitpack.io' }
     }
 }

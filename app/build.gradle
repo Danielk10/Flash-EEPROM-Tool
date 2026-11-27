@@ -73,6 +73,7 @@ android {
     buildFeatures {
         resValues true
         viewBinding true
+        buildConfig true
     }
 
     externalNativeBuild {
@@ -107,12 +108,15 @@ dependencies {
     implementation(libs.usb.serial.for1.android)
     implementation libs.appcenter.analytics
     implementation libs.appcenter.crashes
-    implementation libs.play.services.ads
+    // Wortise media Google Mobile Ads y el resto de redes; no se declara
+    // play-services-ads por separado para no forzar una versión distinta
+    // de la que el SDK trae probada.
+    implementation libs.wortise.sdk
     // UMP: consentimiento de privacidad (RGPD / normativas estatales de EE. UU.)
     implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
-    // play-services-ads-api 25.5.0 arrastra hsdp 2.0.1, que lanza
-    // "targetPackageName is null" en HsdpShimActivity. 2.2.0 cierra la
-    // actividad limpiamente cuando el intent no trae los extras.
+    // Google Mobile Ads (que llega con Wortise) arrastra hsdp 2.0.1, que
+    // lanza "targetPackageName is null" en HsdpShimActivity. 2.2.0 cierra
+    // la actividad limpiamente cuando el intent no trae los extras.
     implementation libs.hsdp
     implementation libs.play.billing
     implementation platform(libs.firebase.bom)

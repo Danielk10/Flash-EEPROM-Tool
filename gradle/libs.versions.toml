@@ -9,7 +9,9 @@ constraintlayout = "2.2.2"
 usbSerialForAndroid = "3.12.0"
 documentfile = "1.1.0"
 appCenterSdkVersion = "5.0.6"
-playServicesAds = "25.5.0"
+# SDK de mediación de Wortise. Trae Google Mobile Ads y las redes
+# que tiene integradas, así que no se declara play-services-ads aparte.
+wortiseSdk = "1.8.0"
 # Billing 9.1.0 llama a ActivityOptions.setPendingIntentBackgroundActivityStartMode
 # desde ProxyBillingActivity en builds de Android 14 que no exponen el método
 # (NoSuchMethodError). 8.3.0 es la última 8.x soportada por Play hasta 2027.
@@ -31,7 +33,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 usb-serial-for1-android = { module = "com.github.mik3y:usb-serial-for-android", version.ref = "usbSerialForAndroid" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
-play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+wortise-sdk = { module = "com.wortise:android-sdk", version.ref = "wortiseSdk" }
 play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
 hsdp = { module = "com.google.android.play:hsdp", version.ref = "hsdp" }
 appcenter-analytics = { module = "com.microsoft.appcenter:appcenter-analytics", version.ref = "appCenterSdkVersion" }

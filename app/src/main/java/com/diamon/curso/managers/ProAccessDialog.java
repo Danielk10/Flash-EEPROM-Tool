@@ -185,7 +185,7 @@ public class ProAccessDialog {
                 btnRewarded.setText(activity.getString(R.string.pro_loading_rewarded_video));
             }
 
-            publicidad.mostrarRewardedAd(activity, rewardItem -> {
+            publicidad.mostrarRewardedAd(activity, () -> {
                 proPassManager.activarPasePro();
                 publicidad.ocultarBanner();
                 Toast.makeText(activity, activity.getString(R.string.pro_pass_activated_toast, appName), Toast.LENGTH_LONG).show();

@@ -17,6 +17,7 @@
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
+        android:name=".FlashApplication"
         android:allowBackup="true"
         android:largeHeap="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

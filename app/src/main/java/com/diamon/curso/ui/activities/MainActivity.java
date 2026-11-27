@@ -53,13 +53,13 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 
 import com.diamon.curso.ads.ConsentManager;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdLoader;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.nativead.NativeAd;
-import com.google.android.gms.ads.nativead.NativeAdOptions;
-import com.google.android.gms.ads.nativead.NativeAdView;
+import com.diamon.curso.ads.WortiseAdUnits;
+import com.wortise.ads.AdError;
+import com.wortise.ads.natives.NativeAd;
+import com.wortise.ads.natives.NativeAdLoader;
+import com.wortise.ads.natives.NativeAdView;
+import com.wortise.ads.natives.NativeAdViewBinder;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.ImageButton;
@@ -187,11 +187,21 @@ public class MainActivity extends AppCompatActivity {
     private volatile String lastReadFile = "bios.bin"; // archivo del último read exitoso
     private MostrarPublicidad mostrarPublicidad;
     private View nativeAdCard;
-    private NativeAdView nativeAdView;
+    private FrameLayout nativeAdContainer;
     private NativeAd currentNativeAd;
+    private NativeAdLoader nativeAdLoader;
     private boolean isLoadingNativeAd = false;
     private int nativeRetryCount = 0;
     private static final int MAX_NATIVE_RETRIES = 1;
+    private final NativeAdViewBinder nativeAdViewBinder =
+            new NativeAdViewBinder.Builder(R.layout.native_ad)
+                    .setHeadlineTextViewId(R.id.ad_headline)
+                    .setBodyTextViewId(R.id.ad_body)
+                    .setCallToActionButtonId(R.id.ad_call_to_action)
+                    .setIconImageViewId(R.id.ad_app_icon)
+                    .setAdvertiserTextViewId(R.id.ad_advertiser)
+                    .setAdChoicesContentViewId(R.id.ad_choices)
+                    .build();
     private BillingManager billingManager;
     private ProPassManager proPassManager;
     private PowerManager.WakeLock operationWakeLock;
@@ -343,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
         cbVerifyWrite = findViewById(R.id.cbVerifyWrite);
         etCustomCommand = findViewById(R.id.etCustomCommand);
         nativeAdCard = findViewById(R.id.nativeAdCard);
-        nativeAdView = findViewById(R.id.nativeAdView);
+        nativeAdContainer = findViewById(R.id.nativeAdContainer);
 
         tvSelectedChip = findViewById(R.id.tvSelectedChip);
         btnSetChip = findViewById(R.id.btnSetChip);
@@ -2346,9 +2356,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void destroyNativeAd() {
         isLoadingNativeAd = false;
+        if (nativeAdLoader != null) {
+            nativeAdLoader.destroy();
+            nativeAdLoader = null;
+        }
         if (currentNativeAd != null) {
             currentNativeAd.destroy();
             currentNativeAd = null;
+        }
+        if (nativeAdContainer != null) {
+            nativeAdContainer.removeAllViews();
         }
         if (nativeAdCard != null) {
             nativeAdCard.setVisibility(View.GONE);
@@ -2367,7 +2384,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadNativeAd() {
-        if (nativeAdView == null || nativeAdCard == null) return;
+        if (nativeAdContainer == null || nativeAdCard == null) return;
         if (!isActivityVisible()) {
             return;
         }
@@ -2382,9 +2399,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         if (!MostrarPublicidad.isMobileAdsInitialized()) {
-            // Igual que C-PIC y PIC K150: no pedir el nativo hasta que el SDK
-            // de Google Mobile Ads haya terminado de inicializarse.
-            Log.d(TAG, "Nativo: esperando inicialización de MobileAds...");
+            // No pedir el nativo hasta que Wortise haya terminado de inicializarse.
+            Log.d(TAG, "Nativo: esperando inicialización de Wortise...");
             MostrarPublicidad.initializeMobileAds(
                     this,
                     () -> {
@@ -2404,127 +2420,86 @@ public class MainActivity extends AppCompatActivity {
 
         isLoadingNativeAd = true;
 
-        AdLoader adLoader = new AdLoader.Builder(this, "ca-app-pub-5141499161332805/6748236478")
-                .forNativeAd(nativeAd -> {
+        if (nativeAdLoader == null) {
+            nativeAdLoader =
+                    new NativeAdLoader(this, WortiseAdUnits.NATIVE, nativeAdLoaderListener);
+        }
+        nativeAdLoader.loadAd();
+    }
+
+    private final NativeAdLoader.Listener nativeAdLoaderListener =
+            new NativeAdLoader.Listener() {
+                @Override
+                public void onNativeLoaded(@NonNull NativeAd ad) {
                     isLoadingNativeAd = false;
                     if (isDestroyed() || isFinishing()) {
-                        nativeAd.destroy();
+                        ad.destroy();
                         return;
                     }
                     if (mostrarPublicidad != null && mostrarPublicidad.isAdDisabled()) {
-                        nativeAd.destroy();
+                        ad.destroy();
                         destroyNativeAd();
                         return;
                     }
                     if (currentNativeAd != null) {
                         currentNativeAd.destroy();
                     }
-                    currentNativeAd = nativeAd;
+                    currentNativeAd = ad;
                     nativeRetryCount = 0;
-                    Log.d(TAG, "AdMob Nativo cargado exitosamente.");
-                    populateNativeAdView(nativeAd, nativeAdView);
-                    if (nativeAdCard.isAttachedToWindow()) {
-                        nativeAdCard.setVisibility(View.VISIBLE);
-                    } else {
-                        nativeAdCard.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-                            @Override
-                            public void onViewAttachedToWindow(@NonNull View v) {
-                                nativeAdCard.removeOnAttachStateChangeListener(this);
-                                if (!isDestroyed() && !isFinishing() && currentNativeAd != null) {
-                                    nativeAdCard.setVisibility(View.VISIBLE);
-                                }
-                            }
+                    Log.d(TAG, "Wortise Nativo cargado exitosamente.");
 
-                            @Override
-                            public void onViewDetachedFromWindow(@NonNull View v) {}
-                        });
+                    if (nativeAdContainer == null || nativeAdLoader == null) {
+                        destroyNativeAd();
+                        return;
+                    }
+
+                    NativeAdView adView = new NativeAdView(MainActivity.this, nativeAdViewBinder);
+                    nativeAdContainer.removeAllViews();
+                    nativeAdContainer.addView(
+                            adView,
+                            new FrameLayout.LayoutParams(
+                                    FrameLayout.LayoutParams.MATCH_PARENT,
+                                    FrameLayout.LayoutParams.WRAP_CONTENT));
+
+                    if (!nativeAdLoader.renderAd(adView, ad)) {
+                        Log.e(TAG, "Wortise Nativo: renderAd devolvió false");
+                        destroyNativeAd();
+                        return;
+                    }
+
+                    if (nativeAdCard != null) {
                         nativeAdCard.setVisibility(View.VISIBLE);
                     }
-                })
-                .withAdListener(new AdListener() {
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError adError) {
-                        isLoadingNativeAd = false;
-                        Log.e(TAG, "AdMob Nativo fallo al cargar: Código=" + adError.getCode()
-                                + ", Mensaje=" + adError.getMessage());
-                        if (currentNativeAd == null) {
-                            nativeAdCard.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onNativeFailedToLoad(@NonNull AdError error) {
+                    isLoadingNativeAd = false;
+                    Log.e(TAG, "Wortise Nativo fallo al cargar: " + error.getMessage());
+                    if (currentNativeAd == null && nativeAdCard != null) {
+                        nativeAdCard.setVisibility(View.GONE);
+                    }
+                    if (!isDestroyed() && !isFinishing() && currentNativeAd == null
+                            && (mostrarPublicidad == null || !mostrarPublicidad.isAdDisabled())
+                            && ConsentManager.canRequestAds()
+                            && error != AdError.NO_FILL
+                            && nativeRetryCount < MAX_NATIVE_RETRIES) {
+                        nativeRetryCount++;
+                        long delay = 30_000L;
+                        if (nativeAdLoader != null) {
+                            delay = Math.max(delay, nativeAdLoader.getCooldownRemainingMs());
                         }
-                        if (!isDestroyed() && !isFinishing() && currentNativeAd == null
-                                && (mostrarPublicidad == null || !mostrarPublicidad.isAdDisabled())
-                                && ConsentManager.canRequestAds()
-                                && adError.getCode() != AdRequest.ERROR_CODE_NO_FILL
-                                && nativeRetryCount < MAX_NATIVE_RETRIES) {
-                            nativeRetryCount++;
+                        final long retryDelay = delay;
+                        if (nativeAdCard != null) {
                             nativeAdCard.postDelayed(() -> {
                                 if (!isDestroyed() && !isFinishing() && currentNativeAd == null) {
                                     loadNativeAd();
                                 }
-                            }, 5000);
+                            }, retryDelay);
                         }
                     }
-                })
-                .withNativeAdOptions(new NativeAdOptions.Builder().build())
-                .build();
-
-        adLoader.loadAd(new AdRequest.Builder().build());
-    }
-
-    private void populateNativeAdView(NativeAd nativeAd, NativeAdView adView) {
-        TextView headlineView = adView.findViewById(R.id.ad_headline);
-        TextView bodyView = adView.findViewById(R.id.ad_body);
-        Button ctaView = adView.findViewById(R.id.ad_call_to_action);
-        ImageView iconView = adView.findViewById(R.id.ad_app_icon);
-        TextView advertiserView = adView.findViewById(R.id.ad_advertiser);
-
-        adView.setHeadlineView(headlineView);
-        adView.setBodyView(bodyView);
-        adView.setCallToActionView(ctaView);
-        adView.setIconView(iconView);
-        adView.setAdvertiserView(advertiserView);
-
-        if (headlineView != null) {
-            headlineView.setText(nativeAd.getHeadline());
-        }
-
-        if (bodyView != null) {
-            if (nativeAd.getBody() == null) {
-                bodyView.setVisibility(View.GONE);
-            } else {
-                bodyView.setVisibility(View.VISIBLE);
-                bodyView.setText(nativeAd.getBody());
-            }
-        }
-
-        if (ctaView != null) {
-            if (nativeAd.getCallToAction() == null) {
-                ctaView.setVisibility(View.INVISIBLE);
-            } else {
-                ctaView.setVisibility(View.VISIBLE);
-                ctaView.setText(nativeAd.getCallToAction());
-            }
-        }
-
-        if (iconView != null) {
-            if (nativeAd.getIcon() == null || nativeAd.getIcon().getDrawable() == null) {
-                iconView.setVisibility(View.GONE);
-            } else {
-                iconView.setImageDrawable(nativeAd.getIcon().getDrawable());
-                iconView.setVisibility(View.VISIBLE);
-            }
-        }
-
-        if (advertiserView != null) {
-            if (nativeAd.getAdvertiser() == null) {
-                advertiserView.setVisibility(View.GONE);
-            } else {
-                advertiserView.setText(nativeAd.getAdvertiser());
-                advertiserView.setVisibility(View.VISIBLE);
-            }
-        }
-
-        adView.setNativeAd(nativeAd);
-    }
+                }
+            };
 
     @SuppressWarnings("deprecation")
     private int getVersionCode() {
