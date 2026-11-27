@@ -532,7 +532,10 @@ public class MostrarPublicidad implements Publicidad {
         mainHandler.post(
                 () -> {
                     try {
-                        if (destroyed || !adsReady || isAdDisabled()) {
+                        if (destroyed || !adsReady) {
+                            return;
+                        }
+                        if (consentResolved && !ConsentManager.canRequestAds()) {
                             return;
                         }
                         if (!WortiseSdk.isReady()) {
@@ -600,8 +603,14 @@ public class MostrarPublicidad implements Publicidad {
                 (activity != null && !activity.isFinishing() && !activity.isDestroyed())
                         ? activity
                         : actividadRef.get();
-        if (destroyed || isAdDisabled() || targetActivity == null
+        if (destroyed || targetActivity == null
                 || targetActivity.isFinishing() || targetActivity.isDestroyed()) {
+            if (onDismissedListener != null) {
+                onDismissedListener.run();
+            }
+            return;
+        }
+        if (consentResolved && !ConsentManager.canRequestAds()) {
             if (onDismissedListener != null) {
                 onDismissedListener.run();
             }
@@ -723,7 +732,7 @@ public class MostrarPublicidad implements Publicidad {
                     Runnable dismissed = activeDismissListener;
                     activeDismissListener = null;
                     ad.destroy();
-                    if (!destroyed && !isAdDisabled()) {
+                    if (!destroyed && (!consentResolved || ConsentManager.canRequestAds())) {
                         cargarRewardedAd();
                     }
                     if (dismissed != null) {
@@ -739,7 +748,7 @@ public class MostrarPublicidad implements Publicidad {
                     Runnable dismissed = activeDismissListener;
                     activeDismissListener = null;
                     ad.destroy();
-                    if (!destroyed && !isAdDisabled()) {
+                    if (!destroyed && (!consentResolved || ConsentManager.canRequestAds())) {
                         cargarRewardedAd();
                     }
                     if (dismissed != null) {

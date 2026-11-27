@@ -24,7 +24,7 @@ import java.util.Map;
  * Pruebas unitarias para ProPassManager en Flash SPI Tool:
  * - Activación del pase de 15 minutos.
  * - Cálculo y persistencia de tiempo de expiración.
- * - Formato del tiempo restante ("11h 45m", "Expirado").
+ * - Formato del tiempo restante ("11:45:10", "Expirado").
  * - Integración de isProActive con BillingManager y estado del pase.
  */
 public class ProPassManagerTest {
@@ -117,8 +117,8 @@ public class ProPassManagerTest {
         proPassManager.setExpireTime(ahora + tiempo);
 
         String formateado = proPassManager.getTiempoRestanteFormateado();
-        assertEquals("11h 45m", formateado);
-        assertEquals("11h 45m", proPassManager.formatearTiempoRestante());
+        assertEquals("11:45:10", formateado);
+        assertEquals("11:45:10", proPassManager.formatearTiempoRestante());
     }
 
     @Test
@@ -129,16 +129,32 @@ public class ProPassManagerTest {
         proPassManager.setExpireTime(ahora + tiempo);
 
         String formateado = proPassManager.getTiempoRestanteFormateado();
-        assertEquals("45m", formateado);
+        assertEquals("45:10", formateado);
+    }
+
+    @Test
+    public void activarPasePro_rellenaA15MinutosExactos() {
+        // Simular que le quedaban 2 minutos de pase previo
+        long ahora = System.currentTimeMillis();
+        proPassManager.setExpireTime(ahora + 2 * 60 * 1000L);
+
+        // Al ver otro video bonificado se rellena a 15 minutos exactos (con tope de 15m)
+        long antes = System.currentTimeMillis();
+        proPassManager.activarPasePro();
+        long despues = System.currentTimeMillis();
+
+        long expireTime = proPassManager.getExpireTime();
+        assertTrue(expireTime >= antes + ProPassManager.DURACION_PASE_MS);
+        assertTrue(expireTime <= despues + ProPassManager.DURACION_PASE_MS);
     }
 
     @Test
     public void getTiempoRestanteFormateado_cuandoExpirado_retornaExpirado() {
         proPassManager.setExpireTime(System.currentTimeMillis() - 5000L);
-        assertEquals("Expirado", proPassManager.getTiempoRestanteFormateado());
+        assertEquals("00:00", proPassManager.getTiempoRestanteFormateado());
 
         proPassManager.setExpireTime(0L);
-        assertEquals("Expirado", proPassManager.getTiempoRestanteFormateado());
+        assertEquals("00:00", proPassManager.getTiempoRestanteFormateado());
     }
 
     @Test
@@ -183,6 +199,6 @@ public class ProPassManagerTest {
         proPassManager.limpiarPase();
         assertFalse(proPassManager.hasActiveProPass());
         assertEquals(0L, proPassManager.getExpireTime());
-        assertEquals("Expirado", proPassManager.getTiempoRestanteFormateado());
+        assertEquals("00:00", proPassManager.getTiempoRestanteFormateado());
     }
 }
